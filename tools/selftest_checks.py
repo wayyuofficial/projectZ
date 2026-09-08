@@ -83,6 +83,16 @@ def main():
             _src = io.open(act, encoding="utf-8").read()
             w(act, _src.replace("s.setDomStorageEnabled(true);", "// s.setDomStorageEnabled(true);"))
 
+        # c13: 밸런스 표의 첫 행을 틀린 값으로 바꿔 fail 이 나야 한다
+        csvp = os.path.join(ROOT, "plans", "balance-zones.csv")
+        csv_backup = csvp + ".selftest-backup"
+        if os.path.exists(csvp):
+            shutil.copy2(csvp, csv_backup); made.append(csv_backup)
+            _c = io.open(csvp, encoding="utf-8-sig").read().splitlines()
+            if len(_c) > 1:
+                _c[1] = "1,99999,999,999.9,1,1,1"
+            io.open(csvp, "w", encoding="utf-8-sig").write("\n".join(_c) + "\n")
+
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
         shutil.copy2(canon, backup); made.append(backup)
@@ -103,6 +113,7 @@ def main():
             ("c10_html_meta.py", ("fail",)),
             ("c11_webview_storage.py", ("fail",)),
             ("c12_draw_order.py", ("warn",)),
+            ("c13_balance_table.py", ("fail",)),
         ]
 
         bad = []
@@ -138,6 +149,12 @@ def main():
             shutil.move(act_backup, act)
             if act_backup in made:
                 made.remove(act_backup)
+        csvp = os.path.join(ROOT, "plans", "balance-zones.csv")
+        csv_backup = csvp + ".selftest-backup"
+        if os.path.exists(csv_backup):
+            shutil.move(csv_backup, csvp)
+            if csv_backup in made:
+                made.remove(csv_backup)
         for p in made:
             if os.path.exists(p):
                 os.remove(p)

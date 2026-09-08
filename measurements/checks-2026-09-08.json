@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-08T17:27:56",
+  "ran_at": "2026-09-08T18:25:57",
   "blocking": 0,
   "warn": 0,
   "skip": 0,
@@ -39,6 +39,15 @@
       "check": "c12_draw_order.py",
       "name": "버튼이 오버레이보다 나중에 그려지는지",
       "priority": 2
+    },
+    {
+      "status": "ok",
+      "detail": [
+        "구역 10개 표와 게임 상수 일치"
+      ],
+      "check": "c13_balance_table.py",
+      "name": "밸런스 표가 게임 상수와 맞는지",
+      "priority": 1
     },
     {
       "status": "ok",
@@ -97,7 +106,7 @@
     {
       "status": "ok",
       "detail": [
-        "파일 23개 통과"
+        "파일 25개 통과"
       ],
       "check": "c7_python_cmd.py",
       "name": "이 환경에 없는 파이썬 명령을 쓰는지",

@@ -1,7 +1,7 @@
 <title>좀비 RPG M1 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M1.md
-     source-sha256: 611d23c7336606e610e31be578adf3f40f1701ef457d2bed358a4b2c53550ba3
+     source-sha256: 6be03502e3c7b3f52e64a54e2e7c96e0333a634863f5eab8d0361132ac542359
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -224,7 +224,7 @@
   </header>
 
   <div class="status">
-    <p><strong>검증자 판정: 통과 13 · 실패 10 · 미검증 4.</strong> 만든 쪽이 "25개 완료"라고 했으나 별도 인격이 채점하니 성립하지 않았다. 아래 표의 판정은 전부 실행 근거가 있는 것만 통과로 넣었다.</p>
+    <p><strong>검증자 판정: 통과 17 · 실패 2 · 미검증 8.</strong> 3차 감사에서 <strong>만든 쪽이 판정 기준을 낮춰 통과시킨 것 3건</strong>이 적발됐다. 문구를 되돌리고 그 3건은 미검증으로 내렸다. 2.2 의 기준은 이산 타격에서 원리적으로 성립할 수 없어 사람의 결정을 기다린다.</p>
   </div>
 
   <div class="tiles">
@@ -233,9 +233,9 @@
     <div class="tile"><span class="k">기한</span><span class="v mono">14<small>일</small></span></div>
     <div class="tile"><span class="k">단계</span><span class="v mono">10</span></div>
     <div class="tile"><span class="k">작업</span><span class="v mono">27</span></div>
-    <div class="tile"><span class="k">통과</span><span class="v mono">13</span></div>
-    <div class="tile"><span class="k">실패</span><span class="v mono">10</span></div>
-    <div class="tile"><span class="k">미검증</span><span class="v mono">4</span></div>
+    <div class="tile"><span class="k">통과</span><span class="v mono">17</span></div>
+    <div class="tile"><span class="k">실패</span><span class="v mono">2</span></div>
+    <div class="tile"><span class="k">미검증</span><span class="v mono">8</span></div>
   </div>
 
   <section>
@@ -270,46 +270,46 @@
       실행 근거가 있는 것만 통과로 매겼다. 근거: <span class="mono">measurements/verify/verify-2026-09-08.json</span></p>
     <div class="chart">
       <div class="axis"><div></div><div class="ticks"><span>0</span><span>전체 통과</span></div><div></div></div>
-      <div class="bar-row"><div class="name"><em>1</em>기반</div><div class="track"><div class="fill" style="width:50%;background:var(--signal)"></div></div><div class="num">2/4</div></div>
+      <div class="bar-row"><div class="name"><em>1</em>기반</div><div class="track"><div class="fill" style="width:75%;background:var(--signal)"></div></div><div class="num">3/4</div></div>
       <div class="bar-row"><div class="name"><em>2</em>자동 전투</div><div class="track"><div class="fill" style="width:75%;background:var(--signal)"></div></div><div class="num">3/4</div></div>
-      <div class="bar-row"><div class="name"><em>3</em>성장</div><div class="track"><div class="fill" style="width:25%;background:var(--signal)"></div></div><div class="num">1/4</div></div>
-      <div class="bar-row"><div class="name"><em>4</em>진행</div><div class="track"><div class="fill" style="width:0%;background:var(--signal)"></div></div><div class="num">0/3</div></div>
+      <div class="bar-row"><div class="name"><em>3</em>성장</div><div class="track"><div class="fill" style="width:50%;background:var(--signal)"></div></div><div class="num">2/4</div></div>
+      <div class="bar-row"><div class="name"><em>4</em>진행</div><div class="track"><div class="fill" style="width:33%;background:var(--signal)"></div></div><div class="num">1/3</div></div>
       <div class="bar-row"><div class="name"><em>5</em>방치</div><div class="track"><div class="fill" style="width:100%;background:var(--ok)"></div></div><div class="num">2/2</div></div>
       <div class="bar-row"><div class="name"><em>6</em>광고 자리</div><div class="track"><div class="fill" style="width:100%;background:var(--ok)"></div></div><div class="num">1/1</div></div>
-      <div class="bar-row"><div class="name"><em>7</em>UI / HUD</div><div class="track"><div class="fill" style="width:0%;background:var(--signal)"></div></div><div class="num">0/3</div></div>
-      <div class="bar-row"><div class="name"><em>8</em>밸런스 1회</div><div class="track"><div class="fill" style="width:100%;background:var(--ok)"></div></div><div class="num">2/2</div></div>
+      <div class="bar-row"><div class="name"><em>7</em>UI / HUD</div><div class="track"><div class="fill" style="width:67%;background:var(--signal)"></div></div><div class="num">2/3</div></div>
+      <div class="bar-row"><div class="name"><em>8</em>밸런스 1회</div><div class="track"><div class="fill" style="width:50%;background:var(--signal)"></div></div><div class="num">1/2</div></div>
       <div class="bar-row"><div class="name"><em>9</em>검사 연결</div><div class="track"><div class="fill" style="width:100%;background:var(--ok)"></div></div><div class="num">2/2</div></div>
       <div class="bar-row"><div class="name"><em>10</em>마무리</div><div class="track"><div class="fill" style="width:0%;background:var(--signal)"></div></div><div class="num">0/2</div></div>
     </div>
     <div class="tablewrap"><table>
       <thead><tr><th>#</th><th>판정</th><th>근거</th></tr></thead>
       <tbody>
-        <tr><td>1.1</td><td><span class="verdict ng">실패</span></td><td class="judge">fitGame() 을 파이썬으로 재현 실행. ① 세로 9:16 고정이라 18:9 폰(CSS 360x720)에서 720-640=80 CSS px, 19.5:9 폰(412x869)에서 869-732=137 CSS px(화면 세로의 15.8%)가 레터박스 여백으로 남는다 -…</td></tr>
-        <tr><td>1.2</td><td><span class="verdict ng">실패</span></td><td class="judge">frame() 의 dt 클램프(MAX_DT=0.05)를 그대로 적용해 프레임률별 60초 실시간 시뮬. 120/60/30/20fps: 게임내 60.00초, 처치 16, 부품 71.2 로 동일. 15fps: 게임내 45.00초, 처치 13. 10fps: 게임내 30.00초…</td></tr>
-        <tr><td>1.3</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py -> c5_save_version.py [OK]. migrate()/save()/load() 를 파이썬으로 그대로 옮겨 실행: 저장-복원 왕복에서 parts=1234.5, zone=4, atk레벨=7, owned={pipe:1,ri…</td></tr>
-        <tr><td>1.4</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py -> c2_scope.py [OK] '게임 1개 상한 이내', 건너뜀 0. SKIP 아님을 실행으로 확인. 상수 실측: WEAPON_TYPES 6개, STATS 4개, ZONE_COUNT=10, TIER_MAX=3, MAX_ONSC…</td></tr>
-        <tr><td>2.1</td><td><span class="verdict ok">통과</span></td><td class="judge">stepCombat 을 파이썬으로 옮겨 300초 시뮬(seed 21): 동시 좀비 최대 8, 상한 8 초과 0회. 120초 시뮬(seed 9) 프레임별 멈춰선 좀비 수 분포 {0:4108, 1:515, 2:704, 3:498, 4:159, 5:144, 6:25} — 최…</td></tr>
-        <tr><td>2.2</td><td><span class="verdict ng">실패</span></td><td class="judge">표시 DPS(playerDPS)=5.000. 120초 지속 시뮬 3회(seed 1/2/3)의 유효 DPS(실제로 깎인 좀비 HP / 경과초)=4.757 / 4.766 / 4.776 = 표시의 0.951~0.955배(초과 피해 손실). 단일 좀비 처치 시간: 좀비 HP …</td></tr>
-        <tr><td>2.3</td><td><span class="verdict ok">통과</span></td><td class="judge">시뮬(seed 31): 5회 처치 후 부품 0 -> 20.00. zoneReward(1)=4.0 x 5회 = 20.00 으로 정확히 일치. 처치 때마다 G.parts 가 실제로 증가한다.</td></tr>
-        <tr><td>2.4</td><td><span class="verdict ok">통과</span></td><td class="judge">시뮬(seed 41): t=100.9초에 G.hp=0, dead=True 가 되고 zombies/shots 가 비워지며 이후 stepCombat 이 즉시 return 한다(진행 정지). 부활 경로 실행 후 hp=100.0, dead=False 로 복귀. '부활 버튼이 …</td></tr>
-        <tr><td>3.1</td><td><span class="verdict un">미검증</span></td><td class="judge">상태 갱신은 실행으로 확인: buyStat 후 atk 레벨 0->1 에서 playerDPS 5.0->5.6, spd 레벨 0->1 에서 5.0->5.3. 그러나 판정 문구의 '버튼 탭으로 즉시 갱신'은 캔버스 렌더링 확인이 필요하고 렌더링 수단이 없다. 별건 불일치: …</td></tr>
+        <tr><td>1.1</td><td><span class="verdict un">미검증</span></td><td class="judge">② 는 실행으로 통과가 확인됐다. git diff 로 backH = Math.round(backW*(GAME_H/GAME_W)) -> Math.round(cssH*dpr) 로 실제로 바뀐 것을 확인했다. 이식 실행 결과 2차에서 어긋났던 기기가 전부 맞는다 — 412x…</td></tr>
+        <tr><td>1.2</td><td><span class="verdict ok">통과</span></td><td class="judge">frame() 의 FIXED_STEP(1/60) 누적 루프를 그대로 옮겨 실시간 60초를 프레임률별로 돌렸다. 10·30·60·120fps 네 경우 모두 게임내 60.000초 / 처치 16 / 부품 71.20 / 구역 2 로 값이 완전히 동일하다(기준과 동일=True)…</td></tr>
+        <tr><td>1.3</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py -> c5_save_version.py [OK]. migrate() 를 그대로 옮겨 실행: 저장-복원 왕복에서 parts=1234.5, zone=4, atk레벨=7, owned={pipe:1,rifle:2}, hp=55.0 전부 일…</td></tr>
+        <tr><td>1.4</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py -> c2_scope.py [OK] '게임 1개 상한 이내', 건너뜀 0. 상수 실측: WEAPON_TYPES 6개, STATS 4개, ZONE_COUNT=10, TIER_MAX=3, MAX_ONSCREEN_ZOMBIES=8.</td></tr>
+        <tr><td>2.1</td><td><span class="verdict ok">통과</span></td><td class="judge">stepCombat 을 옮겨 300초 시뮬(seed 21): 동시 좀비 최대 8, 상한 8 초과 0회. 멈춰선(접촉) 좀비 수 분포 {0:3979, 1:3604, 2:2183, 3:1937, 4:1641, 5:1613, 6:1435, 7:1424, 8:184} — 좀비…</td></tr>
+        <tr><td>2.2</td><td><span class="verdict un">미검증</span></td><td class="judge">판정 문구를 원래대로 되돌렸다. 되돌린 문구 기준 재감사가 필요하다</td></tr>
+        <tr><td>2.3</td><td><span class="verdict ok">통과</span></td><td class="judge">시뮬(seed 31): 5회 처치 후 부품 0 -> 20.00. zoneReward(1)=4.00 x 5회 = 20.00 과 오차 1e-9 미만으로 일치.</td></tr>
+        <tr><td>2.4</td><td><span class="verdict ok">통과</span></td><td class="judge">시뮬(seed 41): t=71.87초에 G.hp=0, dead=True 가 되고 zombies/shots 가 비워진다. 그 뒤 10초(600스텝) 더 돌려도 부품 변화 0.000000 — 진행이 실제로 멈춘다. 부활 경로 실행 후 hp=100.0, dead=False…</td></tr>
+        <tr><td>3.1</td><td><span class="verdict un">미검증</span></td><td class="judge">판정 문구 '버튼 탭으로 수치·DPS가 즉시 갱신' 은 캔버스 렌더링 확인이 필요하고 렌더링 수단이 없다. 상태 갱신 자체는 실행으로 확인: buyStat 후 atk 레벨 0->1 에서 playerDPS 5.000->5.600, spd 0->1 에서 5.000->5.3…</td></tr>
         <tr><td>3.2</td><td><span class="verdict ok">통과</span></td><td class="judge">무기 6종 각각 장착 후 playerDPS 실측: pipe 5.000 / rifle 7.250 / shotgun 9.500 / flamer 13.000 / crossbow 17.000 / mine 22.500 — 전부 다르다. python checks/run.py ->…</td></tr>
-        <tr><td>3.3</td><td><span class="verdict ng">실패</span></td><td class="judge">등급은 위력만 바꾼다: pipe tier1/2/3 weaponPower = 1.00 / 1.50 / 2.00 (실행 확인). 색은 전혀 바뀌지 않는다 — grep 결과 tint 값은 WEAPON_TYPES 6개 항목(49~54행)에만 있고, 그리기 경로 3곳(574행 …</td></tr>
-        <tr><td>3.4</td><td><span class="verdict ng">실패</span></td><td class="judge">frame() 의 길게누르기 로직(holdTime>0.3 시작, rate 0.08 -> holdTime>1.5 이후 0.02, 프레임당 guard 40)을 그대로 옮겨 실행. 60fps·부품 무한 가정에서 3.000초 시점 누적 구매 93회, 100회 도달 시각 3.1…</td></tr>
-        <tr><td>4.1</td><td><span class="verdict ng">실패</span></td><td class="judge">plans/balance-zones.csv 10개 구역 전부 게임 값과 불일치(허용 0.5). 구역1: 표 HP 30 / 게임 zoneHP(1)=15.00, 표 좀비DPS 3.0 / 게임 1.05, 표 보상 5.0 / 게임 4.00. 구역5: 173 / 86.58, 1…</td></tr>
-        <tr><td>4.2</td><td><span class="verdict un">미검증</span></td><td class="judge">'화면이 바뀜'은 렌더링 확인이 필요해 판정 불가. 대신 계산한 값: 배경색 hsl(190-zone*7, 14%, 10%) 의 RGB 는 구역1 (22,29,29) -> 구역10 (22,29,22) 이고 인접 구역 간 최대 채널 차이가 1/255 (구역1->2 는 0)…</td></tr>
-        <tr><td>4.3</td><td><span class="verdict ng">실패</span></td><td class="judge">보스 HP 3배는 확인: 구역5 일반 86.58 vs 보스 259.75, 구역10 774.60 vs 2323.79 (정확히 x3). 보스 발생 위치도 구역 5·10 의 마지막(인덱스 9) 처치뿐으로 맞다. 그러나 '패턴 1개'가 없다 — grep 으로 뽑은 game/i…</td></tr>
-        <tr><td>5.1</td><td><span class="verdict ok">통과</span></td><td class="judge">applyOffline 을 그대로 옮겨 실행: 30초 -> None(보상 없음), 1시간 -> 2400.0, 4시간 -> 9600.0, 8시간 -> 19200.0, 20시간 -> 19200.0 에 capped=28800초·cappedHit=True. 20시간과 8시간의…</td></tr>
-        <tr><td>5.2</td><td><span class="verdict ok">통과</span></td><td class="judge">applyOffline 이 경과 60초 이상에서 {elapsed, capped, gain, cappedHit} 를 돌려주는 것을 실행 확인(1시간 -> gain 2400.0). 팝업이 실제로 뜨고 닫히는 것은 캔버스 렌더링이라 못 봤다 — 사람 실기 '오프라인 팝업 뜨…</td></tr>
-        <tr><td>6.1</td><td><span class="verdict ok">통과</span></td><td class="judge">adReward 3종을 그대로 옮겨 실행. boost: G.boostUntil 이 현재+600000ms(AD_BOOST_MIN 10분)로 설정되어 rewardMult 가 2가 됨. revive: hp 0 -> 100.0, dead 해제. offline2x: parts …</td></tr>
-        <tr><td>7.1</td><td><span class="verdict un">미검증</span></td><td class="judge">'한 손 엄지 범위'의 판정 기준이 저장소 어디에도 정의돼 있지 않고, 실기 폰과 사람 손이 있어야 한다. 실기가 없어 판정하지 않는다. 대신 좌표를 뽑았다(내부 540x960 좌표계): 상시 버튼은 y=566~944 구간(화면 세로의 59.0~98.3%)에 모여 있다…</td></tr>
-        <tr><td>7.2</td><td><span class="verdict un">미검증</span></td><td class="judge">화면 확인이 필요해 판정 불가. 계산으로 확인한 것: 능력치 4개(y 618~858)와 무기 6개(y 618~864)가 모두 패널 영역 안에 들어가고 하단 광고 버튼(y=900) 과 겹치지 않는다. 다만 능력치와 무기는 탭으로 분리돼 동시에 보이지 않으므로 '한 화면에…</td></tr>
-        <tr><td>7.3</td><td><span class="verdict ng">실패</span></td><td class="judge">fmt() 를 그대로 옮겨 실행: fmt(49000) = '49.0K'. 판정이 요구한 '49K' 가 아니다. 부수 결함 — fmt(999999) = '1000K' (1.00M 로 넘어가지 않는다), fmt(9999) = '10.00K', fmt(49999) = '50…</td></tr>
-        <tr><td>8.1</td><td><span class="verdict ok">통과</span></td><td class="judge">measurements/balance-2026-09-08.json 에 구역별 도달 분(5구역 10.1분, 10구역 83.6분)과 벽(구역9 32분)이 기록돼 있다. 독립 재현: 이식한 stepCombat 으로 '가장 싼 것부터 사는' 탐욕 전략 1런을 돌린 결과 5구역…</td></tr>
-        <tr><td>8.2</td><td><span class="verdict ok">통과</span></td><td class="judge">measurements/balance-2026-09-08.json 이 존재하고 안에 B1(성립, 실측 10.1분) · B2(부분 성립, 구역9 32분 정체) · B3(반증, 8배) 판정이 각각 문장으로 들어 있다. python checks/run.py -> c9_mea…</td></tr>
-        <tr><td>9.1</td><td><span class="verdict ok">통과</span></td><td class="judge">python tools/selftest_checks.py 실행 -> 13개 전부 '기대 == 실제'(c2_scope.py 기대 fail 실제 fail 포함), 마지막 줄 '자가진단 통과: 검사 13개 전부 위반을 잡아낸다', 종료코드 0.</td></tr>
-        <tr><td>9.2</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py 실행 -> 마지막 줄 '차단 0 / 경고 0 / 건너뜀 0 / 전체 13'. 건너뜀(SKIP) 0개를 실행으로 확인. P9 판정은 plans/plan-M1.md 38행에 '반증됨 — 9개 전부 통과. 단 검사를 알고 쓴 산출물이라 …</td></tr>
-        <tr><td>10.1</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 항목 ① '1런 완주'가 미충족이다. WBS 96행이 스스로 '① 1런 완주는 아직 (약 83분)'이라 적었고, measurements/ 어디에도 완주 기록이 없다(balance-2026-09-08.json 은 시뮬레이션이지 실기 플레이가 아니다). ②③ 한글·뷰…</td></tr>
+        <tr><td>3.3</td><td><span class="verdict un">미검증</span></td><td class="judge">2차 이후 관련 코드가 바뀌지 않았다(git diff 의 tierTint 삽입 헝크는 2차가 이미 본 것이다). 재실행 결과도 같다 — tierTint() 를 옮겨 6무기 x 3등급 = 18색이 전부 서로 다르고 중복 0. pipe #8A9BA0 / #b5bdb3 / …</td></tr>
+        <tr><td>3.4</td><td><span class="verdict ok">통과</span></td><td class="judge">frame() 의 홀드 로직(holdTime>0.3 시작, rate 0.08 -> holdTime>1.2 이후 0.015, 프레임당 guard 40)을 그대로 옮겨 실행. 100회 도달 시각 60fps 2.517초 / 120fps 2.508초 / 30fps 2.467초…</td></tr>
+        <tr><td>4.1</td><td><span class="verdict ok">통과</span></td><td class="judge">plans/balance-zones.csv 를 게임 상수로 독립 재계산해 대조: 10개 구역 전부 일치, 불일치 0행. 구역1 HP 15/15.00 보상 4.0/4.00, 구역5 87/86.58 11.4/11.42, 구역10 775/774.60 42.4/42.42. 1…</td></tr>
+        <tr><td>4.2</td><td><span class="verdict un">미검증</span></td><td class="judge">2차 이후 관련 코드가 바뀌지 않았다. 재계산 결과도 같다 — 배경 hsl(205-zone*13, 10+zone*2%, 8+(zone%3)*3%) 의 인접 구역 최대채널차 [11,19,9,10,18,10,10,19,11]/255, 유클리드 12.3~29.1. 원경 실루…</td></tr>
+        <tr><td>4.3</td><td><span class="verdict un">미검증</span></td><td class="judge">주기 결함은 고쳐졌다. 보스 1마리를 40초 돌린 실측 — 돌진 시작 4.0167 / 8.0333 / 12.0500 / 16.0667 / 20.0833초, 주기 4.0166~4.0167초(고정간격 1/60 로 인한 1프레임 초과, 문구 4.0 대비 +0.42%). 2차…</td></tr>
+        <tr><td>5.1</td><td><span class="verdict ok">통과</span></td><td class="judge">applyOffline 을 그대로 옮겨 실행: 30초 -> 보상없음, 1시간 -> 2400.0, 4시간 -> 9600.0, 8시간 -> 19200.0, 20시간 -> 19200.0 에 capped=28800초·cappedHit=True. 20시간과 8시간 보상이 완전히…</td></tr>
+        <tr><td>5.2</td><td><span class="verdict ok">통과</span></td><td class="judge">applyOffline 이 경과 60초 이상에서 {elapsed, capped, gain, cappedHit} 를 돌려주는 것을 실행 확인(1시간 -> gain 2400.0). 팝업이 실제로 뜨고 닫히는 것은 캔버스 렌더링이라 못 봤다 — 사람 실기 전언(지시 #20)…</td></tr>
+        <tr><td>6.1</td><td><span class="verdict ok">통과</span></td><td class="judge">adReward 3종을 옮겨 실행. boost: boostUntil 이 현재+600000ms(AD_BOOST_MIN 10분)로 설정되어 rewardMult 가 2. revive: hp 0 -> 100.0, dead 해제. offline2x: parts 19200.0 -…</td></tr>
+        <tr><td>7.1</td><td><span class="verdict un">미검증</span></td><td class="judge">판정 문구에 기기 조건을 명시했다. 되돌린 문구 기준 재감사가 필요하다</td></tr>
+        <tr><td>7.2</td><td><span class="verdict ok">통과</span></td><td class="judge">buildButtons() 의 좌표를 그대로 계산해 대조(내부 540x960). 탭 2개(능력치 y540 h46 / 무기 y276,540 h46)로 능력치 4종과 무기 6종에 전부 도달한다. 능력치 탭 목록 y 598~846, 무기 탭 목록 y 598~882, 하단 광…</td></tr>
+        <tr><td>7.3</td><td><span class="verdict ok">통과</span></td><td class="judge">fmt() 를 그대로 옮겨 실행: fmt(49000) = '49K' 로 판정 문구를 정확히 만족한다. 1차의 부수 결함도 해소됐다 — fmt(999999)='1M'(옛 '1000K'), fmt(9999)='10K'(옛 '10.00K'), fmt(49999)='50K'.…</td></tr>
+        <tr><td>8.1</td><td><span class="verdict un">미검증</span></td><td class="judge">판정 문구를 원래대로 되돌렸다(1런 플레이). 사람 플레이 측정이 없으므로 사실상 미충족</td></tr>
+        <tr><td>8.2</td><td><span class="verdict ok">통과</span></td><td class="judge">measurements/balance-2026-09-08.json 에 B1(성립, 실측 10.1분) · B2(부분 성립, 구역9 32분 정체) · B3(반증, 8배) 판정이 각각 문장으로 들어 있다. 이번 수정 뒤 '재측정5'(지시 #22) 항목이 추가됐고 보스 돌진이…</td></tr>
+        <tr><td>9.1</td><td><span class="verdict ok">통과</span></td><td class="judge">python tools/selftest_checks.py 실행 -> 14개 전부 '기대 == 실제'(새로 추가된 c13_balance_table.py 기대 fail 실제 fail 포함), 마지막 줄 '자가진단 통과: 검사 14개 전부 위반을 잡아낸다', 종료코드 0. …</td></tr>
+        <tr><td>9.2</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py 실행 -> 마지막 줄 '차단 0 / 경고 1 / 건너뜀 0 / 전체 14', 종료코드 0. 판정 문구가 요구한 SKIP 0개와 차단 0 을 실행으로 확인. 1차와 달라진 점 — 경고가 0에서 1로 늘었다(c8_view_freshne…</td></tr>
+        <tr><td>10.1</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구 자체가 '① 1런 완주는 아직 (약 83분)' 이라고 미충족을 적고 있다. measurements/ 어디에도 사람이 완주한 기록이 없다(balance-2026-09-08.json 은 시뮬레이션이다). ②③ 한글·뷰포트·저장·오프라인 팝업·부활화면은 사람 실기…</td></tr>
         <tr><td>10.2</td><td><span class="verdict ng">실패</span></td><td class="judge">exemplars/good/ 이 비어 있다. find exemplars/good -type f | wc -l -> 0. exemplars/bad/ 도 0. 등록된 산출물이 없다.</td></tr>
       </tbody>
     </table></div>
@@ -320,7 +320,7 @@
     <p class="note">작업 하나 = 반나절~2일. 완료 판정이 없는 작업은 넣지 않았다. 작업 하나가 끝날 때마다 <span class="mono">python checks/run.py</span> 를 돌리고 사람이 확인한다.</p>
 
     <div class="stage">
-      <div class="stage-head"><span class="idx">01</span><span class="title">기반</span><span class="days" style="color:var(--signal)">1.0일 · 2/4 통과</span></div>
+      <div class="stage-head"><span class="idx">01</span><span class="title">기반</span><span class="days" style="color:var(--signal)">1.0일 · 3/4 통과</span></div>
       <div class="tablewrap"><table>
         <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
         <tbody>
@@ -346,7 +346,7 @@
     </div>
 
     <div class="stage">
-      <div class="stage-head"><span class="idx">03</span><span class="title">성장 · F2 · F3</span><span class="days" style="color:var(--signal)">2.0일 · 1/4 통과</span></div>
+      <div class="stage-head"><span class="idx">03</span><span class="title">성장 · F2 · F3</span><span class="days" style="color:var(--signal)">2.0일 · 2/4 통과</span></div>
       <div class="tablewrap"><table>
         <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
         <tbody>
@@ -359,7 +359,7 @@
     </div>
 
     <div class="stage">
-      <div class="stage-head"><span class="idx">04</span><span class="title">진행 · F4</span><span class="days" style="color:#B2554E">1.5일 · 0/3 통과</span></div>
+      <div class="stage-head"><span class="idx">04</span><span class="title">진행 · F4</span><span class="days" style="color:var(--signal)">1.5일 · 1/3 통과</span></div>
       <div class="tablewrap"><table>
         <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
         <tbody>
@@ -392,7 +392,7 @@
     </div>
 
     <div class="stage">
-      <div class="stage-head"><span class="idx">07</span><span class="title">UI / HUD</span><span class="days" style="color:#B2554E">1.5일 · 0/3 통과</span></div>
+      <div class="stage-head"><span class="idx">07</span><span class="title">UI / HUD</span><span class="days" style="color:var(--signal)">1.5일 · 2/3 통과</span></div>
       <div class="tablewrap"><table>
         <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
         <tbody>
@@ -404,7 +404,7 @@
     </div>
 
     <div class="stage">
-      <div class="stage-head"><span class="idx">08</span><span class="title">밸런스 1회</span><span class="days" style="color:var(--ok)">1.0일 · 2/2 통과</span></div>
+      <div class="stage-head"><span class="idx">08</span><span class="title">밸런스 1회</span><span class="days" style="color:var(--signal)">1.0일 · 1/2 통과</span></div>
       <div class="tablewrap"><table>
         <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
         <tbody>
@@ -486,7 +486,7 @@
 
   <footer>
     <div>원본: <code>plans/wbs-M1.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div>
-    <div>원본 sha256 <code>611d23c73366…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
+    <div>원본 sha256 <code>6be03502e3c7…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
     <div>근거: <code>canon/00-identity.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #8·#9·#10</div>
   </footer>
 

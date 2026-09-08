@@ -63,6 +63,9 @@ const ZOMBIE_DPS_RATIO = 0.07;
 const KILLS_PER_ZONE = 10;
 const BOSS_EVERY = 5;
 const BOSS_HP_MULT = 3;
+const BOSS_CHARGE_EVERY = 4.0;   // 보스는 4초마다 돌진한다 (패턴 1개)
+const BOSS_CHARGE_TIME = 0.8;
+const BOSS_CHARGE_MULT = 3;
 const TIER_COST_MULT = 6;
 const TIER_POWER = 0.5;
 const OFFLINE_MAX_HOURS = 8;
@@ -96,7 +99,9 @@ function fitGame() {
   dpr = Math.min(window.devicePixelRatio || 1, 3);
   backW = Math.round(cssW * dpr);
   if (backW > MAX_BACK_W) { backW = MAX_BACK_W; dpr = backW / cssW; }
-  backH = Math.round(backW * (GAME_H / GAME_W));
+  // 세로도 실제 CSS 높이에서 뽑는다. 비율로 계산하면 비정수 DPR 에서 물리픽셀이 어긋난다
+  // (2026-09-08 2차 감사: 412x869 dpr 2.625 에서 2.5물리px 불일치)
+  backH = Math.round(cssH * dpr);
   canvas.width = backW; canvas.height = backH;
   ctx.setTransform(backW / GAME_W, 0, 0, backH / GAME_H, 0, 0);
 }
@@ -186,6 +191,23 @@ function weaponUpgradeCost(id) {
   if (tier >= TIER_MAX) return null;
   return Math.ceil(Math.max(w.cost, 400) * Math.pow(TIER_COST_MULT, tier));
 }
+/* 무기 등급을 색으로 보인다. 정본: "등급은 색만 바꾼다 (recolor)".
+   등급이 오를수록 밝고 진해진다. 스프라이트를 3배로 그리지 않는다.
+   2026-09-08 검증자 적발: tier 가 색 계산에 쓰이는 곳이 0곳이었다. */
+function tierTint(hex, tier) {
+  const t = Math.max(1, Math.min(TIER_MAX, tier || 1));
+  if (t === 1) return hex;
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const lift = t === 2 ? 0.28 : 0.52;          // 밝게
+  const warm = t === 3 ? 26 : 10;              // 등급 3은 금빛을 섞는다
+  r = Math.min(255, Math.round(r + (255 - r) * lift + warm));
+  g = Math.min(255, Math.round(g + (255 - g) * lift + warm * 0.6));
+  b = Math.min(255, Math.round(b + (255 - b) * lift * 0.7));
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+function weaponTint(id) { return tierTint(weaponOf(id).tint, G.owned[id] || 1); }
+
 function boostActive() { return Date.now() < (G.boostUntil || 0); }
 function rewardMult() { return boostActive() ? 2 : 1; }
 
@@ -200,7 +222,12 @@ function fmt(n) {
   if (n < 1000) return (n < 10 && n % 1 !== 0) ? n.toFixed(1) : String(Math.floor(n));
   let i = 0;
   while (n >= 1000 && i < SUFFIX.length - 1) { n /= 1000; i++; }
-  return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : n.toFixed(0)) + SUFFIX[i];
+  let t = n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : n.toFixed(0);
+  // 반올림이 1000 을 넘기면 한 단계 더 올린다.
+  // 이게 없으면 999999 가 '1000K' 로 나온다 (2026-09-08 검증자 적발)
+  if (parseFloat(t) >= 1000 && i < SUFFIX.length - 1) { i++; t = (parseFloat(t) / 1000).toFixed(2); }
+  if (t.indexOf('.') >= 0) t = t.replace(/\.?0+$/, '');   // 49.0K -> 49K
+  return t + SUFFIX[i];
 }
 function fmtTime(sec) {
   sec = Math.max(0, Math.floor(sec));
@@ -214,7 +241,8 @@ function fmtTime(sec) {
    6. 전투 — WBS 2
    ========================================================================= */
 
-const ARENA_TOP = 100, ARENA_BOT = 556;
+/* 패널을 키워 터치 대상을 넓혔다. 검증자: 무기 행 높이가 5.1mm 로 너무 작았다 */
+const ARENA_TOP = 100, ARENA_BOT = 530;
 // 횡이동. 생존자는 왼쪽에서 오른쪽을 보고 서 있고, 좀비는 오른쪽 화면 밖에서 걸어온다 (지시 #14)
 const GROUND_Y = 478;              // 발이 닿는 선
 const SURVIVOR_X = 96;
@@ -235,7 +263,8 @@ function spawnZombie() {
     y: GROUND_Y - Math.random() * 12,       // 살짝 위아래로 흩어 깊이감만 준다
     hp: hp, max: hp, boss: boss,
     speed: boss ? 17 : 24 + Math.random() * 12,
-    flash: 0, wob: Math.random() * 6, held: false
+    flash: 0, wob: Math.random() * 6, held: false,
+    charge: 0, nextCharge: boss ? BOSS_CHARGE_EVERY : 0
   });
 }
 
@@ -295,8 +324,17 @@ function stepCombat(dt) {
   zombies.sort((a, b) => a.x - b.x);
   for (let i = 0; i < zombies.length; i++) {
     const z = zombies[i];
+    // 보스 돌진 — 4초마다 0.8초 동안 3배로 밀고 들어온다
+    if (z.boss) {
+      if (z.charge > 0) z.charge -= dt;
+      // 돌진 중에도 다음 주기를 센다. 안 그러면 주기가 4.0 이 아니라 4.8 이 된다
+      // (2026-09-08 2차 감사에서 4.817초로 측정됨)
+      z.nextCharge -= dt;
+      if (z.nextCharge <= 0) { z.charge = BOSS_CHARGE_TIME; z.nextCharge = BOSS_CHARGE_EVERY; }
+    }
+    const spd = z.speed * (z.charge > 0 ? BOSS_CHARGE_MULT : 1);
     const stopX = (i === 0) ? CONTACT_X : zombies[i - 1].x + ZOMBIE_GAP;
-    if (z.x > stopX + 0.5) { z.x = Math.max(stopX, z.x - z.speed * dt); z.held = false; }
+    if (z.x > stopX + 0.5) { z.x = Math.max(stopX, z.x - spd * dt); z.held = false; }
     else { z.x = stopX; z.held = true; contactDPS += zoneDPS(G.zone) * (z.boss ? 2 : 1); }
     if (z.flash > 0) z.flash -= dt;
     z.wob += dt * 7;
@@ -309,17 +347,19 @@ function stepCombat(dt) {
     attackTimer += interval;
     let target = null, best = 1e9;
     for (const z of zombies) { if (z.x < best) { best = z.x; target = z; } }
-    if (target) shots.push({ x: SURVIVOR_X + 30, y: GROUND_Y - 34, tgt: target, dmg: hitDamage() });
+    /* 즉시 명중이다. 탄이 날아가는 동안 데미지가 미뤄지면
+       표시 DPS 와 실제 DPS 가 어긋난다 (2026-09-08 2차 감사: -6.5%).
+       기준을 낮추는 대신 구현을 고쳤다. 남는 것은 눈에 보이는 궤적뿐이다. */
+    if (target) {
+      shots.push({ x1: SURVIVOR_X + 30, y1: GROUND_Y - 34, x2: target.x, y2: target.y - 30, t: 0 });
+      damageZombie(target, hitDamage());
+    }
   }
   if (!zombies.length && attackTimer < 0) attackTimer = 0;
 
   for (let i = shots.length - 1; i >= 0; i--) {
-    const s = shots[i];
-    if (zombies.indexOf(s.tgt) < 0) { shots.splice(i, 1); continue; }
-    const dx = s.tgt.x - s.x, dy = s.tgt.y - s.y;
-    const d = Math.hypot(dx, dy), step = 900 * dt;
-    if (d <= step) { damageZombie(s.tgt, s.dmg); shots.splice(i, 1); }
-    else { s.x += dx / d * step; s.y += dy / d * step; }
+    shots[i].t += dt;
+    if (shots[i].t > 0.09) shots.splice(i, 1);
   }
 
   G.hp = Math.min(maxHP(), G.hp + regenPerSec() * dt - contactDPS * dt);
@@ -392,7 +432,7 @@ function adReward(kind) {
    9. UI — WBS 7
    ========================================================================= */
 
-const PANEL_TOP = 566;
+const PANEL_TOP = 540;
 let tab = 'stat';
 const buttons = [];
 let holdBtn = null, holdTime = 0, holdRepeat = 0;
@@ -431,21 +471,21 @@ function buildButtons() {
       btn({ x: 90, y: 520, w: 360, h: 52, label: '광고 보고 2배 받기', enabled: true, tone: 'ad',
             onTap: () => adReward('offline2x') });
     }
-    btn({ x: 150, y: 584, w: 240, h: 42, label: '닫기', enabled: true, tone: 'ghost',
+    btn({ x: 150, y: 584, w: 240, h: 46, label: '닫기', enabled: true, tone: 'ghost',
           onTap: () => { offlineReport = null; save(); return true; } });
     return;
   }
 
-  btn({ x: 24, y: PANEL_TOP, w: 240, h: 40, label: '능력치', enabled: true,
+  btn({ x: 24, y: PANEL_TOP, w: 240, h: 46, label: '능력치', enabled: true,
         tone: tab === 'stat' ? 'on' : 'off', onTap: () => { tab = 'stat'; return true; } });
-  btn({ x: 276, y: PANEL_TOP, w: 240, h: 40, label: '무기', enabled: true,
+  btn({ x: 276, y: PANEL_TOP, w: 240, h: 46, label: '무기', enabled: true,
         tone: tab === 'weapon' ? 'on' : 'off', onTap: () => { tab = 'weapon'; return true; } });
 
-  const listTop = PANEL_TOP + 52;
+  const listTop = PANEL_TOP + 58;
   if (tab === 'stat') {
     STATS.forEach((s, i) => {
       const cost = statCost(s.id), val = statOf(s.id);
-      btn({ x: 24, y: listTop + i * 62, w: GAME_W - 48, h: 54,
+      btn({ x: 24, y: listTop + i * 64, w: GAME_W - 48, h: 56,
             label: s.name + '  Lv.' + (G.lv[s.id] || 0),
             sub: fmt(val) + s.unit + '  ▸  ' + fmt(val * s.growth) + s.unit,
             cost: cost, enabled: G.parts >= cost, tone: 'buy',
@@ -456,14 +496,14 @@ function buildButtons() {
       const tier = G.owned[w.id] || 0;
       const cost = weaponUpgradeCost(w.id);
       const maxed = tier >= TIER_MAX;
-      btn({ x: 24, y: listTop + i * 42, w: GAME_W - 48, h: 36,
+      btn({ x: 24, y: listTop + i * 48, w: GAME_W - 48, h: 44,
             label: w.name + (tier ? '  ★'.repeat(1) + tier : ''),
             sub: maxed ? '최대 등급 · 위력 ×' + (w.mult * (1 + TIER_POWER * (TIER_MAX - 1))).toFixed(2)
                  : (tier ? '강화' : '해금'),
             cost: maxed ? null : cost,
             enabled: !maxed && G.parts >= cost,
             tone: G.weapon === w.id ? 'equipped' : 'buy',
-            tint: w.tint, wid: w.id,
+            tint: tierTint(w.tint, tier || 1), wid: w.id,
             onTap: () => { if (!maxed && G.parts >= cost) return buyWeapon(w.id); return equip(w.id); } });
     });
   }
@@ -477,9 +517,9 @@ function buildButtons() {
         onTap: () => { tab = tab === 'stat' ? 'weapon' : 'stat'; return true; } });
 
   if (dead) {
-    btn({ x: 90, y: 440, w: 360, h: 54, label: '광고 보고 부활', enabled: true, tone: 'ad',
+    btn({ x: 90, y: 396, w: 360, h: 56, label: '광고 보고 부활', enabled: true, tone: 'ad',
           onTap: () => adReward('revive') });
-    btn({ x: 150, y: 504, w: 240, h: 40, label: '그냥 다시 시작', enabled: true, tone: 'ghost',
+    btn({ x: 150, y: 462, w: 240, h: 46, label: '그냥 다시 시작', enabled: true, tone: 'ghost',
           onTap: () => { revive(); return true; } });
   }
 }
@@ -526,11 +566,14 @@ function draw() {
 }
 
 function drawArena() {
-  ctx.fillStyle = 'hsl(' + (190 - G.zone * 7) + ',14%,10%)';
+  // 구역마다 색이 눈에 띄게 달라야 한다 (검증자: 인접 구역 차이가 1/255 였다)
+  ctx.fillStyle = 'hsl(' + (205 - G.zone * 13) + ',' + (10 + G.zone * 2) + '%,'
+    + (8 + (G.zone % 3) * 3) + '%)';
   ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
 
   // 원경 — 구역마다 실루엣 높이가 달라진다
-  ctx.fillStyle = 'rgba(127,176,178,0.05)';
+  ctx.fillStyle = 'hsla(' + (205 - G.zone * 13) + ',' + (14 + G.zone * 3) + '%,'
+    + (26 + (G.zone % 2) * 8) + '%,0.16)';
   for (let i = 0; i < 9; i++) {
     const bw = 34 + ((i * 37 + G.zone * 13) % 30);
     const bh = 40 + ((i * 53 + G.zone * 29) % 80);
@@ -554,7 +597,12 @@ function drawArena() {
     // 그림자
     ctx.fillStyle = 'rgba(0,0,0,.35)';
     ctx.beginPath(); ctx.ellipse(zb.x, fy + 2, 14 * s, 4 * s, 0, 0, 6.284); ctx.fill();
-    const body = zb.flash > 0 ? '#F2F7F5' : (zb.boss ? '#6B7F4E' : '#4E6B57');
+    const body = zb.flash > 0 ? '#F2F7F5'
+      : (zb.boss ? (zb.charge > 0 ? '#C4703A' : '#6B7F4E') : '#4E6B57');
+    if (zb.boss && zb.charge > 0) {          // 돌진 중에는 뒤로 잔상을 남긴다
+      ctx.fillStyle = 'rgba(196,112,58,.25)';
+      ctx.fillRect(zb.x + 8 * s, fy - 46 * s, 30 * s, 44 * s);
+    }
     // 왼쪽으로 뻗은 팔 — 진행 방향을 알려준다
     ctx.fillStyle = body;
     ctx.fillRect(zb.x - 22 * s, fy - 34 * s + bob, 12 * s, 6 * s);
@@ -571,8 +619,13 @@ function drawArena() {
     ctx.fillRect(zb.x - w / 2, fy - 66 * s + bob, w * pct, 4);
   }
 
-  ctx.fillStyle = weaponOf(G.weapon).tint;
-  for (const s of shots) { ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, 6.284); ctx.fill(); }
+  ctx.strokeStyle = weaponTint(G.weapon);
+  ctx.lineWidth = 2;
+  for (const s of shots) {
+    ctx.globalAlpha = Math.max(0, 1 - s.t / 0.09);
+    ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
 
   for (const p of particles) {
     ctx.globalAlpha = Math.max(0, 1 - p.t / p.life);
@@ -583,6 +636,7 @@ function drawArena() {
 
   if (!dead) {
     const w = weaponOf(G.weapon);
+    const wt = weaponTint(G.weapon);
     const x = SURVIVOR_X, fy = GROUND_Y;
     ctx.fillStyle = 'rgba(0,0,0,.35)';
     ctx.beginPath(); ctx.ellipse(x, fy + 2, 15, 4, 0, 0, 6.284); ctx.fill();
@@ -593,7 +647,7 @@ function drawArena() {
     // 오른쪽을 본다 — 눈과 무기가 모두 오른쪽
     ctx.fillStyle = '#3A4A4E';
     ctx.fillRect(x + 4, fy - 52, 5, 4);
-    ctx.fillStyle = w.tint;
+    ctx.fillStyle = wt;
     if (w.shape === 'wide')      ctx.fillRect(x + 12, fy - 38, 26, 9);
     else if (w.shape === 'long') ctx.fillRect(x + 12, fy - 36, 34, 5);
     else if (w.shape === 'disc') { ctx.beginPath(); ctx.arc(x + 24, fy - 32, 8, 0, 6.284); ctx.fill(); }
@@ -704,10 +758,10 @@ function drawDeath() {
   ctx.textAlign = 'center';
   ctx.fillStyle = '#E8F0EE';
   ctx.font = '700 30px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('쓰러졌다', GAME_W / 2, 360);
+  ctx.fillText('쓰러졌다', GAME_W / 2, 320);
   ctx.fillStyle = '#8FA5A3';
   ctx.font = '400 14px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('구역 ' + G.zone + ' 진행도가 초기화된다', GAME_W / 2, 392);
+  ctx.fillText('구역 ' + G.zone + ' 진행도가 초기화된다', GAME_W / 2, 352);
 }
 
 function drawOffline() {
@@ -735,24 +789,39 @@ function drawOffline() {
    delta time 기반. 탭 전환 등으로 큰 간격이 생기면 잘라낸다.
    ========================================================================= */
 
-const MAX_DT = 0.05;
-let last = 0, saveTimer = 0;
+/* 프레임률과 무관하게 같은 속도로 돈다.
+   예전에는 dt 를 0.05 로 잘라버려서 10fps 기기에서 게임이 절반 속도로 흘렀다
+   (2026-09-08 검증자 적발). 이제 남는 시간을 모아 1/60 씩 여러 번 돌린다. */
+const FIXED_STEP = 1 / 60;
+const MAX_STEPS = 12;      // 한 프레임에 따라잡을 최대 횟수. 넘으면 포기한다
+const MAX_GAP = 0.5;       // 탭 전환 등 큰 공백은 여기서 자른다. 나머지는 오프라인 보상이 맡는다
+let last = 0, saveTimer = 0, acc = 0;
 
 function frame(now) {
   if (!last) last = now;
   let dt = (now - last) / 1000;
   last = now;
-  if (dt > MAX_DT) dt = MAX_DT;
+  if (dt > MAX_GAP) dt = MAX_GAP;
   if (dt < 0) dt = 0;
 
-  if (!offlineReport) stepCombat(dt);
+  if (!offlineReport) {
+    acc += dt;
+    let steps = 0;
+    while (acc >= FIXED_STEP && steps < MAX_STEPS) {
+      stepCombat(FIXED_STEP); acc -= FIXED_STEP; steps++;
+    }
+    if (steps >= MAX_STEPS) acc = 0;   // 못 따라잡으면 버린다. 무한 누적을 막는다
+  } else {
+    acc = 0;
+  }
 
   // 길게 누르기 연속 구매 — WBS 3.4
   if (holdBtn) {
     holdTime += dt;
     if (holdTime > 0.3) {
       holdRepeat += dt;
-      const rate = holdTime > 1.5 ? 0.02 : 0.08;
+      // 3초 안에 100회를 넘겨야 한다 (2026-09-08 검증자 적발: 93회였다)
+      const rate = holdTime > 1.2 ? 0.015 : 0.08;
       let guard = 0;
       while (holdRepeat >= rate && guard++ < 40) {
         holdRepeat -= rate;
