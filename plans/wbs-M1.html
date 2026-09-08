@@ -1,7 +1,7 @@
 <title>좀비 RPG M1 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M1.md
-     source-sha256: acfa4e75ec9576434fa80893cc87a09576d9fa0ecfc03b87a9984d033644851f
+     source-sha256: cebbdbcc46c7519acf58d89537b9c29da21bb5656d307c3f1f3995f8135fc84f
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -265,7 +265,7 @@
       <div class="tablewrap"><table>
         <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
         <tbody>
-          <tr><td>1.1</td><td>단일 HTML 골격 + 캔버스 + 세로 레터박스</td><td class="judge">폰 세로에서 잘림·여백 없이 꽉 참</td><td class="dep">—</td></tr>
+          <tr><td>1.1</td><td>단일 HTML 골격 + 캔버스 + 세로 레터박스</td><td class="judge">폰 세로에서 잘림·여백 없이 꽉 참 · 백버퍼 = CSS 크기 × DPR (정합 1:1) · 글자가 깨지지 않음</td><td class="dep">—</td></tr>
           <tr><td>1.2</td><td>delta-time 게임 루프</td><td class="judge">배속·저사양에서 속도가 같음</td><td class="dep">1.1</td></tr>
           <tr><td>1.3</td><td>저장 스키마 v1 + <span class="mono">SAVE_VERSION</span></td><td class="judge">새로고침해도 상태 유지. 검사 C5 통과</td><td class="dep">1.1</td></tr>
           <tr><td>1.4</td><td>상수 테이블 골격</td><td class="judge">검사 C2가 SKIP에서 OK로 바뀜</td><td class="dep">1.1</td></tr>
@@ -427,7 +427,7 @@
 
   <footer>
     <div>원본: <code>plans/wbs-M1.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div>
-    <div>원본 sha256 <code>acfa4e75ec95…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
+    <div>원본 sha256 <code>cebbdbcc46c7…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
     <div>근거: <code>canon/00-identity.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #8·#9·#10</div>
   </footer>
 
