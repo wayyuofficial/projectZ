@@ -21,7 +21,7 @@
 
   G = freshState(); G.hp = maxHP();
   zombies.length = 0; shots.length = 0; killIndex = 0; dead = false;
-  spawnTimer = 0; attackTimer = 0; acc = 0;
+  spawnTimer = 0; acc = 0;   // attackTimer 는 손대지 않는다. 손대면 첫 타격 지연 수정이 무효가 된다
 
   const zoneAt = { 1: 0 }, wall = {};
   let t = 0, deaths = 0, buyT = 0, stuckFrom = 0, lastZone = 1;

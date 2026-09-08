@@ -313,6 +313,11 @@ function killZombie(z) {
 function stepCombat(dt) {
   if (dead) return;
 
+  /* 표적이 없다가 생기는 순간을 여기서 잡는다.
+     스폰이 공격 판정보다 먼저 일어나므로, 아래에서 zombies.length 로 판단하면
+     세션 첫 좀비와 부활 직후 첫 좀비가 공짜로 한 대 맞는다 (2026-09-08 5차 감사). */
+  const hadTarget = zombies.length > 0;
+
   // 스폰 간격을 처치 시간에 맞춘다. 고정 간격이면 초반에 좀비가 쌓여 즉사한다 (WBS 8.1)
   spawnTimer -= dt;
   const ttk = zoneHP(G.zone) / Math.max(1e-6, playerDPS());
@@ -350,8 +355,13 @@ function stepCombat(dt) {
     z.wob += dt * 7;
   }
 
-  attackTimer -= dt;
+  /* 표적이 없으면 공격 쿨다운을 채워 둔다.
+     예전에는 표적이 없는 동안에도 타이머가 흘러 첫 좀비가 나타나자마자 공짜로 한 대 맞았다.
+     그래서 단일 표적 처치 시간이 이론보다 33% 빨랐다 (2026-09-08 4차 감사).
+     이제 표적이 생긴 뒤 한 주기를 다 기다린다. 지시 #25. */
   const interval = 1 / Math.max(0.05, attacksPerSec());
+  if (!hadTarget) attackTimer = interval;   // 표적이 새로 생겼다. 한 주기를 다 기다린다
+  else attackTimer -= dt;
   let guard = 0;
   while (attackTimer <= 0 && zombies.length && guard++ < 40) {
     attackTimer += interval;
@@ -365,7 +375,7 @@ function stepCombat(dt) {
       damageZombie(target, hitDamage());
     }
   }
-  if (!zombies.length && attackTimer < 0) attackTimer = 0;
+  if (!zombies.length) attackTimer = interval;   // 다 죽였으면 다음 표적을 위해 채워 둔다
 
   for (let i = shots.length - 1; i >= 0; i--) {
     shots[i].t += dt;
