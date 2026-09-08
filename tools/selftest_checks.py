@@ -83,6 +83,14 @@ def main():
             _src = io.open(act, encoding="utf-8").read()
             w(act, _src.replace("s.setDomStorageEnabled(true);", "// s.setDomStorageEnabled(true);"))
 
+        # c15: 예측 문구를 몰래 고친 상태를 만든다
+        gd = os.path.join(ROOT, "plans", "GAMEDESIGN.md")
+        gd_backup = gd + ".selftest-backup"
+        if os.path.exists(gd):
+            shutil.copy2(gd, gd_backup); made.append(gd_backup)
+            _g = io.open(gd, encoding="utf-8").read()
+            w(gd, _g.replace("구역 6·8·10 에서 막힌다", "벽이 생긴다 (아무 데서나)"))
+
         # c13: 밸런스 표의 첫 행을 틀린 값으로 바꿔 fail 이 나야 한다
         csvp = os.path.join(ROOT, "plans", "balance-zones.csv")
         csv_backup = csvp + ".selftest-backup"
@@ -114,6 +122,7 @@ def main():
             ("c11_webview_storage.py", ("fail",)),
             ("c12_draw_order.py", ("warn",)),
             ("c13_balance_table.py", ("fail",)),
+            ("c15_prediction_lock.py", ("fail",)),
         ]
 
         bad = []
@@ -149,6 +158,12 @@ def main():
             shutil.move(act_backup, act)
             if act_backup in made:
                 made.remove(act_backup)
+        gd = os.path.join(ROOT, "plans", "GAMEDESIGN.md")
+        gd_backup = gd + ".selftest-backup"
+        if os.path.exists(gd_backup):
+            shutil.move(gd_backup, gd)
+            if gd_backup in made:
+                made.remove(gd_backup)
         csvp = os.path.join(ROOT, "plans", "balance-zones.csv")
         csv_backup = csvp + ".selftest-backup"
         if os.path.exists(csv_backup):

@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-08T18:41:50",
+  "ran_at": "2026-09-08T19:14:14",
   "blocking": 0,
   "warn": 0,
   "skip": 0,
@@ -47,6 +47,15 @@
       ],
       "check": "c13_balance_table.py",
       "name": "밸런스 표가 게임 상수와 맞는지",
+      "priority": 1
+    },
+    {
+      "status": "ok",
+      "detail": [
+        "예측 5개 문구가 잠근 그대로"
+      ],
+      "check": "c15_prediction_lock.py",
+      "name": "예측 문구를 결과 보고 고쳤는지",
       "priority": 1
     },
     {
@@ -106,7 +115,7 @@
     {
       "status": "ok",
       "detail": [
-        "파일 25개 통과"
+        "파일 26개 통과"
       ],
       "check": "c7_python_cmd.py",
       "name": "이 환경에 없는 파이썬 명령을 쓰는지",
