@@ -73,6 +73,15 @@ def main():
         p = os.path.join(ROOT, "plans", "_selftest.html")
         w(p, "<!-- source-sha256: " + "0" * 64 + " -->\n<p>일부러 어긋난 뷰</p>\n"); made.append(p)
 
+        # c11: WebView 의 DOM Storage 를 주석 처리해 fail 이 나야 한다
+        act = os.path.join(ROOT, "android", "app", "src", "main", "java",
+                           "com", "wayyu", "zombiesurvival", "MainActivity.java")
+        act_backup = act + ".selftest-backup"
+        if os.path.exists(act):
+            shutil.copy2(act, act_backup); made.append(act_backup)
+            _src = io.open(act, encoding="utf-8").read()
+            w(act, _src.replace("s.setDomStorageEnabled(true);", "// s.setDomStorageEnabled(true);"))
+
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
         shutil.copy2(canon, backup); made.append(backup)
@@ -91,6 +100,7 @@ def main():
             ("c8_view_freshness.py", ("warn",)),
             ("c9_measurement_freshness.py", ("warn",)),
             ("c10_html_meta.py", ("fail",)),
+            ("c11_webview_storage.py", ("fail",)),
         ]
 
         bad = []
@@ -119,6 +129,13 @@ def main():
             shutil.move(backup, canon)
             if backup in made:
                 made.remove(backup)
+        act = os.path.join(ROOT, "android", "app", "src", "main", "java",
+                           "com", "wayyu", "zombiesurvival", "MainActivity.java")
+        act_backup = act + ".selftest-backup"
+        if os.path.exists(act_backup):
+            shutil.move(act_backup, act)
+            if act_backup in made:
+                made.remove(act_backup)
         for p in made:
             if os.path.exists(p):
                 os.remove(p)

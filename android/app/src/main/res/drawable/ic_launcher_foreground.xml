@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- 생존자 실루엣. 바이너리 PNG 없이 벡터로만 만든다. -->
+    <path android:fillColor="#C8D6D2"
+        android:pathData="M46,32 h16 a4,4 0 0 1 4,4 v11 a4,4 0 0 1 -4,4 h-16 a4,4 0 0 1 -4,-4 v-11 a4,4 0 0 1 4,-4 z" />
+    <path android:fillColor="#2E3F44"
+        android:pathData="M43,53 h22 a5,5 0 0 1 5,5 v20 a5,5 0 0 1 -5,5 h-22 a5,5 0 0 1 -5,-5 v-20 a5,5 0 0 1 5,-5 z" />
+    <path android:fillColor="#D9A24B" android:pathData="M67,61 h15 v5 h-15 z" />
+</vector>

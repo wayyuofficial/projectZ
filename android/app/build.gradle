@@ -1,0 +1,41 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.wayyu.zombiesurvival'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.wayyu.zombiesurvival"
+        minSdk 24            // Android 7.0. LG V30(Android 8~9)을 덮는다
+        targetSdk 34
+        versionCode 1
+        versionName "0.1.0"
+    }
+
+    sourceSets {
+        main {
+            // 게임 파일을 복사하지 않는다. 저장소의 game/ 폴더를 그대로 가리킨다.
+            // 복사본을 두면 원본과 갈라진다 (지시 #17 충돌 처리).
+            assets.srcDirs = ['src/main/assets', '../../game']
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // 서명 설정 없음 -> Android Studio 의 Build > Generate Signed Bundle/APK 로 서명한다.
+        }
+        debug {
+            applicationIdSuffix ".debug"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+}
