@@ -90,6 +90,7 @@ def main():
             ("c7_python_cmd.py", ("fail",)),
             ("c8_view_freshness.py", ("warn",)),
             ("c9_balance_freshness.py", ("warn",)),
+            ("c10_html_meta.py", ("fail",)),
         ]
 
         bad = []

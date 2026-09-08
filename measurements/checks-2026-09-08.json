@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-08T15:27:42",
+  "ran_at": "2026-09-08T15:40:08",
   "blocking": 0,
   "warn": 0,
   "skip": 0,
@@ -11,6 +11,15 @@
       ],
       "check": "c0_canon_lock.py",
       "name": "정본이 승인 없이 바뀌었는지",
+      "priority": 1
+    },
+    {
+      "status": "ok",
+      "detail": [
+        "게임 1개 선언 통과"
+      ],
+      "check": "c10_html_meta.py",
+      "name": "게임 HTML에 charset·뷰포트 선언이 있는지",
       "priority": 1
     },
     {
@@ -70,7 +79,7 @@
     {
       "status": "ok",
       "detail": [
-        "파일 20개 통과"
+        "파일 21개 통과"
       ],
       "check": "c7_python_cmd.py",
       "name": "이 환경에 없는 파이썬 명령을 쓰는지",
