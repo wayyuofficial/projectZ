@@ -420,6 +420,22 @@ function equip(id) { if (G.owned[id]) { G.weapon = id; return true; } return fal
 function buildButtons() {
   buttons.length = 0;
 
+  /* 오프라인 팝업이 떠 있으면 팝업 버튼만 만든다.
+     뒤의 업그레이드 버튼을 살려두면 화면에 안 보이는 채로 눌려 몰래 구매된다.
+     2026-09-08 실기 제보: "다른 곳을 아무리 터치해도 안 꺼지고 게임은 계속 진행된다" */
+  if (offlineReport) {
+    // 어두운 배경 아무 데나 눌러도 닫힌다 (사람이 가장 먼저 하는 행동이다)
+    btn({ x: 0, y: 0, w: GAME_W, h: GAME_H, label: '', enabled: true, tone: 'scrim',
+          onTap: () => { offlineReport = null; save(); return true; } });
+    if (!offlineReport.doubled) {
+      btn({ x: 90, y: 520, w: 360, h: 52, label: '광고 보고 2배 받기', enabled: true, tone: 'ad',
+            onTap: () => adReward('offline2x') });
+    }
+    btn({ x: 150, y: 584, w: 240, h: 42, label: '닫기', enabled: true, tone: 'ghost',
+          onTap: () => { offlineReport = null; save(); return true; } });
+    return;
+  }
+
   btn({ x: 24, y: PANEL_TOP, w: 240, h: 40, label: '능력치', enabled: true,
         tone: tab === 'stat' ? 'on' : 'off', onTap: () => { tab = 'stat'; return true; } });
   btn({ x: 276, y: PANEL_TOP, w: 240, h: 40, label: '무기', enabled: true,
@@ -466,14 +482,6 @@ function buildButtons() {
     btn({ x: 150, y: 504, w: 240, h: 40, label: '그냥 다시 시작', enabled: true, tone: 'ghost',
           onTap: () => { revive(); return true; } });
   }
-  if (offlineReport) {
-    if (!offlineReport.doubled) {
-      btn({ x: 90, y: 520, w: 360, h: 52, label: '광고 보고 2배 받기', enabled: true, tone: 'ad',
-            onTap: () => adReward('offline2x') });
-    }
-    btn({ x: 150, y: 584, w: 240, h: 42, label: '닫기', enabled: true, tone: 'ghost',
-          onTap: () => { offlineReport = null; save(); return true; } });
-  }
 }
 
 function hitButton(p) {
@@ -505,13 +513,15 @@ function draw() {
   ctx.fillRect(-8, -8, GAME_W + 16, GAME_H + 16);
   drawArena();
   drawHUD();
-  drawPanel();
+  drawPanelBg();
   if (deathFlash > 0) {
     ctx.fillStyle = 'rgba(180,40,40,' + (deathFlash * 0.35).toFixed(3) + ')';
     ctx.fillRect(0, 0, GAME_W, GAME_H);
   }
   if (dead) drawDeath();
   if (offlineReport) drawOffline();
+  // 버튼은 언제나 맨 위에 그린다. 오버레이가 자기 버튼을 덮으면 누를 수가 없다 (2026-09-08)
+  drawButtons();
   ctx.restore();
 }
 
@@ -643,13 +653,16 @@ function drawHUD() {
       + (boostActive() ? '     부품 2배' : ''), GAME_W / 2, 94, GAME_W - 48);
 }
 
-function drawPanel() {
+function drawPanelBg() {
   ctx.fillStyle = '#0A1012';
   ctx.fillRect(0, ARENA_BOT, GAME_W, GAME_H - ARENA_BOT);
   ctx.strokeStyle = 'rgba(127,176,178,0.18)';
   ctx.beginPath(); ctx.moveTo(0, ARENA_BOT + .5); ctx.lineTo(GAME_W, ARENA_BOT + .5); ctx.stroke();
+}
 
+function drawButtons() {
   for (const b of buttons) {
+    if (b.tone === 'scrim') continue;   // 배경 닫기 영역은 그리지 않는다
     let bg = 'rgba(255,255,255,.05)', fg = '#E8F0EE', bd = 'rgba(127,176,178,.20)';
     if (b.tone === 'on') { bg = 'rgba(127,176,178,.18)'; bd = '#7FB0B2'; }
     else if (b.tone === 'off') { fg = '#6F8180'; }

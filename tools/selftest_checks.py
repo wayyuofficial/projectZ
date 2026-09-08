@@ -45,6 +45,7 @@ const TIER_MAX = 9;
 const MAX_ONSCREEN_ZOMBIES = 99;
 localStorage.setItem('save', '{}');
 fetch('https://example.com/score');
+function draw(){ drawButtons(); drawOffline(); }
 </script></body></html>
 """
 
@@ -101,6 +102,7 @@ def main():
             ("c9_measurement_freshness.py", ("warn",)),
             ("c10_html_meta.py", ("fail",)),
             ("c11_webview_storage.py", ("fail",)),
+            ("c12_draw_order.py", ("warn",)),
         ]
 
         bad = []
