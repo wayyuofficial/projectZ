@@ -6,7 +6,7 @@
 
 실행: python tools/selftest_checks.py
 """
-import io, os, sys, glob, shutil, importlib.util
+import io, os, sys, glob, time, shutil, importlib.util
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -59,6 +59,10 @@ def main():
     made = []
     try:
         p = os.path.join(ROOT, "game", "_selftest.html"); w(p, BAD_GAME); made.append(p)
+        # c9 는 파일 시각을 본다. 측정 기록과 1초 이내면 판정이 흔들리므로
+        # 픽스처 시각을 확실히 미래로 못 박는다 (흔들리는 검사는 검사가 아니다)
+        _future = time.time() + 3600
+        os.utime(p, (_future, _future))
         p = os.path.join(ROOT, "rules", "R999-자가진단.md"); w(p, BAD_RULE); made.append(p)
         p = os.path.join(ROOT, "procedures", "_selftest.md")
         w(p, "이 줄은 일부러 잘못된 명령을 쓴다: " + BAD_CMD + " checks/run.py\n"); made.append(p)

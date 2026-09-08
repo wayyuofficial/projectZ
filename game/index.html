@@ -213,8 +213,12 @@ function fmtTime(sec) {
    ========================================================================= */
 
 const ARENA_TOP = 100, ARENA_BOT = 556;
-const SURVIVOR_Y = ARENA_BOT - 46;
-const CONTACT_Y = SURVIVOR_Y - 42;
+// 횡이동. 생존자는 왼쪽에서 오른쪽을 보고 서 있고, 좀비는 오른쪽 화면 밖에서 걸어온다 (지시 #14)
+const GROUND_Y = 478;              // 발이 닿는 선
+const SURVIVOR_X = 96;
+const CONTACT_X = SURVIVOR_X + 46;  // 좀비가 더 못 오는 위치
+const ZOMBIE_GAP = 30;              // 줄 설 때 앞뒤 간격
+const SPAWN_X = GAME_W + 36;        // 화면 밖 오른쪽
 
 let zombies = [], shots = [], floats = [], particles = [];
 let spawnTimer = 0, attackTimer = 0, killIndex = 0;
@@ -225,11 +229,11 @@ function spawnZombie() {
   const boss = isBossKill(G.zone, killIndex + zombies.length);
   const hp = zoneHP(G.zone) * (boss ? BOSS_HP_MULT : 1);
   zombies.push({
-    x: 60 + Math.random() * (GAME_W - 120),
-    y: ARENA_TOP + 8 + Math.random() * 20,
+    x: SPAWN_X + Math.random() * 30,
+    y: GROUND_Y - Math.random() * 12,       // 살짝 위아래로 흩어 깊이감만 준다
     hp: hp, max: hp, boss: boss,
-    speed: boss ? 16 : 22 + Math.random() * 10,
-    flash: 0, wob: Math.random() * 6
+    speed: boss ? 17 : 24 + Math.random() * 12,
+    flash: 0, wob: Math.random() * 6, held: false
   });
 }
 
@@ -283,12 +287,17 @@ function stepCombat(dt) {
     spawnZombie(); spawnTimer = spawnGap;
   }
 
+  // 앞선 좀비부터 처리해 줄을 세운다. 더 못 가고 멈춘 좀비는 접촉 피해를 준다.
+  // 멈춘 마릿수가 세로판과 같아야 밸런스가 보존된다 (지시 #14 충돌 처리)
   let contactDPS = 0;
-  for (const z of zombies) {
-    if (z.y < CONTACT_Y) z.y = Math.min(CONTACT_Y, z.y + z.speed * dt);
-    else contactDPS += zoneDPS(G.zone) * (z.boss ? 2 : 1);
+  zombies.sort((a, b) => a.x - b.x);
+  for (let i = 0; i < zombies.length; i++) {
+    const z = zombies[i];
+    const stopX = (i === 0) ? CONTACT_X : zombies[i - 1].x + ZOMBIE_GAP;
+    if (z.x > stopX + 0.5) { z.x = Math.max(stopX, z.x - z.speed * dt); z.held = false; }
+    else { z.x = stopX; z.held = true; contactDPS += zoneDPS(G.zone) * (z.boss ? 2 : 1); }
     if (z.flash > 0) z.flash -= dt;
-    z.wob += dt * 6;
+    z.wob += dt * 7;
   }
 
   attackTimer -= dt;
@@ -297,8 +306,8 @@ function stepCombat(dt) {
   while (attackTimer <= 0 && zombies.length && guard++ < 40) {
     attackTimer += interval;
     let target = null, best = 1e9;
-    for (const z of zombies) { const d = CONTACT_Y - z.y; if (d < best) { best = d; target = z; } }
-    if (target) shots.push({ x: GAME_W / 2, y: SURVIVOR_Y - 18, tgt: target, dmg: hitDamage() });
+    for (const z of zombies) { if (z.x < best) { best = z.x; target = z; } }
+    if (target) shots.push({ x: SURVIVOR_X + 30, y: GROUND_Y - 34, tgt: target, dmg: hitDamage() });
   }
   if (!zombies.length && attackTimer < 0) attackTimer = 0;
 
@@ -508,25 +517,46 @@ function drawArena() {
   ctx.fillStyle = 'hsl(' + (190 - G.zone * 7) + ',14%,10%)';
   ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
 
-  ctx.strokeStyle = 'rgba(127,176,178,0.10)';
+  // 원경 — 구역마다 실루엣 높이가 달라진다
+  ctx.fillStyle = 'rgba(127,176,178,0.05)';
+  for (let i = 0; i < 9; i++) {
+    const bw = 34 + ((i * 37 + G.zone * 13) % 30);
+    const bh = 40 + ((i * 53 + G.zone * 29) % 80);
+    ctx.fillRect(i * 62 - 8, GROUND_Y - 96 - bh, bw, bh + 96);
+  }
+  // 바닥
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.fillRect(0, GROUND_Y, GAME_W, ARENA_BOT - GROUND_Y);
+  ctx.strokeStyle = 'rgba(127,176,178,0.28)';
   ctx.lineWidth = 1;
-  for (let i = 1; i < 7; i++) {
-    const y = ARENA_TOP + (ARENA_BOT - ARENA_TOP) * i / 7;
-    ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(GAME_W, y + .5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, GROUND_Y + .5); ctx.lineTo(GAME_W, GROUND_Y + .5); ctx.stroke();
+  ctx.strokeStyle = 'rgba(127,176,178,0.08)';
+  for (let x = 0; x < GAME_W; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x + .5, GROUND_Y); ctx.lineTo(x - 14 + .5, ARENA_BOT); ctx.stroke();
   }
 
   for (const zb of zombies) {
     const s = zb.boss ? 1.6 : 1;
-    const bob = Math.sin(zb.wob) * 2;
-    ctx.fillStyle = zb.flash > 0 ? '#F2F7F5' : (zb.boss ? '#6B7F4E' : '#4E6B57');
-    rr(zb.x - 13 * s, zb.y - 20 * s + bob, 26 * s, 34 * s, 6 * s); ctx.fill();
+    const bob = zb.held ? Math.sin(zb.wob * 1.6) * 1.5 : Math.sin(zb.wob) * 2;
+    const fy = zb.y;                       // 발이 닿는 y
+    // 그림자
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath(); ctx.ellipse(zb.x, fy + 2, 14 * s, 4 * s, 0, 0, 6.284); ctx.fill();
+    const body = zb.flash > 0 ? '#F2F7F5' : (zb.boss ? '#6B7F4E' : '#4E6B57');
+    // 왼쪽으로 뻗은 팔 — 진행 방향을 알려준다
+    ctx.fillStyle = body;
+    ctx.fillRect(zb.x - 22 * s, fy - 34 * s + bob, 12 * s, 6 * s);
+    rr(zb.x - 11 * s, fy - 40 * s + bob, 24 * s, 40 * s, 6 * s); ctx.fill();
     ctx.fillStyle = zb.flash > 0 ? '#F2F7F5' : '#8FA88C';
-    rr(zb.x - 9 * s, zb.y - 30 * s + bob, 18 * s, 15 * s, 5 * s); ctx.fill();
+    rr(zb.x - 11 * s, fy - 55 * s + bob, 19 * s, 16 * s, 5 * s); ctx.fill();
+    // 눈 (왼쪽을 본다)
+    ctx.fillStyle = zb.flash > 0 ? '#4E6B57' : '#25311F';
+    ctx.fillRect(zb.x - 8 * s, fy - 49 * s + bob, 4 * s, 3 * s);
     const w = 34 * s, pct = Math.max(0, zb.hp / zb.max);
     ctx.fillStyle = 'rgba(0,0,0,.55)';
-    ctx.fillRect(zb.x - w / 2, zb.y - 40 * s + bob, w, 4);
+    ctx.fillRect(zb.x - w / 2, fy - 66 * s + bob, w, 4);
     ctx.fillStyle = zb.boss ? '#D9A24B' : '#B2554E';
-    ctx.fillRect(zb.x - w / 2, zb.y - 40 * s + bob, w * pct, 4);
+    ctx.fillRect(zb.x - w / 2, fy - 66 * s + bob, w * pct, 4);
   }
 
   ctx.fillStyle = weaponOf(G.weapon).tint;
@@ -541,15 +571,22 @@ function drawArena() {
 
   if (!dead) {
     const w = weaponOf(G.weapon);
+    const x = SURVIVOR_X, fy = GROUND_Y;
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath(); ctx.ellipse(x, fy + 2, 15, 4, 0, 0, 6.284); ctx.fill();
     ctx.fillStyle = '#2E3F44';
-    rr(GAME_W / 2 - 15, SURVIVOR_Y - 22, 30, 38, 7); ctx.fill();
+    rr(x - 14, fy - 42, 28, 42, 7); ctx.fill();
     ctx.fillStyle = '#C8D6D2';
-    rr(GAME_W / 2 - 10, SURVIVOR_Y - 34, 20, 16, 5); ctx.fill();
+    rr(x - 11, fy - 58, 22, 17, 5); ctx.fill();
+    // 오른쪽을 본다 — 눈과 무기가 모두 오른쪽
+    ctx.fillStyle = '#3A4A4E';
+    ctx.fillRect(x + 4, fy - 52, 5, 4);
     ctx.fillStyle = w.tint;
-    if (w.shape === 'wide') ctx.fillRect(GAME_W / 2 + 10, SURVIVOR_Y - 20, 22, 8);
-    else if (w.shape === 'long') ctx.fillRect(GAME_W / 2 + 10, SURVIVOR_Y - 18, 30, 5);
-    else if (w.shape === 'disc') { ctx.beginPath(); ctx.arc(GAME_W / 2 + 22, SURVIVOR_Y - 14, 8, 0, 6.284); ctx.fill(); }
-    else ctx.fillRect(GAME_W / 2 + 10, SURVIVOR_Y - 16, 18, 6);
+    if (w.shape === 'wide')      ctx.fillRect(x + 12, fy - 38, 26, 9);
+    else if (w.shape === 'long') ctx.fillRect(x + 12, fy - 36, 34, 5);
+    else if (w.shape === 'disc') { ctx.beginPath(); ctx.arc(x + 24, fy - 32, 8, 0, 6.284); ctx.fill(); }
+    else if (w.shape === 'cross'){ ctx.fillRect(x + 12, fy - 36, 24, 5); ctx.fillRect(x + 20, fy - 44, 5, 20); }
+    else                          ctx.fillRect(x + 12, fy - 34, 20, 6);
   }
 
   ctx.textAlign = 'center';
@@ -586,22 +623,22 @@ function drawHUD() {
 
   const px = 24, pw = GAME_W - 48;
   ctx.fillStyle = 'rgba(255,255,255,.06)';
-  ctx.fillRect(px, 64, pw, 6);
+  ctx.fillRect(px, 62, pw, 5);
   ctx.fillStyle = '#7FB0B2';
-  ctx.fillRect(px, 64, pw * (killIndex / KILLS_PER_ZONE), 6);
+  ctx.fillRect(px, 62, pw * (killIndex / KILLS_PER_ZONE), 5);
 
   const hpPct = Math.max(0, G.hp / maxHP());
   ctx.fillStyle = 'rgba(255,255,255,.06)';
-  ctx.fillRect(px, 78, pw, 10);
+  ctx.fillRect(px, 72, pw, 9);
   ctx.fillStyle = hpPct > .3 ? '#5E9A6B' : '#B2554E';
-  ctx.fillRect(px, 78, pw * hpPct, 10);
+  ctx.fillRect(px, 72, pw * hpPct, 9);
   ctx.textAlign = 'center';
   ctx.fillStyle = saveError ? '#E08A7A' : '#9FB2B0';
-  ctx.font = '600 10px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   // maxWidth 를 줘서 긴 오류 문구가 화면 밖으로 넘치지 않게 한다
   ctx.fillText(saveError ? '저장 실패 — 진행이 남지 않는다'
     : '체력 ' + fmt(G.hp) + ' / ' + fmt(maxHP()) + '     DPS ' + fmt(playerDPS())
-      + (boostActive() ? '     부품 2배' : ''), GAME_W / 2, 86, GAME_W - 48);
+      + (boostActive() ? '     부품 2배' : ''), GAME_W / 2, 94, GAME_W - 48);
 }
 
 function drawPanel() {
