@@ -1,0 +1,434 @@
+<title>좀비 RPG M1 작업분해도</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
+<!-- 원본: plans/wbs-M1.md
+     source-sha256: 6a2d5a4a80acfe547b04ad67545feeec6ae5b473122c3284f229527e056d4017
+     이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
+     checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
+<style>
+  :root {
+    --bg:        #E9EDEC;
+    --surface:   #F7FAF9;
+    --surface-2: #DFE5E4;
+    --ink:       #14181A;
+    --ink-2:     #4A5658;
+    --muted:     #6E7C7D;
+    --line:      #C4D0CE;
+    --line-soft: #D7E0DE;
+    --accent:    #2A4B50;
+    --accent-2:  #3E6B70;
+    --signal:    #9A6410;
+    --signal-bg: #F2E3C7;
+    --ok:        #35624191;
+    --shadow:    0 1px 0 rgba(20,24,26,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #101617;
+      --surface:   #182123;
+      --surface-2: #1F2A2C;
+      --ink:       #E4EBEA;
+      --ink-2:     #B3C1C0;
+      --muted:     #8C9C9B;
+      --line:      #2C393B;
+      --line-soft: #243032;
+      --accent:    #86B4B6;
+      --accent-2:  #6C9DA0;
+      --signal:    #DEA84E;
+      --signal-bg: #33290F;
+      --ok:        #74AC81;
+      --shadow:    0 1px 0 rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:        #101617;
+    --surface:   #182123;
+    --surface-2: #1F2A2C;
+    --ink:       #E4EBEA;
+    --ink-2:     #B3C1C0;
+    --muted:     #8C9C9B;
+    --line:      #2C393B;
+    --line-soft: #243032;
+    --accent:    #86B4B6;
+    --accent-2:  #6C9DA0;
+    --signal:    #DEA84E;
+    --signal-bg: #33290F;
+    --ok:        #74AC81;
+    --shadow:    0 1px 0 rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans KR", "Malgun Gothic", system-ui, sans-serif;
+    font-weight: 400;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---------- 머리 ---------- */
+  .masthead { display: flex; flex-direction: column; gap: 10px; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 {
+    margin: 0; font-size: clamp(30px, 5vw, 44px); font-weight: 700;
+    letter-spacing: -.02em; line-height: 1.15; text-wrap: balance;
+  }
+  .lede { margin: 0; color: var(--ink-2); font-size: 17px; max-width: 60ch; font-weight: 300; }
+
+  .rule { height: 3px; background: var(--accent); width: 56px; border-radius: 2px; }
+
+  /* ---------- 상태 띠 ---------- */
+  .status {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--signal-bg);
+    border-left: 3px solid var(--signal);
+    padding: 14px 16px;
+    color: var(--ink);
+  }
+  .status strong { color: var(--signal); font-weight: 600; }
+  .status p { margin: 0; font-size: 14px; }
+
+  /* ---------- 요약 숫자 ---------- */
+  .tiles {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: 1px; background: var(--line-soft);
+    border: 1px solid var(--line-soft);
+  }
+  .tile { background: var(--surface); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; }
+  .tile .k { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .tile .v { font-size: 26px; font-weight: 600; letter-spacing: -.01em; }
+  .tile .v small { font-size: 14px; font-weight: 400; color: var(--ink-2); margin-left: 2px; }
+
+  /* ---------- 섹션 ---------- */
+  section { display: flex; flex-direction: column; gap: 16px; }
+  h2 {
+    margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent);
+    padding-bottom: 8px; border-bottom: 1px solid var(--line);
+  }
+  h2 .n { font-family: "IBM Plex Mono", monospace; color: var(--muted); margin-right: 10px; }
+  .note { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 66ch; }
+
+  /* ---------- 공수 막대 ---------- */
+  .chart { display: flex; flex-direction: column; gap: 2px; }
+  .axis {
+    display: grid; grid-template-columns: 150px 1fr 56px;
+    font-size: 11px; color: var(--muted); padding-bottom: 4px;
+  }
+  .ticks { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 3px; }
+  .bar-row {
+    display: grid; grid-template-columns: 150px 1fr 56px;
+    align-items: center; gap: 0;
+    padding: 5px 0; border-bottom: 1px solid var(--line-soft);
+  }
+  .bar-row .name { font-size: 13.5px; color: var(--ink); padding-right: 12px; }
+  .bar-row .name em { font-style: normal; color: var(--muted); font-family: "IBM Plex Mono", monospace; margin-right: 8px; }
+  .track { background: var(--surface-2); height: 16px; position: relative; }
+  .fill { background: var(--accent-2); height: 100%; }
+  .bar-row .num { text-align: right; font-size: 13px; color: var(--ink-2); font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  .bar-row.total { border-bottom: none; border-top: 2px solid var(--line); padding-top: 8px; margin-top: 4px; }
+  .bar-row.total .name, .bar-row.total .num { font-weight: 600; color: var(--ink); }
+  .bar-row.total .fill { background: var(--accent); }
+
+  /* ---------- 단계 표 ---------- */
+  .stage { display: flex; flex-direction: column; gap: 0; }
+  .stage-head {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    padding: 10px 0 8px; border-bottom: 2px solid var(--accent);
+  }
+  .stage-head .idx { font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--accent); font-weight: 600; }
+  .stage-head .title { font-size: 17px; font-weight: 600; }
+  .stage-head .days { margin-left: auto; font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--muted); }
+
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
+  thead th {
+    text-align: left; font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line);
+  }
+  tbody td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; color: var(--ink); }
+  tbody td:first-child {
+    font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+    color: var(--accent); white-space: nowrap; width: 52px;
+  }
+  tbody td.dep { font-family: "IBM Plex Mono", monospace; color: var(--muted); white-space: nowrap; width: 72px; font-size: 13px; }
+  tbody td.judge { color: var(--ink-2); }
+
+  /* ---------- 예측 ---------- */
+  .pred { display: flex; flex-direction: column; gap: 0; }
+  .pred-row {
+    display: grid; grid-template-columns: 44px 1fr; gap: 0 14px;
+    padding: 14px 0; border-bottom: 1px solid var(--line-soft);
+  }
+  .pred-row:last-child { border-bottom: none; }
+  .pred-row .id {
+    font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 14px;
+    color: var(--surface); background: var(--accent); text-align: center;
+    height: 24px; line-height: 24px;
+  }
+  .pred-row .body { display: flex; flex-direction: column; gap: 5px; }
+  .pred-row .claim { font-size: 15px; }
+  .pred-row .falsify { font-size: 13.5px; color: var(--signal); }
+  .pred-row .falsify b { font-weight: 600; }
+
+  /* ---------- 금지 ---------- */
+  ul.nope { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  ul.nope li {
+    font-size: 14.5px; padding-left: 22px; position: relative; color: var(--ink);
+  }
+  ul.nope li::before {
+    content: "×"; position: absolute; left: 4px; top: -1px;
+    color: var(--signal); font-weight: 600; font-family: "IBM Plex Mono", monospace;
+  }
+
+  footer {
+    border-top: 1px solid var(--line); padding-top: 18px;
+    font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 5px;
+  }
+  footer code { font-family: "IBM Plex Mono", monospace; color: var(--ink-2); font-size: 12px; }
+
+  @media (max-width: 620px) {
+    .axis, .bar-row { grid-template-columns: 108px 1fr 48px; }
+    .bar-row .name { font-size: 12.5px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">계획 · M1 · 2026-09-08</div>
+    <h1>M1 작업분해도</h1>
+    <div class="rule"></div>
+    <p class="lede">방치형 좀비 아포칼립스 RPG — 내 폰에서 도는 플레이 가능한 빌드 1개까지. 스토어 출시는 M2로 분리했다.</p>
+  </header>
+
+  <div class="status">
+    <p><strong>착수 전 · 검사 차단 1건.</strong> 정본이 교체돼 <span class="mono">c0_canon_lock</span> 이 FAIL 중이다. 설계대로다 — 사람이 <span class="mono">python tools/approve_canon.py</span> 를 직접 실행해야 통과한다. 그 전까지 1.1을 시작하지 않는다.</p>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><span class="k">공수</span><span class="v mono">12.0<small>일</small></span></div>
+    <div class="tile"><span class="k">여유</span><span class="v mono">2.0<small>일</small></span></div>
+    <div class="tile"><span class="k">기한</span><span class="v mono">14<small>일</small></span></div>
+    <div class="tile"><span class="k">단계</span><span class="v mono">10</span></div>
+    <div class="tile"><span class="k">작업</span><span class="v mono">27</span></div>
+    <div class="tile"><span class="k">완료</span><span class="v mono">0</span></div>
+  </div>
+
+  <section>
+    <h2><span class="n">A</span>단계별 공수</h2>
+    <p class="note">전부 <strong>추정</strong>이다. 이 프로젝트에는 실측 공수 이력이 0건이다. 예측 W2는 그 추정 방식 자체를 판정하려고 넣었다.</p>
+    <div class="chart">
+      <div class="axis">
+        <div></div>
+        <div class="ticks"><span>0</span><span>0.5</span><span>1.0</span><span>1.5</span><span>2.0일</span></div>
+        <div></div>
+      </div>
+
+      <div class="bar-row"><div class="name"><em>1</em>기반</div><div class="track"><div class="fill" style="width:50%"></div></div><div class="num">1.0</div></div>
+      <div class="bar-row"><div class="name"><em>2</em>자동 전투</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">2.0</div></div>
+      <div class="bar-row"><div class="name"><em>3</em>성장</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">2.0</div></div>
+      <div class="bar-row"><div class="name"><em>4</em>진행</div><div class="track"><div class="fill" style="width:75%"></div></div><div class="num">1.5</div></div>
+      <div class="bar-row"><div class="name"><em>5</em>방치</div><div class="track"><div class="fill" style="width:50%"></div></div><div class="num">1.0</div></div>
+      <div class="bar-row"><div class="name"><em>6</em>광고 자리</div><div class="track"><div class="fill" style="width:25%"></div></div><div class="num">0.5</div></div>
+      <div class="bar-row"><div class="name"><em>7</em>UI / HUD</div><div class="track"><div class="fill" style="width:75%"></div></div><div class="num">1.5</div></div>
+      <div class="bar-row"><div class="name"><em>8</em>밸런스 1회</div><div class="track"><div class="fill" style="width:50%"></div></div><div class="num">1.0</div></div>
+      <div class="bar-row"><div class="name"><em>9</em>검사 연결</div><div class="track"><div class="fill" style="width:25%"></div></div><div class="num">0.5</div></div>
+      <div class="bar-row"><div class="name"><em>10</em>마무리</div><div class="track"><div class="fill" style="width:50%"></div></div><div class="num">1.0</div></div>
+
+      <div class="bar-row total"><div class="name">합계</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">12.0</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">B</span>작업 27개</h2>
+    <p class="note">작업 하나 = 반나절~2일. 완료 판정이 없는 작업은 넣지 않았다. 작업 하나가 끝날 때마다 <span class="mono">python checks/run.py</span> 를 돌리고 사람이 확인한다.</p>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">01</span><span class="title">기반</span><span class="days">1.0일</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
+        <tbody>
+          <tr><td>1.1</td><td>단일 HTML 골격 + 캔버스 + 세로 레터박스</td><td class="judge">폰 세로에서 잘림·여백 없이 꽉 참</td><td class="dep">—</td></tr>
+          <tr><td>1.2</td><td>delta-time 게임 루프</td><td class="judge">배속·저사양에서 속도가 같음</td><td class="dep">1.1</td></tr>
+          <tr><td>1.3</td><td>저장 스키마 v1 + <span class="mono">SAVE_VERSION</span></td><td class="judge">새로고침해도 상태 유지. 검사 C5 통과</td><td class="dep">1.1</td></tr>
+          <tr><td>1.4</td><td>상수 테이블 골격</td><td class="judge">검사 C2가 SKIP에서 OK로 바뀜</td><td class="dep">1.1</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">02</span><span class="title">자동 전투 · F1</span><span class="days">2.0일</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
+        <tbody>
+          <tr><td>2.1</td><td>생존자 1명 + 좀비 스폰 (동시 8마리 상한)</td><td class="judge">좀비가 접근하고 대기열이 동작</td><td class="dep">1.2</td></tr>
+          <tr><td>2.2</td><td>데미지 계산 (DPS = 공격력 × 공격속도)</td><td class="judge">표시 DPS와 실제 처치 속도가 일치</td><td class="dep">2.1</td></tr>
+          <tr><td>2.3</td><td>처치 보상 — 부품·경험치 지급</td><td class="judge">처치 시 부품이 실제로 증가</td><td class="dep">2.2</td></tr>
+          <tr><td>2.4</td><td>사망·부활 처리</td><td class="judge">체력 0에서 멈추고 부활 버튼이 뜸</td><td class="dep">2.2</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">03</span><span class="title">성장 · F2 · F3</span><span class="days">2.0일</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
+        <tbody>
+          <tr><td>3.1</td><td>능력치 4종 + 비용식 <span class="mono">10×1.18^L</span></td><td class="judge">버튼 탭으로 수치·DPS가 즉시 갱신</td><td class="dep">2.3</td></tr>
+          <tr><td>3.2</td><td>무기 6종 데이터 + 선택</td><td class="judge">무기를 바꾸면 DPS가 바뀜. C2 상한 이내</td><td class="dep">1.4</td></tr>
+          <tr><td>3.3</td><td>무기 등급 3단계 (recolor 색 변형)</td><td class="judge">스프라이트 6장만으로 18종처럼 보임</td><td class="dep">3.2</td></tr>
+          <tr><td>3.4</td><td>길게 누르기 연속 구매</td><td class="judge">100회 구매가 3초 안에 가능</td><td class="dep">3.1</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">04</span><span class="title">진행 · F4</span><span class="days">1.5일</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
+        <tbody>
+          <tr><td>4.1</td><td>구역 10개 데이터 + 곡선 적용</td><td class="judge">밸런스 표의 HP·보상과 실제 값이 일치</td><td class="dep">1.4</td></tr>
+          <tr><td>4.2</td><td>구역 이동 + 배경 전환</td><td class="judge">구역이 바뀌면 화면이 바뀜</td><td class="dep">4.1</td></tr>
+          <tr><td>4.3</td><td>보스 (5·10구역)</td><td class="judge">보스 HP 3배 + 패턴 1개 동작</td><td class="dep">4.1</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">05</span><span class="title">방치 · F5</span><span class="days">1.0일</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
+        <tbody>
+          <tr><td>5.1</td><td>오프라인 시간 계산 (최대 8시간)</td><td class="judge">시계를 돌려 검증. 8시간 초과분은 안 쌓임</td><td class="dep">1.3</td></tr>
+          <tr><td>5.2</td><td>복귀 팝업</td><td class="judge">재접속 시 획득량이 팝업으로 뜸</td><td class="dep">5.1</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">06</span><span class="title">광고 자리 · F6 (스텁)</span><span class="days">0.5일</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
+        <tbody>
+          <tr><td>6.1</td><td>3지점 버튼 + 스텁 보상</td><td class="judge">3개 버튼이 각각 보상을 줌. <strong>SDK 없음</strong></td><td class="dep">5.2, 2.4</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">07</span><span class="title">UI / HUD</span><span class="days">1.5일</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
+        <tbody>
+          <tr><td>7.1</td><td>세로 HUD (부품·체력·DPS·구역)</td><td class="judge">폰 세로에서 한 손 엄지 범위 안에 버튼이 들어옴</td><td class="dep">1.1</td></tr>
+          <tr><td>7.2</td><td>업그레이드 패널</td><td class="judge">능력치·무기를 한 화면에서 다 만짐</td><td class="dep">3.1, 3.2</td></tr>
+          <tr><td>7.3</td><td>큰 숫자 표기 (K/M/B)</td><td class="judge">49,000이 49K로 보임</td><td class="dep">3.1</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">08</span><span class="title">밸런스 1회</span><span class="days">1.0일</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
+        <tbody>
+          <tr><td>8.1</td><td>밸런스 표 대입 후 1런 플레이</td><td class="judge">구역 1→5 도달 시간을 실제로 측정</td><td class="dep">4.3, 7.2</td></tr>
+          <tr><td>8.2</td><td>측정값을 <span class="mono">measurements/</span> 에 기록</td><td class="judge">예측 B1·B2·B3 판정 가능</td><td class="dep">8.1</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">09</span><span class="title">검사 연결</span><span class="days">0.5일</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
+        <tbody>
+          <tr><td>9.1</td><td><span class="mono">c2_scope.py</span> 변수명 갱신</td><td class="judge"><span class="mono">tools/selftest_checks.py</span> 통과</td><td class="dep">1.4</td></tr>
+          <tr><td>9.2</td><td>게임 파일로 검사 8개 전수 실행</td><td class="judge">SKIP 0개. <strong>예측 P9 판정</strong></td><td class="dep">8.1</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="idx">10</span><span class="title">마무리</span><span class="days">1.0일</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
+        <tbody>
+          <tr><td>10.1</td><td>폰 실기 확인</td><td class="judge">내 폰 브라우저 세로에서 1런 완주</td><td class="dep">9.2</td></tr>
+          <tr><td>10.2</td><td>본보기 등록 (<span class="mono">exemplars/good/</span>)</td><td class="judge">사람이 "좋다" 판정한 산출물 1개 등록</td><td class="dep">10.1</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">C</span>예측과 반증 조건</h2>
+    <p class="note">예측 없는 계획은 만들지 않는다. 아래 넷은 이 WBS가 틀렸을 때 <strong>무엇을 보고 알아차릴지</strong>를 미리 적어둔 것이다.</p>
+    <div class="pred">
+      <div class="pred-row">
+        <div class="id">W1</div>
+        <div class="body">
+          <div class="claim">12일에 끝나고 여유 2일이 남는다.</div>
+          <div class="falsify"><b>반증</b> — 14일차에 10.1이 미완이면 M1 실패(P6 반증). 스코프를 반으로 자른다.</div>
+        </div>
+      </div>
+      <div class="pred-row">
+        <div class="id">W2</div>
+        <div class="body">
+          <div class="claim">가장 오래 걸리는 단계는 3(성장) 또는 7(UI)이다.</div>
+          <div class="falsify"><b>반증</b> — 다른 단계가 예상의 2배를 넘으면 추정 방식이 틀린 것이다. 남은 추정을 다시 한다.</div>
+        </div>
+      </div>
+      <div class="pred-row">
+        <div class="id">W3</div>
+        <div class="body">
+          <div class="claim">단계 9에서 검사 8개 중 1개 이상이 잘못 걸린다.</div>
+          <div class="falsify"><b>반증</b> — 0개면 기준이 예상보다 정확했다는 뜻. 그래도 원칙 5 역검증은 이때 완료된다.</div>
+        </div>
+      </div>
+      <div class="pred-row">
+        <div class="id">W4</div>
+        <div class="body">
+          <div class="claim">CUT 목록에서 1개 이상이 "이건 넣어야 해"로 되살아난다.</div>
+          <div class="falsify"><b>반증</b> — 되살아나면 지시로 남기고 기한을 다시 계산한다. 조용히 넣지 않는다.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">D</span>하지 않는 것</h2>
+    <ul class="nope">
+      <li>정본 승인 전에 착수하지 않는다</li>
+      <li>단계를 건너뛰지 않는다. 특히 1.4(상수 테이블)를 미루면 검사 C2가 계속 SKIP이다</li>
+      <li>CUT 목록(기지 건설 · 동료 · 가챠 · 크래프팅 · 랭킹)을 M1에 넣지 않는다</li>
+      <li>광고 SDK를 붙이지 않는다 — M2다</li>
+      <li>여유 2일을 기능 추가에 쓰지 않는다. 밸런스와 버그에 쓴다</li>
+      <li>자동 실행을 켜지 않는다. 확인 주기는 매 작업마다다</li>
+    </ul>
+  </section>
+
+  <footer>
+    <div>원본: <code>plans/wbs-M1.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div>
+    <div>원본 sha256 <code>6a2d5a4a80ac…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
+    <div>근거: <code>canon/00-identity.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #8·#9·#10</div>
+  </footer>
+
+</div>

@@ -63,6 +63,12 @@ def main():
         p = os.path.join(ROOT, "procedures", "_selftest.md")
         w(p, "이 줄은 일부러 잘못된 명령을 쓴다: " + BAD_CMD + " checks/run.py\n"); made.append(p)
 
+        # c4(예측·반증 없는 계획서) + c8(원본과 어긋난 뷰) 겸용 픽스처
+        p = os.path.join(ROOT, "plans", "_selftest.md")
+        w(p, "# 일부러 예측 없는 계획\n\n할 일: 아무거나\n"); made.append(p)
+        p = os.path.join(ROOT, "plans", "_selftest.html")
+        w(p, "<!-- source-sha256: " + "0" * 64 + " -->\n<p>일부러 어긋난 뷰</p>\n"); made.append(p)
+
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
         shutil.copy2(canon, backup); made.append(backup)
@@ -76,7 +82,9 @@ def main():
             ("c3_no_network.py", ("fail",)),
             ("c5_save_version.py", ("warn",)),
             ("c6_single_file.py", ("warn",)),
+            ("c4_plan_hygiene.py", ("fail",)),
             ("c7_python_cmd.py", ("fail",)),
+            ("c8_view_freshness.py", ("warn",)),
         ]
 
         bad = []
@@ -90,23 +98,12 @@ def main():
                 bad.append("%s : 기대 %s, 실제 %s" % (name, want, got))
         print("=" * 60)
 
-        # c4 는 계획서 위반 파일을 따로 만들어 확인
-        p = os.path.join(ROOT, "plans", "_selftest.md")
-        w(p, "# 일부러 예측 없는 계획\n\n할 일: 아무거나\n"); made.append(p)
-        got = load("c4_plan_hygiene.py").run(ROOT).get("status")
-        ok = got == "fail"
-        print("[%s] %-22s 기대 fail   실제 %s" %
-              ("  OK  " if ok else " MISS ", "c4_plan_hygiene.py", got))
-        if not ok:
-            bad.append("c4_plan_hygiene.py : 기대 fail, 실제 %s" % got)
-
-        print("=" * 60)
         if bad:
             print("자가진단 실패 %d건 — 이 검사들은 위반을 못 잡는다:" % len(bad))
             for b in bad:
                 print("  - %s" % b)
             return 1
-        print("자가진단 통과: 검사 8개 전부 위반을 잡아낸다.")
+        print("자가진단 통과: 검사 %d개 전부 위반을 잡아낸다." % len(expect))
         return 0
 
     finally:

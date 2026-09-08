@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-08T14:25:48",
+  "ran_at": "2026-09-08T14:49:51",
   "blocking": 1,
   "warn": 0,
   "skip": 4,
@@ -73,11 +73,20 @@
     {
       "status": "ok",
       "detail": [
-        "파일 18개 통과"
+        "파일 19개 통과"
       ],
       "check": "c7_python_cmd.py",
       "name": "이 환경에 없는 파이썬 명령을 쓰는지",
       "priority": 1
+    },
+    {
+      "status": "ok",
+      "detail": [
+        "뷰 1개가 원본과 일치"
+      ],
+      "check": "c8_view_freshness.py",
+      "name": "뷰(HTML)가 원본 문서와 어긋났는지",
+      "priority": 2
     }
   ]
 }
