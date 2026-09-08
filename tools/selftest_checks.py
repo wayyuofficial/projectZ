@@ -34,11 +34,15 @@ def w(path, text):
 BAD_GAME = """<!doctype html><html><body>
 <script src="engine.js"></script>
 <script>
-const UNIT_TYPES = [
+const WEAPON_TYPES = [
   {id:'a'},{id:'b'},{id:'c'},{id:'d'},{id:'e'},{id:'f'},{id:'g'},{id:'h'}
 ];
-const WAVE_COUNT = 20;
-const STAR_MAX = 9;
+const STATS = [
+  {id:'atk'},{id:'spd'},{id:'hp'},{id:'reg'},{id:'crit'},{id:'luck'}
+];
+const ZONE_COUNT = 20;
+const TIER_MAX = 9;
+const MAX_ONSCREEN_ZOMBIES = 99;
 localStorage.setItem('save', '{}');
 fetch('https://example.com/score');
 </script></body></html>
