@@ -1,0 +1,35 @@
+{
+  "probed_at": "2026-09-08T14:05:09",
+  "root": "D:\\project2",
+  "os": {
+    "platform": "win32",
+    "name": "nt"
+  },
+  "commands": {
+    "python": {
+      "status": "ok",
+      "returncode": 0,
+      "output": "Python 3.12.10"
+    },
+    "python3_alias": {
+      "status": "error",
+      "returncode": 9009,
+      "output": "Python"
+    },
+    "node": {
+      "status": "error",
+      "returncode": null,
+      "output": "명령 없음 (FileNotFoundError)"
+    },
+    "npm": {
+      "status": "error",
+      "returncode": null,
+      "output": "명령 없음 (FileNotFoundError)"
+    },
+    "git": {
+      "status": "ok",
+      "returncode": 0,
+      "output": "git version 2.55.0.windows.3"
+    }
+  }
+}

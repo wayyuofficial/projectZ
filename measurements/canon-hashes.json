@@ -1,0 +1,11 @@
+{
+  "approved_at": "2026-09-08T14:08:24",
+  "note": "사람이 승인한 정본 상태. AI가 이 파일을 갱신하면 감시가 무의미해진다.",
+  "hashes": {
+    "00-identity.md": "1d5d28ab0eaec46a196e1f63cbf6946dcce80ae12d0187323d189cfb3f30f05b",
+    "10-scope.md": "94731b469edded5c75693b096078fe10477d99a9aae581584636fb53f0fedffd",
+    "20-principles.md": "20af86ca5ad9cddef5123da58f9146064b7f6c42d8430f3f261ef82279eb78ee",
+    "30-forbidden.md": "596798c5023910ea7559cc80cd0bb51eb51a2ce49ad6058f42f829b398cb4376",
+    "README.md": "32523329426f82a74e01ae3d9939eae652609335a74c6226ee41281b8258781c"
+  }
+}
