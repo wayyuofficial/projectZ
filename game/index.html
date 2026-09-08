@@ -1,39 +1,24 @@
-<title>좀비 생존 — 골격</title>
+<title>좀비 생존</title>
 <style>
-  /* WBS 1.1 골격. 외부 파일을 하나도 참조하지 않는다 (검사 C6). */
-  :root {
-    --void:   #05080A;   /* 레터박스 여백 */
-    --ground: #12181A;
-    --ink:    #DCE6E4;
-    --muted:  #6F8180;
-    --line:   #243335;
-    --accent: #7FB0B2;
-    --signal: #D9A24B;
-  }
-  * { box-sizing: border-box; }
+  /* 단일 HTML. 외부 파일을 하나도 참조하지 않는다 (검사 C6). */
   html, body {
     margin: 0; padding: 0; height: 100%;
-    background: var(--void);
+    background: #05080A;
     overflow: hidden;
     overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none; user-select: none;
     font-family: "Segoe UI", "Malgun Gothic", system-ui, sans-serif;
   }
   #stage {
     position: fixed; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    background: var(--void);
+    background: #05080A;
     padding: env(safe-area-inset-top) env(safe-area-inset-right)
              env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
-  #c {
-    display: block;
-    background: var(--ground);
-    touch-action: none;
-    /* image-rendering: pixelated 를 쓰지 않는다.
-       비정수 배율에서 글자 획이 계단으로 깨진다 (지시 #12).
-       픽셀아트 스프라이트가 들어올 때 그 스프라이트에만 국소로 적용한다. */
-  }
+  #c { display: block; background: #12181A; touch-action: none; }
+  /* image-rendering: pixelated 를 쓰지 않는다 — 비정수 배율에서 글자가 깨진다 (지시 #12) */
 </style>
 
 <div id="stage"><canvas id="c"></canvas></div>
@@ -42,255 +27,732 @@
 "use strict";
 
 /* =========================================================================
-   상수 테이블 — WBS 1.4
+   1. 상수 테이블 — WBS 1.4
    검사 c2_scope.py 가 이 선언들을 읽어 canon/10-scope.md 의 상한과 대조한다.
-   상한을 늘리려면 instructions-log.md 에 지시를 남기고 사람이 정본을 고친다.
    ========================================================================= */
 
-const SAVE_VERSION = 1;              // 저장 스키마 버전 (검사 C5). 실제 저장은 WBS 1.3
-const ZONE_COUNT   = 10;             // 구역 수        (상한 10)
-const TIER_MAX     = 3;              // 무기 등급 단계  (상한 3)
-const MAX_ONSCREEN_ZOMBIES = 8;      // 동시 좀비 상한  (상한 8)
+const SAVE_VERSION = 1;
+const ZONE_COUNT   = 10;
+const TIER_MAX     = 3;
+const MAX_ONSCREEN_ZOMBIES = 8;
 
-// 능력치 4종 (상한 4)
 const STATS = [
-  { id: 'atk',  name: '공격력',   base: 5,   growth: 1.12 },
-  { id: 'spd',  name: '공격속도', base: 1.0, growth: 1.06 },
-  { id: 'hp',   name: '최대체력', base: 100, growth: 1.10 },
-  { id: 'reg',  name: '체력회복', base: 1,   growth: 1.08 }
+  { id: 'atk', name: '공격력',   base: 5,   growth: 1.12, cost0: 10, costG: 1.322, unit: '' },
+  { id: 'spd', name: '공격속도', base: 1.0, growth: 1.06, cost0: 14, costG: 1.344, unit: '/초' },
+  { id: 'hp',  name: '최대체력', base: 100, growth: 1.10, cost0: 12, costG: 1.310, unit: '' },
+  { id: 'reg', name: '체력회복', base: 1,   growth: 1.08, cost0: 16, costG: 1.333, unit: '/초' }
 ];
 
-// 무기 6종 (상한 6). 등급은 색만 바꾼다 — 스프라이트를 3배로 그리지 않는다.
 const WEAPON_TYPES = [
-  { id: 'pipe',      name: '쇠파이프',   mult: 1.00, tint: '#8A9BA0' },
-  { id: 'rifle',     name: '소총',       mult: 1.45, tint: '#6F8FA8' },
-  { id: 'shotgun',   name: '산탄총',     mult: 1.90, tint: '#A88C5F' },
-  { id: 'flamer',    name: '화염방사기', mult: 2.60, tint: '#C4703A' },
-  { id: 'crossbow',  name: '석궁',       mult: 3.40, tint: '#7E9B72' },
-  { id: 'mine',      name: '지뢰',       mult: 4.50, tint: '#9A6B8E' }
+  { id: 'pipe',     name: '쇠파이프',   mult: 1.00, cost: 0,      tint: '#8A9BA0', shape: 'bar' },
+  { id: 'rifle',    name: '소총',       mult: 1.45, cost: 400,    tint: '#6F8FA8', shape: 'long' },
+  { id: 'shotgun',  name: '산탄총',     mult: 1.90, cost: 2600,   tint: '#A88C5F', shape: 'wide' },
+  { id: 'flamer',   name: '화염방사기', mult: 2.60, cost: 16000,  tint: '#C4703A', shape: 'nozzle' },
+  { id: 'crossbow', name: '석궁',       mult: 3.40, cost: 95000,  tint: '#7E9B72', shape: 'cross' },
+  { id: 'mine',     name: '지뢰',       mult: 4.50, cost: 620000, tint: '#9A6B8E', shape: 'disc' }
 ];
+
+// 구역 곡선 — plans/GAMEDESIGN.md 3장. 전부 설계값이며 실측으로 교체 대상.
+// 아래 다섯 값은 2026-09-08 시뮬레이션으로 재보정한 값이다 (WBS 8.1).
+// 처음 값(30 / 1.55 / 5 / 1.45 / 0.09)으로는 구역 1조차 못 넘겼다.
+const ZONE_HP0 = 15,  ZONE_HP_G = 1.55;
+const ZONE_RW0 = 4,   ZONE_RW_G = 1.30;
+const ZOMBIE_DPS_RATIO = 0.07;
+const KILLS_PER_ZONE = 10;
+const BOSS_EVERY = 5;
+const BOSS_HP_MULT = 3;
+const TIER_COST_MULT = 6;
+const TIER_POWER = 0.5;
+const OFFLINE_MAX_HOURS = 8;
+const OFFLINE_RATE = 0.5;
+const AD_BOOST_MIN = 10;
 
 /* =========================================================================
-   레터박스 화면 맞춤 — WBS 1.1
-   기준 비율은 하나뿐이다: 540 x 960 (9:16 세로).
-   내부 좌표계는 항상 540x960. CSS 크기만 바꾼다.
+   2. 화면 맞춤 — WBS 1.1
+   기준 비율은 하나뿐이다: 540 x 960 (9:16). 내부 좌표계 고정, CSS 크기만 조절.
    ========================================================================= */
 
 const GAME_W = 540, GAME_H = 960;
 const GAME_ASP = GAME_W / GAME_H;
+const MAX_BACK_W = 2160;
 
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
-
-const MAX_BACK_W = 2160;   /* 백버퍼 폭 상한(물리 픽셀).
-                              폰(CSS 폭 <=430, DPR<=3 -> 최대 1290)에서는 이 상한에 안 걸린다.
-                              큰 화면에서만 걸리며, 걸리면 글자가 다시 늘어나 흐려진다.
-                              1620 은 너무 낮아 데스크톱에서 342px 어긋났다 (지시 #12 2차). */
-
-let cssW = 0, cssH = 0, backW = 0, backH = 0, dpr = 1, lastTap = null;
+let cssW = 0, cssH = 0, backW = 0, backH = 0, dpr = 1;
 
 function fitGame() {
   const stage = document.getElementById('stage');
-  const vw = stage.clientWidth;
-  const vh = stage.clientHeight;
-  const winAsp = vw / vh;
-
+  const vw = stage.clientWidth, vh = stage.clientHeight;
   let w, h;
-  if (winAsp > GAME_ASP) {   // 창이 더 넓다 -> 높이에 맞추고 좌우 필러박스
-    h = vh; w = vh * GAME_ASP;
-  } else {                   // 창이 더 좁다 -> 너비에 맞추고 상하 레터박스
-    w = vw; h = vw / GAME_ASP;
-  }
-  cssW = Math.round(w);
-  cssH = Math.round(h);
-
-  canvas.style.width  = cssW + 'px';
+  if (vw / vh > GAME_ASP) { h = vh; w = vh * GAME_ASP; }
+  else                    { w = vw; h = vw / GAME_ASP; }
+  cssW = Math.round(w); cssH = Math.round(h);
+  canvas.style.width = cssW + 'px';
   canvas.style.height = cssH + 'px';
 
-  /* 백버퍼는 논리 해상도가 아니라 **실제로 표시되는 물리 픽셀 수**로 잡는다.
-     GAME_W * dpr 로 잡으면 표시 크기와 어긋나 브라우저가 다시 늘리고, 글자가 깨진다 (지시 #12).
-     canvas 1픽셀 = 화면 1픽셀이 되게 맞춘다. */
+  // 백버퍼는 실제로 표시되는 물리 픽셀 수로 잡는다 (지시 #12)
   dpr = Math.min(window.devicePixelRatio || 1, 3);
   backW = Math.round(cssW * dpr);
-  if (backW > MAX_BACK_W) {          // 발열·메모리 상한
-    backW = MAX_BACK_W;
-    dpr = backW / cssW;
-  }
+  if (backW > MAX_BACK_W) { backW = MAX_BACK_W; dpr = backW / cssW; }
   backH = Math.round(backW * (GAME_H / GAME_W));
-
-  canvas.width  = backW;
-  canvas.height = backH;
-
-  // 그리기 좌표는 언제나 540x960 논리 좌표로 유지한다.
+  canvas.width = backW; canvas.height = backH;
   ctx.setTransform(backW / GAME_W, 0, 0, backH / GAME_H, 0, 0);
-
-  draw();
 }
 
-// 화면 픽셀 -> 캔버스 논리 좌표. getBoundingClientRect 를 쓰면 레터박스 여백이 자동 반영된다.
 function toCanvas(clientX, clientY) {
   const r = canvas.getBoundingClientRect();
-  return {
-    x: (clientX - r.left) / r.width  * GAME_W,
-    y: (clientY - r.top)  / r.height * GAME_H
-  };
+  return { x: (clientX - r.left) / r.width * GAME_W,
+           y: (clientY - r.top) / r.height * GAME_H };
 }
 
 /* =========================================================================
-   화면 — 1.1 완료 판정용 확인 화면
-   "폰 세로에서 잘림·여백 없이 꽉 참" 을 눈으로 확인할 수 있어야 한다.
-   테두리와 네 모서리 표식이 다 보이면 잘리지 않은 것이다.
+   3. 저장 — WBS 1.3
    ========================================================================= */
 
-function draw() {
-  ctx.clearRect(0, 0, GAME_W, GAME_H);
+const SAVE_KEY = 'zombie-idle-save';
+let saveError = null;
 
-  // 바닥
-  ctx.fillStyle = '#12181A';
-  ctx.fillRect(0, 0, GAME_W, GAME_H);
-
-  // 옅은 격자 — 찌그러졌는지 눈으로 본다 (정사각형이어야 한다)
-  ctx.strokeStyle = 'rgba(127,176,178,0.07)';
-  ctx.lineWidth = 1;
-  for (let x = 60; x < GAME_W; x += 60) {
-    ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, GAME_H); ctx.stroke();
-  }
-  for (let y = 60; y < GAME_H; y += 60) {
-    ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(GAME_W, y + 0.5); ctx.stroke();
-  }
-
-  // 바깥 테두리 — 한 변이라도 안 보이면 잘린 것이다
-  ctx.strokeStyle = '#7FB0B2';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(1, 1, GAME_W - 2, GAME_H - 2);
-
-  // 네 모서리 표식
-  ctx.strokeStyle = '#D9A24B';
-  ctx.lineWidth = 3;
-  const m = 26;
-  const corners = [[0, 0, 1, 1], [GAME_W, 0, -1, 1], [0, GAME_H, 1, -1], [GAME_W, GAME_H, -1, -1]];
-  for (const [cx, cy, sx, sy] of corners) {
-    ctx.beginPath();
-    ctx.moveTo(cx + sx * 4, cy + sy * (4 + m));
-    ctx.lineTo(cx + sx * 4, cy + sy * 4);
-    ctx.lineTo(cx + sx * (4 + m), cy + sy * 4);
-    ctx.stroke();
-  }
-
-  // 제목
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#DCE6E4';
-  ctx.font = '600 34px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('좀비 생존', GAME_W / 2, 118);
-  ctx.fillStyle = '#6F8180';
-  ctx.font = '300 15px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('WBS 1.1 골격 · 1.4 상수 테이블', GAME_W / 2, 146);
-
-  // 화면 정보
-  const rows = [
-    ['기준 해상도', GAME_W + ' x ' + GAME_H + '  (9:16)'],
-    ['캔버스 CSS', cssW + ' x ' + cssH + ' px'],
-    ['배율', (cssW / GAME_W).toFixed(3) + ' x'],
-    ['백버퍼', backW + ' x ' + backH + '  (물리 픽셀)'],
-    ['화면 밀도', 'DPR ' + (window.devicePixelRatio || 1) + '  -> 적용 ' + dpr.toFixed(2)],
-    ['픽셀 정합', (Math.abs(backW - cssW * (window.devicePixelRatio || 1)) < 1.5
-        ? '1:1  (다시 늘리지 않음)' : '어긋남 ' + (backW - cssW * (window.devicePixelRatio || 1)).toFixed(1) + 'px')],
-    ['창', window.innerWidth + ' x ' + window.innerHeight],
-    ['방향', window.innerWidth >= window.innerHeight ? '가로 (좌우 필러박스)' : '세로 (꽉 참)']
-  ];
-  drawPanel('화면 맞춤', rows, 200);
-
-  // 상수 테이블 — 1.4 가 실제로 들어갔는지 눈으로 확인
-  const consts = [
-    ['무기 종류', WEAPON_TYPES.length + ' / 상한 6'],
-    ['능력치 종류', STATS.length + ' / 상한 4'],
-    ['구역', ZONE_COUNT + ' / 상한 10'],
-    ['무기 등급', TIER_MAX + ' / 상한 3'],
-    ['동시 좀비', MAX_ONSCREEN_ZOMBIES + ' / 상한 8'],
-    ['저장 버전', 'v' + SAVE_VERSION + '  (저장은 1.3)']
-  ];
-  drawPanel('스코프 상한', consts, 538);
-
-  // 무기 6종 색 견본 — 등급은 색만 바꾼다는 설계를 눈으로 확인
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#6F8180';
-  ctx.font = '600 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('무기 6종', 46, 802);
-  WEAPON_TYPES.forEach((w, i) => {
-    const x = 46 + i * 75;
-    ctx.fillStyle = w.tint;
-    ctx.fillRect(x, 814, 62, 30);
-    ctx.fillStyle = '#0B1012';
-    ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(w.name, x + 31, 833);
-    ctx.textAlign = 'left';
-  });
-
-  // 터치 확인 — 레터박스 배율이 반영됐는지
-  ctx.textAlign = 'center';
-  ctx.fillStyle = lastTap ? '#7FB0B2' : '#6F8180';
-  ctx.font = '400 14px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText(
-    lastTap ? ('터치 좌표  ' + lastTap.x.toFixed(0) + ', ' + lastTap.y.toFixed(0))
-            : '화면을 눌러 좌표가 맞는지 확인',
-    GAME_W / 2, 886
-  );
-  if (lastTap) {
-    ctx.strokeStyle = '#D9A24B';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(lastTap.x, lastTap.y, 14, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(lastTap.x - 22, lastTap.y); ctx.lineTo(lastTap.x + 22, lastTap.y);
-    ctx.moveTo(lastTap.x, lastTap.y - 22); ctx.lineTo(lastTap.x, lastTap.y + 22);
-    ctx.stroke();
-  }
-
-  ctx.fillStyle = '#3E4F4E';
-  ctx.font = '300 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('테두리와 네 모서리가 모두 보이면 잘리지 않은 것이다', GAME_W / 2, GAME_H - 40);
+function freshState() {
+  return {
+    v: SAVE_VERSION,
+    parts: 0, zone: 1, kills: 0,
+    lv: { atk: 0, spd: 0, hp: 0, reg: 0 },
+    weapon: 'pipe',
+    owned: { pipe: 1 },
+    hp: 100,
+    bestZone: 1, totalKills: 0,
+    lastSeen: Date.now(),
+    boostUntil: 0
+  };
 }
 
-function drawPanel(title, rows, top) {
-  const x = 34, w = GAME_W - 68;
-  const h = 34 + rows.length * 30;
+let G = freshState();
 
-  ctx.fillStyle = 'rgba(127,176,178,0.05)';
-  ctx.fillRect(x, top, w, h);
-  ctx.strokeStyle = 'rgba(127,176,178,0.22)';
+function migrate(raw) {
+  // 저장 구조가 바뀌면 여기서 옛 버전을 끌어올린다. 지금은 v1 하나뿐이다.
+  if (!raw || typeof raw !== 'object') return freshState();
+  if (raw.v !== SAVE_VERSION) return freshState();
+  const s = freshState();
+  for (const k of Object.keys(s)) if (k in raw) s[k] = raw[k];
+  s.lv = Object.assign({ atk: 0, spd: 0, hp: 0, reg: 0 }, raw.lv || {});
+  s.owned = Object.assign({ pipe: 1 }, raw.owned || {});
+  return s;
+}
+
+function save() {
+  G.lastSeen = Date.now();
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(G)); saveError = null; }
+  catch (e) { saveError = String(e); }   // 조용히 넘기지 않는다. HUD에 표시한다
+}
+
+function load() {
+  try {
+    const t = localStorage.getItem(SAVE_KEY);
+    if (!t) return false;
+    G = migrate(JSON.parse(t));
+    return true;
+  } catch (e) { saveError = String(e); G = freshState(); return false; }
+}
+
+/* =========================================================================
+   4. 파생 수치
+   ========================================================================= */
+
+function statDef(id) { return STATS.find(x => x.id === id); }
+function statOf(id) { const s = statDef(id); return s.base * Math.pow(s.growth, G.lv[id] || 0); }
+function statCost(id) { const s = statDef(id); return Math.ceil(s.cost0 * Math.pow(s.costG, G.lv[id] || 0)); }
+function weaponOf(id) { return WEAPON_TYPES.find(w => w.id === id); }
+function weaponPower() {
+  const w = weaponOf(G.weapon);
+  const tier = G.owned[G.weapon] || 1;
+  return w.mult * (1 + TIER_POWER * (tier - 1));
+}
+function hitDamage() { return statOf('atk') * weaponPower(); }
+function attacksPerSec() { return statOf('spd'); }
+function playerDPS() { return hitDamage() * attacksPerSec(); }
+function maxHP() { return statOf('hp'); }
+function regenPerSec() { return statOf('reg'); }
+
+function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1); }
+function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO; }
+function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1); }
+function isBossKill(z, idx) { return (z % BOSS_EVERY === 0) && idx === KILLS_PER_ZONE - 1; }
+function weaponUpgradeCost(id) {
+  const w = weaponOf(id);
+  const tier = G.owned[id] || 0;
+  if (tier === 0) return w.cost;
+  if (tier >= TIER_MAX) return null;
+  return Math.ceil(Math.max(w.cost, 400) * Math.pow(TIER_COST_MULT, tier));
+}
+function boostActive() { return Date.now() < (G.boostUntil || 0); }
+function rewardMult() { return boostActive() ? 2 : 1; }
+
+/* =========================================================================
+   5. 숫자 표기 — WBS 7.3
+   ========================================================================= */
+
+const SUFFIX = ['', 'K', 'M', 'B', 'T', 'aa', 'ab', 'ac'];
+function fmt(n) {
+  if (!isFinite(n)) return '무한';
+  if (n < 0) return '-' + fmt(-n);
+  if (n < 1000) return (n < 10 && n % 1 !== 0) ? n.toFixed(1) : String(Math.floor(n));
+  let i = 0;
+  while (n >= 1000 && i < SUFFIX.length - 1) { n /= 1000; i++; }
+  return (n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : n.toFixed(0)) + SUFFIX[i];
+}
+function fmtTime(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  if (h) return h + '시간 ' + m + '분';
+  if (m) return m + '분 ' + s + '초';
+  return s + '초';
+}
+
+/* =========================================================================
+   6. 전투 — WBS 2
+   ========================================================================= */
+
+const ARENA_TOP = 100, ARENA_BOT = 556;
+const SURVIVOR_Y = ARENA_BOT - 46;
+const CONTACT_Y = SURVIVOR_Y - 42;
+
+let zombies = [], shots = [], floats = [], particles = [];
+let spawnTimer = 0, attackTimer = 0, killIndex = 0;
+let dead = false, deathFlash = 0, shake = 0;
+
+function spawnZombie() {
+  if (zombies.length >= MAX_ONSCREEN_ZOMBIES) return;
+  const boss = isBossKill(G.zone, killIndex + zombies.length);
+  const hp = zoneHP(G.zone) * (boss ? BOSS_HP_MULT : 1);
+  zombies.push({
+    x: 60 + Math.random() * (GAME_W - 120),
+    y: ARENA_TOP + 8 + Math.random() * 20,
+    hp: hp, max: hp, boss: boss,
+    speed: boss ? 16 : 22 + Math.random() * 10,
+    flash: 0, wob: Math.random() * 6
+  });
+}
+
+function addFloat(x, y, text, color, size) {
+  floats.push({ x: x, y: y, text: text, c: color, s: size || 14, t: 0, life: .9 });
+}
+
+function damageZombie(z, dmg) {
+  z.hp -= dmg; z.flash = 0.12;
+  addFloat(z.x, z.y - 14, fmt(dmg), z.boss ? '#FFD9A0' : '#E8F0EE', 13);
+  if (z.hp <= 0) killZombie(z);
+}
+
+function killZombie(z) {
+  const i = zombies.indexOf(z);
+  if (i < 0) return;
+  zombies.splice(i, 1);
+  for (let k = 0; k < (z.boss ? 16 : 7); k++) {
+    particles.push({ x: z.x, y: z.y, vx: (Math.random() - .5) * 120,
+      vy: (Math.random() - .5) * 120 - 30, life: .5 + Math.random() * .3,
+      t: 0, c: z.boss ? '#D9A24B' : '#7E9B72' });
+  }
+  const gain = zoneReward(G.zone) * (z.boss ? BOSS_EVERY : 1) * rewardMult();
+  G.parts += gain;
+  G.totalKills++;
+  addFloat(z.x, z.y - 30, '+' + fmt(gain), '#7FB0B2', 15);
+  killIndex++;
+  if (killIndex >= KILLS_PER_ZONE) {
+    killIndex = 0;
+    if (G.zone < ZONE_COUNT) {
+      G.zone++;
+      G.bestZone = Math.max(G.bestZone, G.zone);
+      addFloat(GAME_W / 2, ARENA_TOP + 60, '구역 ' + G.zone, '#D9A24B', 26);
+      zombies.length = 0; shots.length = 0;
+    } else {
+      addFloat(GAME_W / 2, ARENA_TOP + 60, '최종 구역 방어 중', '#D9A24B', 20);
+    }
+  }
+  G.kills = killIndex;
+}
+
+function stepCombat(dt) {
+  if (dead) return;
+
+  // 스폰 간격을 처치 시간에 맞춘다. 고정 간격이면 초반에 좀비가 쌓여 즉사한다 (WBS 8.1)
+  spawnTimer -= dt;
+  const ttk = zoneHP(G.zone) / Math.max(1e-6, playerDPS());
+  const spawnGap = Math.min(2.0, Math.max(0.35, ttk * 0.9));
+  const remaining = KILLS_PER_ZONE - killIndex;
+  if (spawnTimer <= 0 && zombies.length < Math.min(MAX_ONSCREEN_ZOMBIES, remaining)) {
+    spawnZombie(); spawnTimer = spawnGap;
+  }
+
+  let contactDPS = 0;
+  for (const z of zombies) {
+    if (z.y < CONTACT_Y) z.y = Math.min(CONTACT_Y, z.y + z.speed * dt);
+    else contactDPS += zoneDPS(G.zone) * (z.boss ? 2 : 1);
+    if (z.flash > 0) z.flash -= dt;
+    z.wob += dt * 6;
+  }
+
+  attackTimer -= dt;
+  const interval = 1 / Math.max(0.05, attacksPerSec());
+  let guard = 0;
+  while (attackTimer <= 0 && zombies.length && guard++ < 40) {
+    attackTimer += interval;
+    let target = null, best = 1e9;
+    for (const z of zombies) { const d = CONTACT_Y - z.y; if (d < best) { best = d; target = z; } }
+    if (target) shots.push({ x: GAME_W / 2, y: SURVIVOR_Y - 18, tgt: target, dmg: hitDamage() });
+  }
+  if (!zombies.length && attackTimer < 0) attackTimer = 0;
+
+  for (let i = shots.length - 1; i >= 0; i--) {
+    const s = shots[i];
+    if (zombies.indexOf(s.tgt) < 0) { shots.splice(i, 1); continue; }
+    const dx = s.tgt.x - s.x, dy = s.tgt.y - s.y;
+    const d = Math.hypot(dx, dy), step = 900 * dt;
+    if (d <= step) { damageZombie(s.tgt, s.dmg); shots.splice(i, 1); }
+    else { s.x += dx / d * step; s.y += dy / d * step; }
+  }
+
+  G.hp = Math.min(maxHP(), G.hp + regenPerSec() * dt - contactDPS * dt);
+  if (contactDPS > 0) shake = Math.max(shake, 2);
+  if (G.hp <= 0) { G.hp = 0; dead = true; deathFlash = 1; zombies.length = 0; shots.length = 0; }
+
+  for (let i = floats.length - 1; i >= 0; i--) {
+    const f = floats[i]; f.t += dt; f.y -= 26 * dt;
+    if (f.t > f.life) floats.splice(i, 1);
+  }
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i]; p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 180 * dt;
+    if (p.t > p.life) particles.splice(i, 1);
+  }
+  if (shake > 0) shake = Math.max(0, shake - dt * 12);
+  if (deathFlash > 0) deathFlash = Math.max(0, deathFlash - dt);
+}
+
+function revive() {
+  dead = false;
+  G.hp = maxHP();
+  killIndex = 0; G.kills = 0;
+  zombies.length = 0; shots.length = 0;
+  save();
+}
+
+/* =========================================================================
+   7. 오프라인 보상 — WBS 5
+   ========================================================================= */
+
+let offlineReport = null;
+
+function partsPerSecondEstimate() {
+  const ttk = zoneHP(G.zone) / Math.max(1e-6, playerDPS());
+  return zoneReward(G.zone) / Math.max(ttk, 0.35);
+}
+
+function applyOffline() {
+  const now = Date.now();
+  const elapsed = Math.max(0, (now - (G.lastSeen || now)) / 1000);
+  const capped = Math.min(elapsed, OFFLINE_MAX_HOURS * 3600);
+  if (capped < 60) return null;
+  const gain = partsPerSecondEstimate() * capped * OFFLINE_RATE;
+  G.parts += gain;
+  return { elapsed: elapsed, capped: capped, gain: gain, cappedHit: elapsed > capped + 1, doubled: false };
+}
+
+/* =========================================================================
+   8. 광고 자리 (스텁) — WBS 6
+   실제 SDK는 M2. 지금은 버튼과 보상 경로만 만든다.
+   ========================================================================= */
+
+const adLog = [];
+function adReward(kind) {
+  adLog.push({ kind: kind, at: Date.now() });
+  if (kind === 'boost') {
+    G.boostUntil = Math.max(Date.now(), G.boostUntil || 0) + AD_BOOST_MIN * 60000;
+    addFloat(GAME_W / 2, ARENA_TOP + 90, '부품 2배 ' + AD_BOOST_MIN + '분', '#D9A24B', 22);
+  } else if (kind === 'revive') {
+    revive();
+  } else if (kind === 'offline2x' && offlineReport && !offlineReport.doubled) {
+    G.parts += offlineReport.gain;
+    offlineReport.doubled = true;
+  }
+  save();
+  return true;
+}
+
+/* =========================================================================
+   9. UI — WBS 7
+   ========================================================================= */
+
+const PANEL_TOP = 566;
+let tab = 'stat';
+const buttons = [];
+let holdBtn = null, holdTime = 0, holdRepeat = 0;
+
+function btn(o) { buttons.push(o); return o; }
+
+function buyStat(id) {
+  const c = statCost(id);
+  if (G.parts < c) return false;
+  G.parts -= c; G.lv[id] = (G.lv[id] || 0) + 1;
+  return true;
+}
+
+function buyWeapon(id) {
+  const cost = weaponUpgradeCost(id);
+  if (cost === null || G.parts < cost) return false;
+  G.parts -= cost;
+  G.owned[id] = (G.owned[id] || 0) + 1;
+  G.weapon = id;
+  return true;
+}
+
+function equip(id) { if (G.owned[id]) { G.weapon = id; return true; } return false; }
+
+function buildButtons() {
+  buttons.length = 0;
+
+  btn({ x: 24, y: PANEL_TOP, w: 240, h: 40, label: '능력치', enabled: true,
+        tone: tab === 'stat' ? 'on' : 'off', onTap: () => { tab = 'stat'; return true; } });
+  btn({ x: 276, y: PANEL_TOP, w: 240, h: 40, label: '무기', enabled: true,
+        tone: tab === 'weapon' ? 'on' : 'off', onTap: () => { tab = 'weapon'; return true; } });
+
+  const listTop = PANEL_TOP + 52;
+  if (tab === 'stat') {
+    STATS.forEach((s, i) => {
+      const cost = statCost(s.id), val = statOf(s.id);
+      btn({ x: 24, y: listTop + i * 62, w: GAME_W - 48, h: 54,
+            label: s.name + '  Lv.' + (G.lv[s.id] || 0),
+            sub: fmt(val) + s.unit + '  ▸  ' + fmt(val * s.growth) + s.unit,
+            cost: cost, enabled: G.parts >= cost, tone: 'buy',
+            onTap: () => buyStat(s.id) });
+    });
+  } else {
+    WEAPON_TYPES.forEach((w, i) => {
+      const tier = G.owned[w.id] || 0;
+      const cost = weaponUpgradeCost(w.id);
+      const maxed = tier >= TIER_MAX;
+      btn({ x: 24, y: listTop + i * 42, w: GAME_W - 48, h: 36,
+            label: w.name + (tier ? '  ★'.repeat(1) + tier : ''),
+            sub: maxed ? '최대 등급 · 위력 ×' + (w.mult * (1 + TIER_POWER * (TIER_MAX - 1))).toFixed(2)
+                 : (tier ? '강화' : '해금'),
+            cost: maxed ? null : cost,
+            enabled: !maxed && G.parts >= cost,
+            tone: G.weapon === w.id ? 'equipped' : 'buy',
+            tint: w.tint, wid: w.id,
+            onTap: () => { if (!maxed && G.parts >= cost) return buyWeapon(w.id); return equip(w.id); } });
+    });
+  }
+
+  const adY = GAME_H - 60;
+  btn({ x: 24, y: adY, w: 240, h: 44,
+        label: boostActive() ? '2배 ' + fmtTime((G.boostUntil - Date.now()) / 1000) : '광고 · 부품 2배',
+        enabled: !boostActive(), tone: 'ad', onTap: () => adReward('boost') });
+  btn({ x: 276, y: adY, w: 240, h: 44, label: tab === 'stat' ? '무기 보기' : '능력치 보기',
+        enabled: true, tone: 'ghost',
+        onTap: () => { tab = tab === 'stat' ? 'weapon' : 'stat'; return true; } });
+
+  if (dead) {
+    btn({ x: 90, y: 440, w: 360, h: 54, label: '광고 보고 부활', enabled: true, tone: 'ad',
+          onTap: () => adReward('revive') });
+    btn({ x: 150, y: 504, w: 240, h: 40, label: '그냥 다시 시작', enabled: true, tone: 'ghost',
+          onTap: () => { revive(); return true; } });
+  }
+  if (offlineReport) {
+    if (!offlineReport.doubled) {
+      btn({ x: 90, y: 520, w: 360, h: 52, label: '광고 보고 2배 받기', enabled: true, tone: 'ad',
+            onTap: () => adReward('offline2x') });
+    }
+    btn({ x: 150, y: 584, w: 240, h: 42, label: '닫기', enabled: true, tone: 'ghost',
+          onTap: () => { offlineReport = null; save(); return true; } });
+  }
+}
+
+function hitButton(p) {
+  for (let i = buttons.length - 1; i >= 0; i--) {
+    const b = buttons[i];
+    if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return b;
+  }
+  return null;
+}
+
+/* =========================================================================
+   10. 그리기
+   ========================================================================= */
+
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function draw() {
+  ctx.save();
+  if (shake > 0) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+  ctx.fillStyle = '#0E1416';
+  ctx.fillRect(-8, -8, GAME_W + 16, GAME_H + 16);
+  drawArena();
+  drawHUD();
+  drawPanel();
+  if (deathFlash > 0) {
+    ctx.fillStyle = 'rgba(180,40,40,' + (deathFlash * 0.35).toFixed(3) + ')';
+    ctx.fillRect(0, 0, GAME_W, GAME_H);
+  }
+  if (dead) drawDeath();
+  if (offlineReport) drawOffline();
+  ctx.restore();
+}
+
+function drawArena() {
+  ctx.fillStyle = 'hsl(' + (190 - G.zone * 7) + ',14%,10%)';
+  ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
+
+  ctx.strokeStyle = 'rgba(127,176,178,0.10)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(x + 0.5, top + 0.5, w - 1, h - 1);
+  for (let i = 1; i < 7; i++) {
+    const y = ARENA_TOP + (ARENA_BOT - ARENA_TOP) * i / 7;
+    ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(GAME_W, y + .5); ctx.stroke();
+  }
+
+  for (const zb of zombies) {
+    const s = zb.boss ? 1.6 : 1;
+    const bob = Math.sin(zb.wob) * 2;
+    ctx.fillStyle = zb.flash > 0 ? '#F2F7F5' : (zb.boss ? '#6B7F4E' : '#4E6B57');
+    rr(zb.x - 13 * s, zb.y - 20 * s + bob, 26 * s, 34 * s, 6 * s); ctx.fill();
+    ctx.fillStyle = zb.flash > 0 ? '#F2F7F5' : '#8FA88C';
+    rr(zb.x - 9 * s, zb.y - 30 * s + bob, 18 * s, 15 * s, 5 * s); ctx.fill();
+    const w = 34 * s, pct = Math.max(0, zb.hp / zb.max);
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillRect(zb.x - w / 2, zb.y - 40 * s + bob, w, 4);
+    ctx.fillStyle = zb.boss ? '#D9A24B' : '#B2554E';
+    ctx.fillRect(zb.x - w / 2, zb.y - 40 * s + bob, w * pct, 4);
+  }
+
+  ctx.fillStyle = weaponOf(G.weapon).tint;
+  for (const s of shots) { ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, 6.284); ctx.fill(); }
+
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0, 1 - p.t / p.life);
+    ctx.fillStyle = p.c;
+    ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+  }
+  ctx.globalAlpha = 1;
+
+  if (!dead) {
+    const w = weaponOf(G.weapon);
+    ctx.fillStyle = '#2E3F44';
+    rr(GAME_W / 2 - 15, SURVIVOR_Y - 22, 30, 38, 7); ctx.fill();
+    ctx.fillStyle = '#C8D6D2';
+    rr(GAME_W / 2 - 10, SURVIVOR_Y - 34, 20, 16, 5); ctx.fill();
+    ctx.fillStyle = w.tint;
+    if (w.shape === 'wide') ctx.fillRect(GAME_W / 2 + 10, SURVIVOR_Y - 20, 22, 8);
+    else if (w.shape === 'long') ctx.fillRect(GAME_W / 2 + 10, SURVIVOR_Y - 18, 30, 5);
+    else if (w.shape === 'disc') { ctx.beginPath(); ctx.arc(GAME_W / 2 + 22, SURVIVOR_Y - 14, 8, 0, 6.284); ctx.fill(); }
+    else ctx.fillRect(GAME_W / 2 + 10, SURVIVOR_Y - 16, 18, 6);
+  }
+
+  ctx.textAlign = 'center';
+  for (const f of floats) {
+    ctx.globalAlpha = Math.max(0, 1 - f.t / f.life);
+    ctx.fillStyle = f.c;
+    ctx.font = '600 ' + f.s + 'px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+    ctx.fillText(f.text, f.x, f.y);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawHUD() {
+  ctx.fillStyle = '#0A1012';
+  ctx.fillRect(0, 0, GAME_W, ARENA_TOP);
+  ctx.strokeStyle = 'rgba(127,176,178,0.18)';
+  ctx.beginPath(); ctx.moveTo(0, ARENA_TOP - .5); ctx.lineTo(GAME_W, ARENA_TOP - .5); ctx.stroke();
 
   ctx.textAlign = 'left';
   ctx.fillStyle = '#7FB0B2';
-  ctx.font = '600 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText(title, x + 12, top + 22);
+  ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('부품', 24, 26);
+  ctx.fillStyle = '#E8F0EE';
+  ctx.font = '600 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText(fmt(G.parts), 24, 54);
 
-  rows.forEach((r, i) => {
-    const y = top + 46 + i * 30;
-    ctx.fillStyle = '#6F8180';
-    ctx.font = '400 13px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-    ctx.fillText(r[0], x + 12, y);
-    ctx.fillStyle = '#DCE6E4';
-    ctx.font = '400 13px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(r[1], x + w - 12, y);
-    ctx.textAlign = 'left';
-  });
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#7FB0B2';
+  ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('구역', GAME_W - 24, 26);
+  ctx.fillStyle = '#E8F0EE';
+  ctx.font = '600 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText(G.zone + ' / ' + ZONE_COUNT, GAME_W - 24, 54);
+
+  const px = 24, pw = GAME_W - 48;
+  ctx.fillStyle = 'rgba(255,255,255,.06)';
+  ctx.fillRect(px, 64, pw, 6);
+  ctx.fillStyle = '#7FB0B2';
+  ctx.fillRect(px, 64, pw * (killIndex / KILLS_PER_ZONE), 6);
+
+  const hpPct = Math.max(0, G.hp / maxHP());
+  ctx.fillStyle = 'rgba(255,255,255,.06)';
+  ctx.fillRect(px, 78, pw, 10);
+  ctx.fillStyle = hpPct > .3 ? '#5E9A6B' : '#B2554E';
+  ctx.fillRect(px, 78, pw * hpPct, 10);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = saveError ? '#E08A7A' : '#9FB2B0';
+  ctx.font = '600 10px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  // maxWidth 를 줘서 긴 오류 문구가 화면 밖으로 넘치지 않게 한다
+  ctx.fillText(saveError ? '저장 실패 — 진행이 남지 않는다'
+    : '체력 ' + fmt(G.hp) + ' / ' + fmt(maxHP()) + '     DPS ' + fmt(playerDPS())
+      + (boostActive() ? '     부품 2배' : ''), GAME_W / 2, 86, GAME_W - 48);
 }
 
-/* ========================= 이벤트 배선 ========================= */
+function drawPanel() {
+  ctx.fillStyle = '#0A1012';
+  ctx.fillRect(0, ARENA_BOT, GAME_W, GAME_H - ARENA_BOT);
+  ctx.strokeStyle = 'rgba(127,176,178,0.18)';
+  ctx.beginPath(); ctx.moveTo(0, ARENA_BOT + .5); ctx.lineTo(GAME_W, ARENA_BOT + .5); ctx.stroke();
+
+  for (const b of buttons) {
+    let bg = 'rgba(255,255,255,.05)', fg = '#E8F0EE', bd = 'rgba(127,176,178,.20)';
+    if (b.tone === 'on') { bg = 'rgba(127,176,178,.18)'; bd = '#7FB0B2'; }
+    else if (b.tone === 'off') { fg = '#6F8180'; }
+    else if (b.tone === 'ad') { bg = 'rgba(217,162,75,.16)'; bd = '#D9A24B'; fg = '#F0D9AE'; }
+    else if (b.tone === 'equipped') { bg = 'rgba(127,176,178,.12)'; bd = '#7FB0B2'; }
+    else if (b.tone === 'ghost') { bg = 'rgba(255,255,255,.03)'; fg = '#9FB2B0'; }
+    if (b.enabled === false) { fg = '#556564'; bd = 'rgba(127,176,178,.10)'; bg = 'rgba(255,255,255,.02)'; }
+
+    ctx.fillStyle = bg; rr(b.x, b.y, b.w, b.h, 8); ctx.fill();
+    ctx.strokeStyle = bd; ctx.lineWidth = 1; rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 8); ctx.stroke();
+    if (b.tint) { ctx.fillStyle = b.tint; rr(b.x + 8, b.y + 8, 6, b.h - 16, 3); ctx.fill(); }
+
+    const tx = b.x + (b.tint ? 22 : 14);
+    ctx.fillStyle = fg;
+    ctx.font = '600 15px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+    if (b.sub) {
+      ctx.textAlign = 'left';
+      ctx.fillText(b.label, tx, b.y + b.h / 2 - 2);
+      ctx.fillStyle = b.enabled === false ? '#4A5857' : '#8FA5A3';
+      ctx.font = '400 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+      ctx.fillText(b.sub, tx, b.y + b.h / 2 + 15);
+    } else {
+      ctx.textAlign = 'center';
+      ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2 + 5);
+    }
+
+    if (b.cost != null) {
+      ctx.textAlign = 'right';
+      ctx.fillStyle = b.enabled === false ? '#556564' : '#D9A24B';
+      ctx.font = '600 14px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+      ctx.fillText(fmt(b.cost), b.x + b.w - 14, b.y + b.h / 2 + 5);
+    }
+  }
+}
+
+function drawDeath() {
+  ctx.fillStyle = 'rgba(5,8,10,.78)';
+  ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#E8F0EE';
+  ctx.font = '700 30px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('쓰러졌다', GAME_W / 2, 360);
+  ctx.fillStyle = '#8FA5A3';
+  ctx.font = '400 14px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('구역 ' + G.zone + ' 진행도가 초기화된다', GAME_W / 2, 392);
+}
+
+function drawOffline() {
+  ctx.fillStyle = 'rgba(5,8,10,.88)';
+  ctx.fillRect(0, 0, GAME_W, GAME_H);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#E8F0EE';
+  ctx.font = '700 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('자리를 비운 동안', GAME_W / 2, 370);
+  ctx.fillStyle = '#8FA5A3';
+  ctx.font = '400 15px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText(fmtTime(offlineReport.capped) + ' 동안 모았다', GAME_W / 2, 402);
+  ctx.fillStyle = '#D9A24B';
+  ctx.font = '700 40px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('+' + fmt(offlineReport.gain * (offlineReport.doubled ? 2 : 1)), GAME_W / 2, 460);
+  if (offlineReport.cappedHit) {
+    ctx.fillStyle = '#6F8180';
+    ctx.font = '400 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+    ctx.fillText('최대 ' + OFFLINE_MAX_HOURS + '시간까지만 쌓인다', GAME_W / 2, 488);
+  }
+}
+
+/* =========================================================================
+   11. 게임 루프 — WBS 1.2
+   delta time 기반. 탭 전환 등으로 큰 간격이 생기면 잘라낸다.
+   ========================================================================= */
+
+const MAX_DT = 0.05;
+let last = 0, saveTimer = 0;
+
+function frame(now) {
+  if (!last) last = now;
+  let dt = (now - last) / 1000;
+  last = now;
+  if (dt > MAX_DT) dt = MAX_DT;
+  if (dt < 0) dt = 0;
+
+  if (!offlineReport) stepCombat(dt);
+
+  // 길게 누르기 연속 구매 — WBS 3.4
+  if (holdBtn) {
+    holdTime += dt;
+    if (holdTime > 0.3) {
+      holdRepeat += dt;
+      const rate = holdTime > 1.5 ? 0.02 : 0.08;
+      let guard = 0;
+      while (holdRepeat >= rate && guard++ < 40) {
+        holdRepeat -= rate;
+        if (!holdBtn.onTap()) { holdBtn = null; break; }
+      }
+    }
+  }
+
+  saveTimer += dt;
+  if (saveTimer > 30) { saveTimer = 0; save(); }
+
+  buildButtons();
+  draw();
+  requestAnimationFrame(frame);
+}
+
+/* ========================= 입력 ========================= */
 
 canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
-  lastTap = toCanvas(e.clientX, e.clientY);
-  draw();
+  const p = toCanvas(e.clientX, e.clientY);
+  const b = hitButton(p);
+  if (!b || b.enabled === false) return;
+  b.onTap();
+  buildButtons();
+  const again = hitButton(p);
+  holdBtn = (again && again.tone === 'buy' && again.enabled !== false) ? again : null;
+  holdTime = 0; holdRepeat = 0;
+  save();
 });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev =>
+  canvas.addEventListener(ev, () => { holdBtn = null; }));
 
 window.addEventListener('resize', fitGame);
 window.addEventListener('orientationchange', () => setTimeout(fitGame, 80));
 document.addEventListener('fullscreenchange', fitGame);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', fitGame);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+window.addEventListener('pagehide', save);
 
-fitGame();
+/* ========================= 시작 ========================= */
+
+function start() {
+  fitGame();
+  const had = load();
+  if (had) offlineReport = applyOffline();
+  if (!(G.hp > 0)) G.hp = maxHP();
+  killIndex = G.kills || 0;
+  buildButtons();
+  save();
+  requestAnimationFrame(frame);
+}
+
+start();
 </script>

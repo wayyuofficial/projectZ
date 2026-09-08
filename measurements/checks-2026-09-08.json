@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-08T15:04:35",
+  "ran_at": "2026-09-08T15:21:38",
   "blocking": 0,
   "warn": 0,
   "skip": 0,
@@ -16,7 +16,7 @@
     {
       "status": "ok",
       "detail": [
-        "규칙 2개 통과"
+        "규칙 3개 통과"
       ],
       "check": "c1_rule_hygiene.py",
       "name": "규칙 머리 4줄 · 유효기한 · 대상 중복",
@@ -70,7 +70,7 @@
     {
       "status": "ok",
       "detail": [
-        "파일 19개 통과"
+        "파일 20개 통과"
       ],
       "check": "c7_python_cmd.py",
       "name": "이 환경에 없는 파이썬 명령을 쓰는지",
@@ -83,6 +83,15 @@
       ],
       "check": "c8_view_freshness.py",
       "name": "뷰(HTML)가 원본 문서와 어긋났는지",
+      "priority": 2
+    },
+    {
+      "status": "ok",
+      "detail": [
+        "측정 기록 최신: balance-2026-09-08.json"
+      ],
+      "check": "c9_balance_freshness.py",
+      "name": "밸런스를 바꾸고 다시 재보지 않았는지",
       "priority": 2
     }
   ]
