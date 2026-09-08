@@ -3,29 +3,26 @@
 `game/index.html` 하나를 안드로이드 앱으로 감싼다. 게임 코드는 여기에 **복사하지 않는다.**
 `app/build.gradle` 의 `assets.srcDirs` 가 저장소의 `game/` 폴더를 그대로 가리킨다 — 복사본을 두면 갈라진다.
 
-## 이 폴더로는 APK가 안 나온다. 도구가 필요하다.
+## 빌드 (확인됨 — 2026-09-08 실제로 성공)
 
-2026-09-08 조회 결과 이 PC에는 **빌드 도구가 하나도 없다.**
+```bash
+# JDK 21 을 써야 한다. Android Studio 내장 jbr 은 JDK 25 라 Gradle 8.7 / AGP 8.5.2 가 지원하지 않는다.
+JAVA_HOME=~/.jdks/jbr-21.0.11 ./gradlew assembleDebug
+```
 
-| 도구 | 상태 |
+- 결과: `android/app/build/outputs/apk/debug/app-debug.apk` (**23.1 KB**)
+- 디버그 키로 서명된다. 폰에 넣을 때 **출처를 알 수 없는 앱 설치**를 허용해야 한다
+- Android Studio 에서는 `Build > Build Bundle(s)/APK(s) > Build APK(s)` 로도 같은 결과가 나온다
+- 폰을 USB로 연결하고 **개발자 옵션 → USB 디버깅** 을 켜면 ▶ 로 바로 설치·실행된다
+
+## 빌드하다 걸린 것 (기록해 둔다)
+
+| 문제 | 처리 |
 |---|---|
-| `java` / `javac` (JDK) | 없음 |
-| `gradle` | 없음 |
-| Android SDK (`adb`·`sdkmanager`·`apksigner`·`aapt2`·`d8`) | 없음 |
-| `ANDROID_HOME` / `ANDROID_SDK_ROOT` | 미설정 |
-| `node` / `npm` | 없음 → Capacitor·Cordova·Bubblewrap **불가** |
-
-## 사람이 할 일 (한 번만)
-
-1. **Android Studio 설치** — https://developer.android.com/studio
-   JDK와 Android SDK가 함께 깔린다. 따로 설치할 필요 없다.
-2. Android Studio 에서 **이 `android` 폴더를 연다** (`Open`, 상위 `project2` 가 아니라 `android`).
-3. 처음 열면 Gradle 래퍼가 없다고 할 수 있다 → **"Use Gradle wrapper" / 동기화(Sync)** 를 누르면 Studio 가 채워 넣는다.
-   (`gradle/wrapper/gradle-wrapper.jar` 는 바이너리라 저장소에 넣지 않았다.)
-4. 폰을 USB로 연결하고 **개발자 옵션 → USB 디버깅** 을 켠 뒤 ▶ 실행.
-   또는 `Build > Build Bundle(s)/APK(s) > Build APK(s)` 로 APK 파일을 만든다.
-   - 디버그 APK 위치: `android/app/build/outputs/apk/debug/app-debug.apk`
-   - 폰에 옮겨 설치할 때는 **출처를 알 수 없는 앱 설치**를 허용해야 한다.
+| `checkDebugDuplicateClasses` 실패 — `androidx.appcompat` 이 끌고 온 `kotlin-stdlib 1.8.22` 와 `kotlin-stdlib-jdk7/jdk8 1.6.21` 충돌 | **appcompat 을 통째로 제거.** WebView 하나짜리 앱에 AndroidX 는 필요 없다. 프레임워크 `Activity` + `Theme.NoTitleBar.Fullscreen` 으로 바꿨다 |
+| Studio 내장 JDK 가 25 | `~/.jdks/jbr-21.0.11` 을 `JAVA_HOME` 으로 지정 |
+| Sync 가 래퍼 없이 돌아 `gradlew` 가 없었다 | `gradle wrapper` 로 생성해 저장소에 넣었다 |
+| `game/README.md` 가 앱 assets 에 딸려 들어갔다 | `ignoreAssetsPattern` 으로 제외 |
 
 ## 이 래퍼가 신경 쓴 것
 

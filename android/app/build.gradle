@@ -20,6 +20,11 @@ android {
         }
     }
 
+    androidResources {
+        // game/README.md 는 개발용 문서다. 앱에 넣지 않는다.
+        ignoreAssetsPattern '!.svn:!.git:!.gitignore:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!README.md'
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -36,6 +41,8 @@ android {
     }
 }
 
-dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-}
+// 의존성 없음.
+// WebView 하나짜리 앱에 androidx.appcompat 을 넣었더니 kotlin-stdlib 1.8.22 와
+// kotlin-stdlib-jdk7/jdk8 1.6.21 이 겹쳐 빌드가 깨졌다 (2026-09-08).
+// 프레임워크 Activity 와 프레임워크 테마만 쓰면 그 문제가 통째로 사라지고 APK 도 작아진다.
+dependencies { }

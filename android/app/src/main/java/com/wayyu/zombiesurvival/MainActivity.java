@@ -1,6 +1,7 @@
 package com.wayyu.zombiesurvival;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -8,8 +9,6 @@ import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 /**
  * 단일 HTML 게임을 WebView 로 감싼다.
@@ -19,7 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
  *     방치형 게임의 저장이 전부 사라진다. setDomStorageEnabled(true) 는 선택이 아니다.
  *  2) 문자 인코딩을 UTF-8 로 못 박는다. 지시 #15 에서 실기 한글 깨짐을 겪었다.
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     private WebView web;
 

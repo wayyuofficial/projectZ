@@ -1,0 +1,28 @@
+{
+  "측정일": "2026-09-08",
+  "대상": "android/ WebView 래퍼 -> app-debug.apk",
+  "결과": "BUILD SUCCESSFUL",
+  "빌드환경": {
+    "JDK": "JBR 21.0.11 (사용자 홈의 .jdks/jbr-21.0.11)",
+    "주의": "Android Studio 내장 jbr 은 JDK 25 라 Gradle 8.7 / AGP 8.5.2 가 지원하지 않는다. 21 을 써야 한다.",
+    "Gradle": "8.7 (래퍼를 새로 만들었다 — Sync 는 래퍼 없이 돌아갔었다)",
+    "AGP": "8.5.2",
+    "SDK": "platforms android-34, build-tools 34.0.0 / 36.0.0"
+  },
+  "산출물": {
+    "경로": "android/app/build/outputs/apk/debug/app-debug.apk",
+    "크기_바이트": 23613,
+    "파일수": 9,
+    "assets": [
+      "assets/index.html"
+    ],
+    "게임파일_해시_일치": true,
+    "서명": "디버그 키 (Android Studio 기본). 스토어용 아님"
+  },
+  "고친 것": [
+    "androidx.appcompat 제거 — kotlin-stdlib 1.8.22 와 kotlin-stdlib-jdk7/jdk8 1.6.21 이 겹쳐 checkDebugDuplicateClasses 에서 빌드 실패했다. WebView 하나짜리 앱에 AndroidX 는 필요 없다",
+    "프레임워크 Activity + Theme.NoTitleBar.Fullscreen 으로 교체",
+    "game/README.md 가 앱에 딸려 들어가던 것을 ignoreAssetsPattern 으로 제외"
+  ],
+  "확인 못 한 것": "설치와 실행. 실기에 넣어봐야 안다. 특히 WebView 의 localStorage 가 실제로 살아있는지."
+}

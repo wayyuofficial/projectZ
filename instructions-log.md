@@ -664,3 +664,44 @@ Q. 정본을 방치형 좀비 RPG로 교체?   → 교체해라
 
 - **아직 확인 못 한 것**: 빌드도 설치도 해 본 적이 없다. 도구가 없어 **컴파일조차 못 해봤다.**
   gradle·AGP·의존성 버전이 실제로 맞물리는지는 첫 Sync 에서 드러난다.
+
+---
+
+## 지시 #18 — 2026-09-08 — Android Studio 설치 완료, 이제 빌드하면 되는지
+
+### 원문
+
+```
+안드로이드 스튜디오 설치 완료했고, sync도 잘 된것같아. 이제 APK로 빌드 하면 되는거야?
+```
+
+### 처리
+- **층 판정**: 계획(실행). 지시 #17 의 후속.
+- **충돌 확인**: 없음.
+- **실측 대조 (환경이 바뀌었다. 다시 조회했다)**
+  - JDK: Android Studio 내장 `jbr` = **JDK 25**. Gradle 8.7 / AGP 8.5.2 가 지원하지 않는다.
+    별도로 받아진 **`~/.jdks/jbr-21.0.11`** 이 있어 이것을 썼다.
+  - Android SDK: `platforms/android-34`, `build-tools/34.0.0·36.0.0` **있음**. `local.properties` 에 `sdk.dir` 기록됨
+  - Gradle 8.7 배포본이 `~/.gradle/wrapper/dists` 에 내려와 있음
+  - **`gradlew` 와 `gradle-wrapper.jar` 는 없었다.** Sync 가 래퍼 없이 돌았다 → `gradle wrapper` 로 생성해 저장소에 넣었다
+- **반영**: "빌드하면 된다"고 답만 하지 않고 **직접 빌드했다.**
+
+### 결과 — 첫 빌드는 실패했다
+
+- `:app:checkDebugDuplicateClasses` **FAILED**.
+  `androidx.appcompat:appcompat:1.7.0` 이 끌고 온 `kotlin-stdlib 1.8.22` 와
+  `kotlin-stdlib-jdk7/jdk8 1.6.21` 이 같은 클래스를 중복으로 갖는다.
+- **처리: appcompat 을 통째로 제거했다.** 버전을 억지로 맞추는 대신 의존성을 없앴다 —
+  WebView 하나짜리 앱에 AndroidX 는 필요 없다. 프레임워크 `Activity` + `Theme.NoTitleBar.Fullscreen` 으로 교체.
+  결과적으로 **의존성 0개**가 되어 APK 가 23KB 로 줄었다.
+- 재빌드 **BUILD SUCCESSFUL**.
+
+### 산출물 검증
+
+- `app-debug.apk` **23,613 바이트**, 파일 9개
+- `assets/index.html` 이 `game/index.html` 과 **sha256 까지 일치** — 복사본이 갈라지지 않았다
+- 처음엔 `assets/README.md` 도 들어갔다(개발 문서가 앱에 딸려감) → `ignoreAssetsPattern` 으로 제외 후 재빌드
+- 기록: `measurements/apk-build-2026-09-08.json`
+
+### 아직 확인 못 한 것
+**설치도 실행도 안 해봤다.** 특히 WebView 의 localStorage 가 실기에서 실제로 살아있는지는 폰에 넣어봐야 안다.

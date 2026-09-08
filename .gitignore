@@ -1,3 +1,4 @@
 measurements/tmp-*
 *.pyc
 __pycache__/
+zombie-survival-debug.apk
