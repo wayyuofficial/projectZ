@@ -1,69 +1,68 @@
-/* 밸런스 시뮬레이션 — 게임의 실제 함수로 1런을 돌린다
+/* 밸런스 시뮬레이션 — 게임의 **실제 전투 루프**로 1런을 돌린다
  *
  * 쓰는 법: game/index.html 을 브라우저에서 열고 콘솔에 붙여 넣는다.
  * 결과를 measurements/balance-YYYY-MM-DD.json 에 남긴다 (R002).
  *
- * 2026-09-08 검증자 지적: 이 스크립트가 저장소에 없어서 기록된 값을 재현할 수 없었다.
- * 원칙 9 — 조사는 한 번 하고 결과를 파일로 남긴다. 스크립트도 파일이다.
+ * 2026-09-08 개정 — 근사 모델을 버렸다.
+ *   예전 판은 "접촉 좀비 수 = 상한 × (1 - 스폰간격/처치시간)" 같은 수식으로 근사했다.
+ *   그 모델이 만든 "벽: 구역9 에서 32분 정체" 는 **게임에는 없는 현상**이었다.
+ *   실제 루프로 돌려보니 접촉 피해를 8배로 올려도 진행 곡선이 거의 안 변했다
+ *   (구역10 도달 68~72분). 근사가 실제와 달랐던 것이다.
+ *   그래서 이제 stepCombat 을 그대로 돌린다.
  *
  * 한계 (숨기지 않는다):
- *  - 보스를 따로 모델링하지 않는다. 평균 처치율로만 본다. 보스 돌진 패턴은 반영되지 않는다.
- *  - 접촉 좀비 수를 스폰 간격과 처치 시간의 비로 근사한다. 실제 배치·이동은 무시한다.
- *  - 탐욕 구매(가장 싼 것부터)를 가정한다. 사람은 다르게 살 수 있다.
+ *  - 구매는 0.5초마다 "살 수 있는 것 중 가장 싼 것"을 산다. 사람은 다르게 산다.
+ *  - 죽으면 즉시 부활시킨다. 사람은 광고를 보거나 잠시 멈춘다.
+ *  - 오프라인 보상은 넣지 않는다.
  */
 (function () {
-  G = freshState();
-  let t = 0, kills = 0;
-  const zoneAt = { 1: 0 }, walls = {};
-  let stuck = 0;
-  const dt = 1;
+  const MAX_MIN = 120;
+  const step = 1 / 60;
 
-  while (t < 48 * 3600 && G.zone <= ZONE_COUNT) {
-    // 살 수 있는 것 중 가장 싼 것을 산다
-    let bought = true;
-    while (bought) {
-      bought = false;
-      let id = null, cheapest = Infinity;
-      for (const s of STATS) {
-        const c = statCost(s.id);
-        if (c <= G.parts && c < cheapest) { cheapest = c; id = s.id; }
+  G = freshState(); G.hp = maxHP();
+  zombies.length = 0; shots.length = 0; killIndex = 0; dead = false;
+  spawnTimer = 0; attackTimer = 0; acc = 0;
+
+  const zoneAt = { 1: 0 }, wall = {};
+  let t = 0, deaths = 0, buyT = 0, stuckFrom = 0, lastZone = 1;
+
+  while (t < MAX_MIN * 60 && G.zone < ZONE_COUNT) {
+    stepCombat(step); t += step;
+
+    if (dead) { deaths++; revive(); }
+
+    buyT += step;
+    if (buyT >= 0.5) {
+      buyT = 0;
+      let bought = true;
+      while (bought) {
+        bought = false;
+        let id = null, cheapest = Infinity;
+        for (const s of STATS) {
+          const c = statCost(s.id);
+          if (c <= G.parts && c < cheapest) { cheapest = c; id = s.id; }
+        }
+        for (const w of WEAPON_TYPES) {
+          const c = weaponUpgradeCost(w.id);
+          if (c !== null && c <= G.parts && c < cheapest) { cheapest = c; id = 'W:' + w.id; }
+        }
+        if (id) bought = id.indexOf('W:') === 0 ? buyWeapon(id.slice(2)) : buyStat(id);
       }
-      for (const w of WEAPON_TYPES) {
-        const c = weaponUpgradeCost(w.id);
-        if (c !== null && c <= G.parts && c < cheapest) { cheapest = c; id = 'W:' + w.id; }
-      }
-      if (id) bought = id.indexOf('W:') === 0 ? buyWeapon(id.slice(2)) : buyStat(id);
     }
 
-    const zhp = zoneHP(G.zone), zdps = zoneDPS(G.zone), rw = zoneReward(G.zone);
-    const ttk = zhp / Math.max(1e-9, playerDPS());
-    const gap = Math.min(2, Math.max(0.35, ttk * 0.9));      // 게임의 적응형 스폰 간격과 같은 식
-    const contact = Math.max(0, Math.min(MAX_ONSCREEN_ZOMBIES,
-      MAX_ONSCREEN_ZOMBIES * (1 - Math.min(1, gap / ttk))));
-    const incoming = contact * zdps;
-    const killRate = 1 / Math.max(ttk, 0.35);
-
-    G.parts += rw * killRate * dt;
-
-    // 죽기 전에 한 구역(10마리)을 잡을 수 있는가
-    const ok = incoming <= regenPerSec() ||
-      (maxHP() / (incoming - regenPerSec())) * killRate >= KILLS_PER_ZONE;
-
-    if (ok) {
-      kills += killRate * dt; stuck = 0;
-      while (kills >= KILLS_PER_ZONE && G.zone < ZONE_COUNT) {
-        kills -= KILLS_PER_ZONE; G.zone++; zoneAt[G.zone] = t;
-      }
-      if (G.zone >= ZONE_COUNT) { if (zoneAt[10] === undefined) zoneAt[10] = t; break; }
-    } else {
-      kills = 0; stuck += dt;
-      if (stuck > 1200) walls[G.zone] = Math.round(stuck / 60);   // 20분 넘게 정체 = 벽
+    if (G.zone !== lastZone) {
+      const held = t - stuckFrom;
+      if (held > 600) wall[lastZone] = +(held / 60).toFixed(0);   // 10분 넘게 머물면 벽
+      lastZone = G.zone; stuckFrom = t;
     }
-    t += dt;
+    if (zoneAt[G.zone] === undefined) zoneAt[G.zone] = t;
   }
+  if (t - stuckFrom > 600) wall[G.zone] = +((t - stuckFrom) / 60).toFixed(0);
 
   const 분 = {};
-  for (const k in zoneAt) 분[k] = +(zoneAt[k] / 60).toFixed(1);
-  G = freshState();
-  return { 구역별_도달_분: 분, 벽_정체분: walls, 총_클리어_시간: +(t / 3600).toFixed(2) };
+  for (const z in zoneAt) 분[z] = +(zoneAt[z] / 60).toFixed(1);
+
+  G = freshState(); zombies.length = 0; shots.length = 0; killIndex = 0; dead = false;
+  return { 구역별_도달_분: 분, 벽_정체분: wall, 최종구역: G.zone,
+           사망횟수: deaths, 총_소요분: +(t / 60).toFixed(1) };
 })();

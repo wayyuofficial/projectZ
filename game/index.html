@@ -59,7 +59,9 @@ const WEAPON_TYPES = [
 // 처음 값(30 / 1.55 / 5 / 1.45 / 0.09)으로는 구역 1조차 못 넘겼다.
 const ZONE_HP0 = 15,  ZONE_HP_G = 1.55;
 const ZONE_RW0 = 4,   ZONE_RW_G = 1.30;
-const ZOMBIE_DPS_RATIO = 0.07;
+const ZOMBIE_DPS_RATIO = 0.14;   /* 2026-09-08 지시 #23 재보정.
+     접촉 판정을 위치 기준으로 고치면서 때리는 좀비가 최대 8마리에서 3마리로 줄었다.
+     실제 전투 루프로 배수를 훑어 0.07 -> 0.14 를 골랐다 (구역5 10.2분 / 구역10 69.4분). */
 const KILLS_PER_ZONE = 10;
 const BOSS_EVERY = 5;
 const BOSS_HP_MULT = 3;
@@ -247,7 +249,9 @@ const ARENA_TOP = 100, ARENA_BOT = 530;
 const GROUND_Y = 478;              // 발이 닿는 선
 const SURVIVOR_X = 96;
 const CONTACT_X = SURVIVOR_X + 46;  // 좀비가 더 못 오는 위치
-const ZOMBIE_GAP = 30;              // 줄 설 때 앞뒤 간격
+const ZOMBIE_GAP = 18;              // 줄 설 때 앞뒤 간격. 몸통(24px)보다 좁아 서로 밀착해 보인다
+const CONTACT_REACH = 40;           // 접촉선에서 이만큼 안에 있는 좀비만 피해를 준다
+const MAX_CONTACT_ZOMBIES = Math.floor(CONTACT_REACH / ZOMBIE_GAP) + 1;   // = 3
 const SPAWN_X = GAME_W + 36;        // 화면 밖 오른쪽
 
 let zombies = [], shots = [], floats = [], particles = [];
@@ -318,8 +322,10 @@ function stepCombat(dt) {
     spawnZombie(); spawnTimer = spawnGap;
   }
 
-  // 앞선 좀비부터 처리해 줄을 세운다. 더 못 가고 멈춘 좀비는 접촉 피해를 준다.
-  // 멈춘 마릿수가 세로판과 같아야 밸런스가 보존된다 (지시 #14 충돌 처리)
+  /* 좀비는 각자 '자기 줄 자리'로 걸어온다. 자리는 앞 좀비의 위치가 아니라
+     접촉선에서 순번으로 계산한다. 예전에는 앞 좀비에 막히기만 하면 위치와 무관하게
+     접촉으로 쳐서 **화면 밖 좀비가 피해를 줬다** (2026-09-08 실기 제보, 지시 #23).
+     피해는 이제 '막혔는가'가 아니라 '접촉선 가까이 왔는가'로만 판정한다. */
   let contactDPS = 0;
   zombies.sort((a, b) => a.x - b.x);
   for (let i = 0; i < zombies.length; i++) {
@@ -333,9 +339,13 @@ function stepCombat(dt) {
       if (z.nextCharge <= 0) { z.charge = BOSS_CHARGE_TIME; z.nextCharge = BOSS_CHARGE_EVERY; }
     }
     const spd = z.speed * (z.charge > 0 ? BOSS_CHARGE_MULT : 1);
-    const stopX = (i === 0) ? CONTACT_X : zombies[i - 1].x + ZOMBIE_GAP;
+    const stopX = CONTACT_X + i * ZOMBIE_GAP;          // 순번으로 정한 자기 자리
     if (z.x > stopX + 0.5) { z.x = Math.max(stopX, z.x - spd * dt); z.held = false; }
-    else { z.x = stopX; z.held = true; contactDPS += zoneDPS(G.zone) * (z.boss ? 2 : 1); }
+    else { z.x = stopX; z.held = true; }
+    // 접촉선 가까이 온 좀비만 때린다. 위치로만 판정한다
+    if (z.x <= CONTACT_X + CONTACT_REACH + 0.5) {
+      contactDPS += zoneDPS(G.zone) * (z.boss ? 2 : 1);
+    }
     if (z.flash > 0) z.flash -= dt;
     z.wob += dt * 7;
   }
