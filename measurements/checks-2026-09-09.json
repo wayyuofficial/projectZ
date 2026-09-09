@@ -1,14 +1,13 @@
 {
-  "ran_at": "2026-09-09T20:33:36",
-  "blocking": 1,
+  "ran_at": "2026-09-09T20:36:39",
+  "blocking": 0,
   "warn": 0,
   "skip": 0,
   "results": [
     {
-      "status": "fail",
+      "status": "ok",
       "detail": [
-        "정본이 바뀜: 10-scope.md",
-        "사람이 의도한 변경이면 python tools/approve_canon.py 실행"
+        "정본 5개 일치"
       ],
       "check": "c0_canon_lock.py",
       "name": "정본이 승인 없이 바뀌었는지",
