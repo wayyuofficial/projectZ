@@ -143,22 +143,22 @@ MIRRORED = {
     "applyOffline": "b7cab65995bd9534",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "510bca97c25210ab",
+    "buildButtons": "5bd7e49545d01e31",
     "buyStat": "2b0b94e9a15bcaaa",
     "buyWeapon": "0c1bb6b5a33eb755",
     "damageZombie": "9dfa910d5cf6855b",
     "equip": "c815c6819c3b6edb",
     "fitGame": "d526a00619b69c86",
-    "freshState": "d3e150adddd9425b",
+    "freshState": "34dde8559f5a60a9",
     "hitButton": "c1fb7a2a2ca5a3b7",
     "hitDamage": "78764110ba1a3fdd",
     "isBossKill": "4e70f4e006a8ab2a",
-    "killZombie": "f24afd439d608803",
+    "killZombie": "0aaaf8a5b275c51b",
     "layout": "f9b6d6e12249c87d",
     "maxHP": "85e54826f897f7c7",
-    "migrate": "f7ef8c70ad7c767b",
+    "migrate": "e90d09eade56be4f",
     "onDeath": "589239f3a352fe82",
-    "partsPerSecondEstimate": "02bde987992b2e2e",
+    "partsPerSecondEstimate": "424babe8c5fc62f9",
     "playerDPS": "6e388f9e36329ce1",
     "regenPerSec": "73badd17c9fc2857",
     "rewardMult": "bff5bcb3e94a3395",
@@ -281,7 +281,7 @@ class Sim(object):
     # ---- 저장 ----
     def freshState(self):
         return dict(v=SAVE_VERSION, parts=0.0, zone=1, kills=0,
-                    lv=dict(atk=0, spd=0, hp=0, reg=0), weapon="pipe",
+                    lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0), weapon="pipe",
                     owned=dict(pipe=1), hp=100.0, bestZone=1, totalKills=0,
                     lastSeen=self.now_ms, boostUntil=0)
 
@@ -294,7 +294,8 @@ class Sim(object):
         for k in list(s.keys()):
             if k in raw:
                 s[k] = raw[k]
-        lv = dict(atk=0, spd=0, hp=0, reg=0)
+        # 옛 저장본에는 inc 가 없다. 0 으로 채운다 (원본과 같다)
+        lv = dict(atk=0, spd=0, hp=0, reg=0, inc=0)
         lv.update(raw.get("lv") or {})
         s["lv"] = lv
         ow = dict(pipe=1)
@@ -418,7 +419,7 @@ class Sim(object):
         if self.tab == "stat":
             for i, s in enumerate(STATS):
                 cost = self.statCost(s["id"])
-                b("stat", 24, listTop + i * 64, GAME_W - 48, 56, "buy",
+                b("stat", 24, listTop + i * 60, GAME_W - 48, 56, "buy",
                   self.G["parts"] >= cost, s["id"])
         else:
             for i, w in enumerate(WEAPON_TYPES):
@@ -492,7 +493,8 @@ class Sim(object):
         # 안 뽑으면 그 뒤 수열이 통째로 어긋난다 — 12차 감사가 t=4.05초에 갈리는 것을 잡았다.
         for _ in range(3 * (16 if z["boss"] else 7)):
             self.rnd()
-        gain = self.zoneReward(self.G["zone"]) * (BOSS_EVERY if z["boss"] else 1) * self.rewardMult()
+        gain = (self.zoneReward(self.G["zone"]) * (BOSS_EVERY if z["boss"] else 1)
+                * self.rewardMult() * self.statOf("inc"))
         self.G["parts"] += gain
         self.G["totalKills"] += 1
         self.killIndex += 1
@@ -601,7 +603,7 @@ class Sim(object):
     # ---- 오프라인 ----
     def partsPerSecondEstimate(self):
         ttk = self.zoneHP(self.G["zone"]) / max(1e-6, self.playerDPS())
-        return self.zoneReward(self.G["zone"]) / max(ttk, 0.35)
+        return self.zoneReward(self.G["zone"]) * self.statOf("inc") / max(ttk, 0.35)
 
     def applyOffline(self):
         elapsed = max(0.0, (self.now_ms - (self.G.get("lastSeen") or self.now_ms)) / 1000.0)

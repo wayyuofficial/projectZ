@@ -103,7 +103,11 @@ const STATS = [
   { id: 'atk', name: '공격력',   base: 5,   growth: 1.12, cost0: 10, costG: 1.322, unit: '' },
   { id: 'spd', name: '공격속도', base: 1.0, growth: 1.06, cost0: 14, costG: 1.344, unit: '/초' },
   { id: 'hp',  name: '최대체력', base: 100, growth: 1.10, cost0: 12, costG: 1.310, unit: '' },
-  { id: 'reg', name: '체력회복', base: 1,   growth: 1.08, cost0: 16, costG: 1.333, unit: '/초' }
+  { id: 'reg', name: '체력회복', base: 1,   growth: 1.08, cost0: 16, costG: 1.333, unit: '/초' },
+  /* 수입 — 처치 보상에 곱한다. 정본 상한을 4에서 5로 올려 넣었다 (지시 #42).
+     방치형에서 비용은 지수로 오르는데 수입이 선형이면 구역이 늘수록 반드시 막힌다.
+     구역이 10 뒤로 계속 추가될 예정이라 넣는다. */
+  { id: 'inc', name: '수입',     base: 1.0, growth: 1.12, cost0: 20, costG: 1.350, unit: '배' }
 ];
 
 const WEAPON_TYPES = [
@@ -208,7 +212,7 @@ function freshState() {
   return {
     v: SAVE_VERSION,
     parts: 0, zone: 1, kills: 0,
-    lv: { atk: 0, spd: 0, hp: 0, reg: 0 },
+    lv: { atk: 0, spd: 0, hp: 0, reg: 0, inc: 0 },
     weapon: 'pipe',
     owned: { pipe: 1 },
     hp: 100,
@@ -226,7 +230,8 @@ function migrate(raw) {
   if (raw.v !== SAVE_VERSION) return freshState();
   const s = freshState();
   for (const k of Object.keys(s)) if (k in raw) s[k] = raw[k];
-  s.lv = Object.assign({ atk: 0, spd: 0, hp: 0, reg: 0 }, raw.lv || {});
+  /* 옛 저장본에는 inc 가 없다. 0 으로 채운다 — 그래서 SAVE_VERSION 을 올리지 않는다. */
+  s.lv = Object.assign({ atk: 0, spd: 0, hp: 0, reg: 0, inc: 0 }, raw.lv || {});
   s.owned = Object.assign({ pipe: 1 }, raw.owned || {});
   return s;
 }
@@ -428,7 +433,7 @@ function killZombie(z) {
       vy: (Math.random() - .5) * 120 - 30, life: .5 + Math.random() * .3,
       t: 0, c: z.boss ? '#D9A24B' : '#7E9B72' });
   }
-  const gain = zoneReward(G.zone) * (z.boss ? BOSS_EVERY : 1) * rewardMult();
+  const gain = zoneReward(G.zone) * (z.boss ? BOSS_EVERY : 1) * rewardMult() * statOf('inc');
   G.parts += gain;
   G.totalKills++;
   addFloat(z.x, z.y - 30, '+' + fmt(gain), '#7FB0B2', 15);
@@ -575,7 +580,10 @@ let offlineReport = null;
 
 function partsPerSecondEstimate() {
   const ttk = zoneHP(G.zone) / Math.max(1e-6, playerDPS());
-  return zoneReward(G.zone) / Math.max(ttk, 0.35);
+  /* 수입 능력치는 오프라인에도 똑같이 붙인다. 온라인만 붙이면 능력치를 올려도
+     자리 비운 사이엔 안 늘어 플레이어가 이유를 알 수 없다.
+     대가: 이미 방치가 활동보다 앞서는 문제(관측_오프라인지배)를 더 벌린다. 알고 넣는다. */
+  return zoneReward(G.zone) * statOf('inc') / Math.max(ttk, 0.35);
 }
 
 function applyOffline() {
@@ -665,7 +673,10 @@ function buildButtons() {
   if (tab === 'stat') {
     STATS.forEach((s, i) => {
       const cost = statCost(s.id), val = statOf(s.id);
-      btn({ x: 24, y: listTop + i * 64, w: GAME_W - 48, h: 56,
+      /* 줄 간격 64 -> 60. 능력치가 5종이 되면서 마지막 줄이 광고줄을 10px 파고들었다
+         (지시 #42, 넣자마자 계산으로 잡았다). 60 이면 마지막 줄 아래가 광고줄 위보다 6px 위다.
+         버튼 높이 56 은 그대로 둔다 — 줄이면 7.1(탭 대상 크기)이 더 나빠진다. */
+      btn({ x: 24, y: listTop + i * 60, w: GAME_W - 48, h: 56,
             label: s.name + '  Lv.' + (G.lv[s.id] || 0),
             sub: fmt(val) + s.unit + '  ▸  ' + fmt(val * s.growth) + s.unit,
             cost: cost, enabled: G.parts >= cost, tone: 'buy',
