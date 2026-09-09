@@ -1,7 +1,7 @@
 <title>좀비 RPG M1 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M1.md
-     source-sha256: eae114924168eba6a4a9d319eac3e50b0a5037896a2294cf69fa1a8eb78fcbc6
+     source-sha256: 345d5ed5856d273ba15bfdae909dfb16bc0967e8aa45efc3f0b586bc78f81835
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -212,6 +212,9 @@
     .axis, .bar-row { grid-template-columns: 108px 1fr 48px; }
     .bar-row .name { font-size: 12.5px; }
   }
+  ul.plain{margin:0;padding-left:18px;line-height:1.75}
+  ul.plain li{margin:7px 0}
+  h3{font-size:15px;margin:28px 0 10px;letter-spacing:-.01em}
 </style>
 
 <div class="wrap">
@@ -224,7 +227,7 @@
   </header>
 
   <div class="status">
-    <p><strong>검증자 4차 감사: 통과 18 · 실패 4 · 미검증 5.</strong> 이번에도 <strong>만든 쪽이 예측 문구를 결과에 맞춰 고친 것</strong>이 적발됐다(GAMEDESIGN B2·B3). 원복하고 예측을 잠갔다. 남은 실패 4건은 2.2(처치 속도 오차) · 8.1·10.1·10.2(사람이 해야 하는 일)다.</p>
+    <p><strong>검증자 8차 감사: 통과 16 · 실패 6 · 미검증 5 — 7차와 판정이 한 칸도 다르지 않다.</strong> 화면비 대응은 1.1 의 여백을 실제로 0%로 만들었지만, 1.1 은 "글자가 깨지지 않음"이 렌더링이라 여전히 미검증이다. 그리고 화면비 대응이 <strong>회귀 2건</strong>을 새로 넣은 것이 적발됐다 — 좀비가 공중에 뜨고, 구역이 달라도 하늘이 같다. 고쳤고 아직 검증 전이다.</p>
   </div>
 
   <div class="tiles">
@@ -266,8 +269,7 @@
 
   <section>
     <h2><span class="n">V</span>검증자 판정</h2>
-    <p class="note">만든 쪽의 "완료" 주장을 쓰지 않는다. 별도 인격(<span class="mono">.claude/agents/verifier.md</span>)이
-      실행 근거가 있는 것만 통과로 매겼다. 근거: <span class="mono">measurements/verify/verify-2026-09-08.json</span></p>
+    <p class="note">만든 쪽의 "완료" 주장을 쓰지 않는다. 별도 인격(<span class="mono">.claude/agents/verifier.md</span>)이 실행 근거가 있는 것만 통과로 매겼다. 8차 전수, 이전 회차와 병합하지 않았다. 근거: <span class="mono">measurements/verify/verify-2026-09-09-8.json</span></p>
     <div class="chart">
       <div class="axis"><div></div><div class="ticks"><span>0</span><span>전체 통과</span></div><div></div></div>
       <div class="bar-row"><div class="name"><em>1</em>기반</div><div class="track"><div class="fill" style="width:75%;background:var(--signal)"></div></div><div class="num">3/4</div></div>
@@ -284,36 +286,75 @@
     <div class="tablewrap"><table>
       <thead><tr><th>#</th><th>판정</th><th>근거</th></tr></thead>
       <tbody>
-        <tr><td>1.1</td><td><span class="verdict un">미검증</span></td><td class="judge">② 통과 — fitGame() 을 옮겨 17개 뷰포트(280~1440 CSS px, DPR 1~4)를 돌렸다. |backW-cssW*dpr| 와 |backH-cssH*dpr| 의 최댓값 0.5000 물리px 로 판정선(0.5 이내) 안. ① 통과 — 캔버스 CSS 비율이 9:16 에서 최대 0.1565%…</td></tr>
-        <tr><td>1.2</td><td><span class="verdict ok">통과</span></td><td class="judge">frame() 의 FIXED_STEP 누적 루프를 옮겨 같은 시드로 실시간 60초를 돌렸다. 2.5·3·4·5·10·30·60·120fps 전부 게임내 60.0000초 / 구역2 / 처치16 / 부품71.2 / hp65.422 로 완전히 같다. 불규칙 프레임(4~120fps 무작위 혼합)도 60.0000…</td></tr>
-        <tr><td>1.3</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py -> c5_save_version.py [OK]. migrate() 를 옮겨 JSON 직렬화 왕복 실행: parts 1234.5 / zone 4 / weapon rifle / kills 7 / hp 88.25 / bestZone 6 / totalKills 41 / b…</td></tr>
-        <tr><td>1.4</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py -> c2_scope.py [OK] '게임 1개 상한 이내', 건너뜀 0. 상수 직접 확인: WEAPON_TYPES 6 / ZONE_COUNT 10 / TIER_MAX 3 / STATS 4.</td></tr>
-        <tr><td>2.1</td><td><span class="verdict ok">통과</span></td><td class="judge">stepCombat 을 옮겨 300초(seed 21) 실행: 동시 좀비 최대 8, 상한 8 초과 프레임 0. 정지 대기열 x 가 142/160/178/196 으로 CONTACT_X=142 에서 ZOMBIE_GAP=18 씩 늘어선다. 오버킬 넘기기 도입 뒤에도 같다.</td></tr>
-        <tr><td>2.2</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구는 '표시 DPS(HUD 는 fmt(playerDPS()) 를 그린다) 와 실제 처치 속도가 일치' 다. 그대로 쟀다. (1) 실제 1런(자동구매, 5시드, 60~69분): 처치된 좀비 HP 합 / ∫playerDPS dt = -9.51 / -9.32 / -9.67 / -10.20 / -9.54…</td></tr>
-        <tr><td>2.3</td><td><span class="verdict ok">통과</span></td><td class="judge">시뮬(seed 31): 5회 처치 후 부품 0 -> 20.000000 = zoneReward(1) 4.0 x 5. 오버킬 넘기기로 한 공격이 여러 마리를 죽이는 경우도 검사했다 — 구역3 고정 60초에서 한 공격에 3마리를 죽인 경우 42회, 1마리 13회, 전부 '부품 증가 = 처치수 x zoneRew…</td></tr>
-        <tr><td>2.4</td><td><span class="verdict ok">통과</span></td><td class="judge">시뮬(seed 43): t=66.50초에 hp=0.000, dead=True 가 되고 zombies/shots 가 비워진다. 그 뒤 10초(600스텝) 더 돌려도 부품 변화 0.000000, 처치 변화 0. buildButtons() 를 dead 상태로 실행하면 '광고 보고 부활'(90,396,360,5…</td></tr>
-        <tr><td>3.1</td><td><span class="verdict un">미검증</span></td><td class="judge">'수치·DPS가 즉시 갱신' 의 '갱신되어 보이는 것' 은 렌더링 확인이 필요하고 수단이 없다. 상태·라벨까지는 실행: statCost 초기값 [atk 10, spd 14, hp 12, reg 16], 탭 1회 뒤 같은 buildButtons 호출에서 '공격력 Lv.0 / 5 ▸ 5.6 / 10' -> …</td></tr>
-        <tr><td>3.2</td><td><span class="verdict ok">통과</span></td><td class="judge">무기 6종 장착 후 playerDPS 실측: pipe 5.0 / rifle 7.25 / shotgun 9.5 / flamer 13.0 / crossbow 17.0 / mine 22.5 — 6개 전부 다름. c2_scope.py [OK].</td></tr>
+        <tr><td>1.1</td><td><span class="verdict un">미검증</span></td><td class="judge">② 통과 — fitGame() 을 옮겨 뷰포트 240~1440 x 320~3200 (DPR 1/1.5/2/2.625/2.75/3/4) 을 훑었다. |backW-cssW*dpr|·|backH-cssH*dpr| 최댓값 0.5000 물리px (판정선 0.5 이내). ① 만든 쪽 숫자를 직접 재현했다 — 360x640 / 360x720 / 360…</td></tr>
+        <tr><td>1.2</td><td><span class="verdict ok">통과</span></td><td class="judge">frame() 의 FIXED_STEP 누적 루프를 옮겨 같은 시드로 실시간 60초를 돌렸다. 2.5·3·4·5·10·30·60·120fps 전부 게임내 60.0000초 / 구역2 / 처치16 / 부품71.2 / hp60.3139 로 완전히 같다. 판정 문구의 4~120fps 를 덮는다.</td></tr>
+        <tr><td>1.3</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py -&gt; c5_save_version.py [OK]. migrate() 를 옮겨 JSON 직렬화 왕복 실행: parts 1234.5 / zone 4 / weapon rifle / kills 7 / hp 88.25 / bestZone 6 / totalKills 41 / boostUntil 1234567 / …</td></tr>
+        <tr><td>1.4</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py -&gt; c2_scope.py [OK] '게임 1개 상한 이내', 건너뜀 0. 상수 직접 확인: WEAPON_TYPES 6 / ZONE_COUNT 10 / TIER_MAX 3 / STATS 4 / MAX_ONSCREEN_ZOMBIES 8 / SAVE_VERSION 1 — canon/10-scope.md 상…</td></tr>
+        <tr><td>2.1</td><td><span class="verdict ok">통과</span></td><td class="judge">stepCombat 을 옮겨 300초(seed 21) 실행: 동시 좀비 최대 7, 상한 8 초과 프레임 0. 정지 대기열 x 가 142/160/178 로 CONTACT_X=142 에서 ZOMBIE_GAP=18 간격으로 줄을 선다. 화면비 대응 후에도 전투는 x 좌표만 쓴다 — 값이 7차와 같다.</td></tr>
+        <tr><td>2.2</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구는 '표시 DPS 와 실제 처치 속도가 일치' 다. 자동구매 1런(5시드, 64.7~67.9분, 사망 119~128)에서 처치된 좀비 HP 합 / ∫playerDPS dt = 0.8898 / 0.8896 / 0.8897 / 0.8925 / 0.9032, 합계 0.8928 → 실제가 표시보다 10.72% 느리다. 표적이 있는 동안만…</td></tr>
+        <tr><td>2.3</td><td><span class="verdict ok">통과</span></td><td class="judge">시뮬(seed 31): 5회 처치 후 부품 0 -&gt; 20.000000 = zoneReward(1) 4.0 x 5. 오버킬 넘기기(applyDamage)로 한 타격이 여러 마리를 죽여도 마리당 보상이 정확히 한 번씩 붙는다.</td></tr>
+        <tr><td>2.4</td><td><span class="verdict ok">통과</span></td><td class="judge">시뮬(seed 43): t=68.22초에 hp=0.000, dead=True 가 되고 zombies/shots 가 비워진다. 그 뒤 10초(600스텝) 더 돌려도 부품 변화 0.000000, 처치 변화 0. buildButtons() 가 '광고 보고 부활'(90, ARENA_BOT-134, 360x56)과 '그냥 다시 시작'(150, AR…</td></tr>
+        <tr><td>3.1</td><td><span class="verdict un">미검증</span></td><td class="judge">'수치·DPS가 즉시 갱신' 의 '갱신되어 보이는 것' 은 렌더링 확인이 필요하고 수단이 없다. 상태까지는 실행: statCost 초기값 [atk 10, spd 14, hp 12, reg 16], atk 1회 구매 즉시 playerDPS 5.0000 -&gt; 5.6000 이고 다음 비용 10 -&gt; 14. cost0*costG^L 도 lv5 에…</td></tr>
+        <tr><td>3.2</td><td><span class="verdict ok">통과</span></td><td class="judge">무기 6종 장착 후 playerDPS 실측: pipe 5.0 / rifle 7.25 / shotgun 9.5 / flamer 13.0 / crossbow 17.0 / mine 22.5 — 6개 전부 다르다. c2_scope.py [OK] 로 상한 6 이내.</td></tr>
         <tr><td>3.3</td><td><span class="verdict un">미검증</span></td><td class="judge">'18종처럼 보임' 은 사람이 화면을 봐야 한다. 계산만 실행: tierTint() 로 무기6 x 등급3 = 18색 전부 서로 다름(중복 0). 가장 가까운 두 색의 RGB 거리 15.17 (#e1dfc3 pipe등급3 vs #d4d9c8 rifle등급3).</td></tr>
-        <tr><td>3.4</td><td><span class="verdict ok">통과</span></td><td class="judge">frame() 홀드 로직(holdTime>0.3 시작, rate 0.08 -> holdTime>1.2 이후 0.015, 프레임당 guard 40)을 옮겨 60fps 실행. 최초 탭 1회 포함 3.0초 동안 134회, 100회 도달 2.5000초.</td></tr>
-        <tr><td>4.1</td><td><span class="verdict ok">통과</span></td><td class="judge">게임 상수(ZONE_HP0 15, ZONE_HP_G 1.55, ZONE_RW0 4, ZONE_RW_G 1.30, ZOMBIE_DPS_RATIO 0.14)로 독립 재계산해 plans/balance-zones.csv 와 대조 — c13_balance_table.py [OK] '구역 10개 표와 게임 상수 일…</td></tr>
-        <tr><td>4.2</td><td><span class="verdict un">미검증</span></td><td class="judge">'구역이 바뀌면 화면이 바뀜' 은 렌더링 확인이 필요하다. 계산만: 배경 hsl 색상이 구역마다 13도씩 이동한다(205-zone*13).</td></tr>
-        <tr><td>4.3</td><td><span class="verdict un">미검증</span></td><td class="judge">수치는 실행으로 통과 — 구역5 보스 HP 259.7403 = zoneHP(5) 86.5801 의 정확히 3.000000배, 구역10 보스 2323.7949 = 774.5983 의 3.000000배, 구역4 는 보스 없음. 보스 보상도 zoneReward(5) x BOSS_EVERY = 57.1220 으…</td></tr>
-        <tr><td>5.1</td><td><span class="verdict ok">통과</span></td><td class="judge">applyOffline 을 옮겨 실행: 30초 None / 59초 None / 60초 40.0 / 1시간 2400.0 / 4시간 9600.0 / 8시간 19200.0 / 9시간 19200.0(cappedHit True) / 24시간 19200.0(cappedHit True). 8시간 초과분이 쌓이지 않는…</td></tr>
-        <tr><td>5.2</td><td><span class="verdict ok">통과</span></td><td class="judge">offlineReport={gain 2400.0} 상태에서 buildButtons() 를 실행하면 [scrim 0,0,540,960 / '광고 보고 2배 받기' 90,520,360,52 / '닫기' 150,584,240,46] 3개만 남는다. 업그레이드 첫 행 자리(29,603)를 찍으면 scrim 이 …</td></tr>
-        <tr><td>6.1</td><td><span class="verdict ok">통과</span></td><td class="judge">adReward 3종 실행. boost: boostUntil 이 현재+600000ms 가 되어 rewardMult()=2. revive: dead True/hp 0 -> dead False/hp 100.00. offline2x: 부품 +2400.0 이 붙고 두 번째 호출은 무시(doubled). c3_n…</td></tr>
-        <tr><td>7.1</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구에서 '폭 360 이상 기기에서' 조건이 실제로 빠진 것을 git diff 로 확인했다(plans/wbs-M1.md 122행). 조건이 빠졌으므로 전 기기가 대상이다. buildButtons()+fitGame() 을 옮겨 17개 뷰포트의 최소 탭 대상 높이(게임좌표 최소 버튼 높이 44/960)…</td></tr>
-        <tr><td>7.2</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구가 '능력치·무기를 한 화면에서 다 만짐' 으로 되돌아온 것을 git diff 로 확인했다(plans/wbs-M1.md 123행). buildButtons() 를 실행하면 tab='stat' 일 때 능력치 행 4 · 무기 행 0, tab='weapon' 일 때 능력치 행 0 · 무기 행 6 이다…</td></tr>
+        <tr><td>3.4</td><td><span class="verdict ok">통과</span></td><td class="judge">frame() 홀드 로직(holdTime&gt;0.3 시작, rate 0.08 -&gt; holdTime&gt;1.2 이후 0.015, 프레임당 guard 40)을 옮겨 60fps 로 3.0초 실행. 최초 탭 1회 포함 133회 구매(레벨 0-&gt;132). 판정선 100회를 넘는다. 주의: 부품이 모자라면 그 전에 끊긴다 — parts=1e12 로 두면 8…</td></tr>
+        <tr><td>4.1</td><td><span class="verdict ok">통과</span></td><td class="judge">게임 상수(ZONE_HP0 15, ZONE_HP_G 1.55, ZONE_RW0 4, ZONE_RW_G 1.30, ZOMBIE_DPS_RATIO 0.14)로 독립 재계산해 plans/balance-zones.csv 10행의 좀비HP·좀비DPS·처치보상_부품과 대조: 불일치 0. z1 hp15.0000/rw4.0000, z5 hp86.5801…</td></tr>
+        <tr><td>4.2</td><td><span class="verdict un">미검증</span></td><td class="judge">'구역이 바뀌면 화면이 바뀜' 은 렌더링 확인이 필요하다. 계산만: 바탕 hsl 색상이 구역마다 13도씩 이동해 인접 구역 RGB 거리 12.3~29.1. 그런데 이번에 새로 넣은 하늘 그라디언트의 위쪽 색은 hsl(h, s, 4%) 라 구역마다 rgb (9,11,12)~(12,13,7) 로 인접 거리가 0~2 뿐이고 구역6과 7은 (8,…</td></tr>
+        <tr><td>4.3</td><td><span class="verdict un">미검증</span></td><td class="judge">수치는 실행으로 통과 — 구역5 보스 HP 259.7403 = zoneHP(5) 86.5801 의 정확히 3.000000배, isBossKill 이 z5/z10 의 10번째에만 True, 돌진 시작 4.0000/8.0167/12.0333/16.0500초(간격 4.0167초 = 4.0 + 1/60 양자화), 지속 BOSS_CHARGE_TIM…</td></tr>
+        <tr><td>5.1</td><td><span class="verdict ok">통과</span></td><td class="judge">applyOffline 을 옮겨 실행: 30초 None / 59초 None / 60초 gain 40.0 / 1시간 2400.0 / 4시간 9600.0 / 8시간 19200.0 / 9시간 19200.0(capped 28800, cappedHit True). 8시간 초과분이 쌓이지 않는다.</td></tr>
+        <tr><td>5.2</td><td><span class="verdict ok">통과</span></td><td class="judge">offlineReport(gain 2400.0) 상태에서 buildButtons() 실행 -&gt; [scrim 0,0,540,GAME_H / '광고 보고 2배 받기' 90, GAME_H/2+40, 360x52 / '닫기' 150, GAME_H/2+104, 240x46] 세 개만 만들어지고 업그레이드 버튼은 하나도 없다(몰래 구매 차단 유지).…</td></tr>
+        <tr><td>6.1</td><td><span class="verdict ok">통과</span></td><td class="judge">adReward 3종 실행. boost: boostUntil 이 현재+600000ms 가 되어 rewardMult()=2. revive: dead True/hp 0 -&gt; dead False/hp 100.00. offline2x: parts 2400.00 -&gt; 4800.00 이고 두 번째 호출은 변화 0.00(doubled 잠금). SDK …</td></tr>
+        <tr><td>7.1</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구는 조건 없이 '모든 탭 대상 높이 &gt;= 29 CSS px' 다. buildButtons()+fitGame() 을 옮겨 재측정: 280x653 = 22.82 / 320x568 = 26.06 / 320x640 = 26.07 CSS px 로 세 기기가 미달. 360dp 이상은 29.33~59.28 로 넘는다. 화면비 대응으로 값이 달…</td></tr>
+        <tr><td>7.2</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구는 '능력치·무기를 한 화면에서 다 만짐' 이다. buildButtons() 를 실행하면 tab='stat' 일 때 능력치 행 4 · 무기 행 0, tab='weapon' 일 때 능력치 행 0 · 무기 행 6 이다. 10행이 한 화면에 함께 있는 상태는 존재하지 않는다. 화면비 대응으로도 달라지지 않았다 — PANEL_H 가 42…</td></tr>
         <tr><td>7.3</td><td><span class="verdict ok">통과</span></td><td class="judge">fmt() 실행: fmt(49000)='49K'. 부수 fmt(999)='999', fmt(1000)='1K', fmt(49999)='50K', fmt(999999)='1M', fmt(1234567)='1.23M', fmt(1e9)='1B', fmt(1e12)='1T'.</td></tr>
-        <tr><td>8.1</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구는 '밸런스 표 대입 후 1런 플레이 — 구역 1->5 도달 시간을 실제로 측정' 이다. ls measurements/ 에 사람이 플레이해 잰 기록이 없다(파일 10개: apk-build / balance / canon-hashes / checks x2 / env / probe_env / sto…</td></tr>
-        <tr><td>8.2</td><td><span class="verdict ok">통과</span></td><td class="judge">plans/GAMEDESIGN.md 예측표에 B1 '성립' · B2 '부분 성립' · B3 '반증'(+B3′ '성립') 이 문장으로 적혀 있어 '판정 가능' 은 충족한다. B1·B2 는 재현된다 — 9시드로 구역5 도달 6.6~7.8분(문서 6.7~7.6), 벽이 7 과 9 에서 전 시드 공통(문서와 같…</td></tr>
-        <tr><td>9.1</td><td><span class="verdict ok">통과</span></td><td class="judge">python tools/selftest_checks.py 실행 -> 15개 전부 '기대 == 실제', 마지막 줄 '자가진단 통과: 검사 15개 전부 위반을 잡아낸다.' 종료코드 0.</td></tr>
-        <tr><td>9.2</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py 실행 -> 마지막 줄 '차단 0 / 경고 1 / 건너뜀 0 / 전체 15', 종료코드 0. 판정 문구의 SKIP 0개·차단 0 을 만족한다. 예측 P9 는 plans/plan-M1.md 38행에 '반증됨 — 9개 전부 통과' 로 적혀 있다. 다만 경고 1건은 c8_v…</td></tr>
-        <tr><td>10.1</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구 ① '1런 완주는 아직 (약 83분)' 이 스스로 미충족을 적고 있다. ②③ 의 '확인' 도 지금 빌드 것이 아니다 — instructions-log.md 868행이 지시 #20 확인을 '레이아웃 변경 이전 빌드' 라고 적었고, 그 뒤 지시 #22·#23·#25·#25 2차·#27 로 게임이 …</td></tr>
-        <tr><td>10.2</td><td><span class="verdict ng">실패</span></td><td class="judge">find exemplars -> 파일은 exemplars/README.md 하나뿐이고 exemplars/good 과 exemplars/bad 는 빈 디렉터리다. 등록된 산출물이 없다.</td></tr>
+        <tr><td>8.1</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구는 '밸런스 표 대입 후 1런 플레이 — 구역 1-&gt;5 도달 시간을 실제로 측정' 이다. measurements/ 에 사람이 플레이해 잰 기록이 없다(파일: apk-build / aspect / balance / canon-hashes / checks x2 / env / storage / probe_env.py / README /…</td></tr>
+        <tr><td>8.2</td><td><span class="verdict ok">통과</span></td><td class="judge">plans/GAMEDESIGN.md 예측표에 B1 '성립' · B2 '부분 성립' · B3 '반증'(+B3' '성립') 이 적혀 있어 '판정 가능' 은 충족한다. 내 포트 9시드로 재현: 구역5 도달 중앙 7.6분(범위 7.3~7.8) -&gt; B1(15분 안) 성립, 벽(10분 초과 정체)이 구역7·9 에서 9시드 전부 -&gt; B2 는 예측한…</td></tr>
+        <tr><td>9.1</td><td><span class="verdict ok">통과</span></td><td class="judge">python tools/selftest_checks.py 실행 -&gt; 15개 전부 '기대 == 실제', 마지막 줄 '자가진단 통과: 검사 15개 전부 위반을 잡아낸다.' 종료코드 0.</td></tr>
+        <tr><td>9.2</td><td><span class="verdict ok">통과</span></td><td class="judge">python checks/run.py 실행 -&gt; 마지막 줄 '차단 0 / 경고 0 / 건너뜀 0 / 전체 15', 종료코드 0. SKIP 0개·차단 0 충족. 예측 P9 는 plans/plan-M1.md 38행에 '반증됨 — 9개 전부 통과' 로 판정돼 있다.</td></tr>
+        <tr><td>10.1</td><td><span class="verdict ng">실패</span></td><td class="judge">판정 문구 ① '1런 완주는 아직 (약 83분)' 이 스스로 미충족을 적고 있다. ②③ 의 '확인' 도 지금 빌드 것이 아니다 — 지시 #28(화면비 대응)이 2026-09-09 에 배치를 전부 바꿨는데 instructions-log.md 1118~1156행에 실기 재확인 기록이 없고 measurements/ 에 09-08 이후 실기 기록…</td></tr>
+        <tr><td>10.2</td><td><span class="verdict ng">실패</span></td><td class="judge">find exemplars -type f -&gt; exemplars/README.md 하나뿐이고 exemplars/good 과 exemplars/bad 는 빈 디렉터리다. 등록된 산출물이 0개.</td></tr>
       </tbody>
     </table></div>
   </section>
+
+  <section id="regression">
+    <h2><span class="n">R</span>8차가 새로 잡은 것</h2>
+    <p class="note">판정을 바꾸지는 않았지만 <strong>지시 #28(화면비 대응)이 새로 만든 결함</strong>이다.
+      감사 뒤 고쳤고 <strong>고친 것은 아직 검증자가 보지 않았다</strong> — 다음 회차 대상이다.
+      근거: <span class="mono">measurements/regression-2026-09-09.json</span></p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>결함</th><th>감사가 잰 것</th><th>고친 것</th><th>고친 뒤 실측</th></tr></thead>
+      <tbody>
+        <tr><td>좀비가 공중에 뜬다</td>
+          <td class="judge"><span class="mono">GROUND_Y</span> 가 <span class="mono">let</span> 이 되며 좀비 <span class="mono">y</span> 는 스폰 때 값으로 굳는다. 360x640 &rarr; 360x800 에서 좀비가 새 바닥선 위 <strong>245.7 / 250.4px</strong> 에 남는다 (회전·분할화면)</td>
+          <td class="judge"><span class="mono">layout()</span> 에서 바닥선 변화량만큼 살아 있는 좀비를 같이 옮긴다</td>
+          <td class="judge">표본 4종(회전 포함)에서 좀비 <span class="mono">y - GROUND_Y</span> 가 스폰 오프셋 그대로. 수정 전이었다면 240~440px 떴다</td></tr>
+        <tr><td>구역이 달라도 하늘이 같다</td>
+          <td class="judge">새 하늘 그라디언트 위쪽이 밝기 4% 고정이라 인접 구역 RGB 거리 <strong>0~2</strong>, <strong>구역 6과 7은 완전히 동일</strong>. 화면이 길수록 이 영역이 전투 화면 대부분을 먹는다</td>
+          <td class="judge">밝기를 <span class="mono">6+(zone%4)*4</span>, 채도를 <span class="mono">26+zone*3</span> 으로 구역마다 옮긴다</td>
+          <td class="judge">인접 최소 거리 <strong>0.00 &rarr; 15.94</strong>, 완전 동일쌍 <strong>1 &rarr; 0</strong></td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>내 보고에서 빠졌던 것 3건</h3>
+    <ul class="plain">
+      <li><strong>접는 폰 여백을 표에서 뺐다.</strong> "폰 전부 0%" 라고 보고했으나 Fold5 내부 690x829 = <strong>14.64%</strong>, Pixel Fold <strong>14.69%</strong>, Fold4 <strong>11.28%</strong>, Surface Duo <strong>5.19%</strong> 가 남는다 (화면비 &lt; 1.4074 라 <span class="mono">MIN_GAME_H</span> 하한).</li>
+      <li><strong>벽 목록에서 구역 8 을 뺐다.</strong> "7·9 가 9시드 전부" 라고만 적었다. 측정 기록 자체에는 8도 있었으나 요약에서 불리한 쪽을 지웠다.</li>
+      <li><strong>저장 12/12 를 값 없이 적어 재현이 안 됐다.</strong> 7차가 재검증7 에 한 지적을 재검증9 에서 그대로 반복했다. 이제 항목 22개를 값과 함께 적는다.</li>
+    </ul>
+
+    <h3>두 포트가 어긋난다 — 밸런스 숫자를 믿지 마라</h3>
+    <p class="note">같은 게임을 옮긴 포트 두 개가 <strong>구역 5 도달 시간에서 25% 어긋난다.</strong>
+      만든 쪽 포트 중앙 <strong>9.5분</strong>(8.9~10.1), 검증자 포트 중앙 <strong>7.6분</strong>(7.3~7.8) — 범위가 겹치지도 않는다.</p>
+    <ul class="plain">
+      <li>구매 없이 돌리면 두 포트가 <strong>같다</strong> (60초·600초 모두 구역·처치·부품 일치).</li>
+      <li>자동구매를 켜면 갈라진다 (seed 1: 구역5 도달 546초 vs 437초, 능력치 <span class="mono">hp</span> 레벨 7 vs 8).</li>
+      <li><strong>어느 쪽이 실제 게임인지 여기서 못 정한다</strong> — 브라우저도 node 도 없어 <span class="mono">game/index.html</span> 을 직접 못 돌린다.</li>
+    </ul>
+    <p class="note">판정에는 영향이 없다 (B1 "15분 안" 은 7.6이든 9.5든 성립). 하지만 <strong>도달표 숫자는 &plusmn;25% 로 봐야 한다.</strong>
+      진짜 값은 8.1(사람이 플레이해 잰 기록)로만 정해진다 &mdash; 8.1 이 실패로 남아 있는 이유가 이것이다.</p>
+  </section>
+
 
   <section>
     <h2><span class="n">B</span>작업 27개</h2>
@@ -486,7 +527,7 @@
 
   <footer>
     <div>원본: <code>plans/wbs-M1.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div>
-    <div>원본 sha256 <code>eae114924168…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
+    <div>원본 sha256 <code>345d5ed5856d…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
     <div>근거: <code>canon/00-identity.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #8·#9·#10</div>
   </footer>
 
