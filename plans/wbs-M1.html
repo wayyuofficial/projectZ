@@ -1,7 +1,7 @@
 <title>좀비 RPG M1 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M1.md
-     source-sha256: aff22c4ba08129b5fc48bc88547061d6647bd83407c7dad90c4f8eaf15ee2f2d
+     source-sha256: 7e7a9fbf6c9fc6f14c431858e3917b494efa05029d5dbbbab1841bf052edf043
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -464,7 +464,7 @@
       <div class="tablewrap"><table>
         <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
         <tbody>
-          <tr><td>10.1</td><td>폰 실기 확인</td><td class="judge">세로에서 1런 완주 · 한글이 안 깨짐 · 가상 뷰포트 980px 가 아님 — LG V30에서 한글 깨짐 발견, meta 추가함</td><td class="dep">9.2</td></tr>
+          <tr><td>10.1</td><td>폰 실기 확인</td><td class="judge"><strong>폰에서 처음부터 한 번 돌려 아래를 전부 확인한다.</strong><br>① <strong>구역 10 까지 1런 완주</strong> &mdash; 중간에 멈추거나 저장이 깨지지 않는다<br>② 한글이 안 깨진다 &nbsp; ③ 가상 뷰포트 980px 이 아니다 (APK 전체화면)<br>④ 앱을 껐다 켜도 진행이 이어진다 &nbsp; ⑤ 자리를 비웠다 오면 오프라인 팝업이 뜬다<br>⑥ <strong>죽으면 구역이 하나 내려가고 8초짜리 광고 제안이 뜬다</strong> &mdash; 안 눌러도 계속 굴러간다<br><em>2026-09-09 지시 #44 로 사람이 정했다.</em> 이전 문구는 "부활화면 확인" 이었는데 지시 #35 로 그 화면이 사라졌다 &mdash; 없는 화면을 확인하라고 요구하고 있었다(14차 감사).</td><td class="dep">9.2</td></tr>
           <tr><td>10.2</td><td>본보기 등록 (<span class="mono">exemplars/good/</span>)</td><td class="judge">사람이 "좋다" 판정한 산출물 1개 등록</td><td class="dep">10.1</td></tr>
         </tbody>
       </table></div>
@@ -520,7 +520,7 @@
 
   <footer>
     <div>원본: <code>plans/wbs-M1.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div>
-    <div>원본 sha256 <code>aff22c4ba081…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
+    <div>원본 sha256 <code>7e7a9fbf6c9f…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
     <div>근거: <code>canon/00-identity.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #8·#9·#10</div>
   </footer>
 
