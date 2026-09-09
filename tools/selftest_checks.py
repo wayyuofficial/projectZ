@@ -101,17 +101,19 @@ def main():
                 _c[1] = "1,99999,999,999.9,1,1,1"
             io.open(csvp, "w", encoding="utf-8-sig").write("\n".join(_c) + "\n")
 
-        # c16: 포트의 잠금 해시 하나를 틀리게 만들어 fail 이 나야 한다.
-        # game/index.html 을 건드리지 않는다 — 다른 검사 6개가 같은 파일을 본다.
-        portp = os.path.join(ROOT, "tools", "sim_port.py")
-        port_backup = portp + ".selftest-backup"
-        if os.path.exists(portp):
-            shutil.copy2(portp, port_backup); made.append(port_backup)
-            _p = io.open(portp, encoding="utf-8").read()
-            _m = re.search(r'"(\w+)": "([0-9a-f]{16})",', _p)
-            if _m:
-                w(portp, _p.replace(_m.group(0),
-                                    '"%s": "%s",' % (_m.group(1), "0" * 16), 1))
+        # c16: **게임 쪽**을 바꾸고 포트를 그대로 두면 fail 이 나야 한다.
+        # 9차 감사 지적: 예전 픽스처는 포트의 해시를 망가뜨려 "잠금이 손대졌다"만 증명했고,
+        # c16 이 막겠다고 한 것("게임을 고치고 포트를 안 고침")은 증명하지 않았다.
+        # 옮긴 함수 본문에 주석 한 조각만 넣는다 — 상수·통신·메타를 보는 다른 검사는 안 건드린다.
+        gamep = os.path.join(ROOT, "game", "index.html")
+        game_backup = gamep + ".selftest-backup"
+        if os.path.exists(gamep):
+            shutil.copy2(gamep, game_backup); made.append(game_backup)
+            _g2 = io.open(gamep, encoding="utf-8-sig").read()
+            _old = "function zoneReward(z) {"
+            if _old in _g2:
+                io.open(gamep, "w", encoding="utf-8-sig").write(
+                    _g2.replace(_old, _old + " /*selftest*/", 1))
 
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
@@ -183,12 +185,12 @@ def main():
             shutil.move(csv_backup, csvp)
             if csv_backup in made:
                 made.remove(csv_backup)
-        portp = os.path.join(ROOT, "tools", "sim_port.py")
-        port_backup = portp + ".selftest-backup"
-        if os.path.exists(port_backup):
-            shutil.move(port_backup, portp)
-            if port_backup in made:
-                made.remove(port_backup)
+        gamep = os.path.join(ROOT, "game", "index.html")
+        game_backup = gamep + ".selftest-backup"
+        if os.path.exists(game_backup):
+            shutil.move(game_backup, gamep)
+            if game_backup in made:
+                made.remove(game_backup)
         for p in made:
             if os.path.exists(p):
                 os.remove(p)

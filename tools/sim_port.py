@@ -24,10 +24,15 @@
    여기 시드는 *이 포트를 결정적으로 만들기 위한 것*이지 게임과 같은 수열이 아니다.
    그러므로 **시드 하나의 값을 게임의 값이라고 말하면 안 된다.** 여러 시드의 분포로만 말한다.
 
-## 안 옮긴 것 (여기서 판정하면 안 되는 것)
+## 옮긴 것 / 안 옮긴 것
 
-그리기(`draw*`) · 입력 · 캔버스 · `localStorage` · 화면 배치.
+옮긴 것: 상태 · 전투 · 저장(`migrate`) · 오프라인 · 구매 · **배치(`layout`/`fit_game`)** ·
+**버튼 자리(`buildButtons`)**. 배치와 버튼은 9차 감사 지적으로 추가했다 —
+이게 없으면 1.1·7.1·7.2 를 회차마다 다시 옮겨야 해서 빠른 회차가 안 빨라진다.
+
+안 옮긴 것: 그리기(`draw*`) · 입력 · 캔버스 · `localStorage` · 버튼의 **글자**.
 이 포트로 "화면이 이렇게 보인다"를 판정하지 않는다. 그건 사람이나 실기가 한다.
+버튼은 **자리와 상태**만 있고 label/sub 는 없다 — 글자 판정에 쓰지 마라.
 
 실행: `python tools/sim_port.py`          — 자기 점검 (상수 대조 + 짧은 런)
       `python tools/sim_port.py --reseal` — 원본을 다시 읽어 해시를 찍는다 (사람이 확인한 뒤에만)
@@ -84,6 +89,12 @@ OFFLINE_MAX_HOURS = num("OFFLINE_MAX_HOURS")
 OFFLINE_RATE = num("OFFLINE_RATE")
 AD_BOOST_MIN = num("AD_BOOST_MIN")
 GAME_W = num("GAME_W")
+MIN_GAME_H = num("MIN_GAME_H")
+MAX_GAME_H = num("MAX_GAME_H")
+MAX_BACK_W = num("MAX_BACK_W")
+HUD_H = num("HUD_H")
+PANEL_H = num("PANEL_H")
+ARENA_TOP = HUD_H                    # 원본도 ARENA_TOP = HUD_H 다
 SURVIVOR_X = num("SURVIVOR_X")
 CONTACT_X = SURVIVOR_X + 46          # 원본도 SURVIVOR_X + 46 으로 쓴다
 ZOMBIE_GAP = num("ZOMBIE_GAP")
@@ -129,23 +140,32 @@ MIRRORED = {
     "applyDamage": "a42df6ae4cb6cf99",
     "applyOffline": "b7cab65995bd9534",
     "attacksPerSec": "50d4fd5785b29ace",
+    "boostActive": "ed9a9a513325e7ef",
+    "buildButtons": "527da4a1b4c51e3a",
     "buyStat": "2b0b94e9a15bcaaa",
     "buyWeapon": "0c1bb6b5a33eb755",
     "damageZombie": "9dfa910d5cf6855b",
+    "equip": "c815c6819c3b6edb",
+    "fitGame": "0e8d72ce743f9095",
     "freshState": "d3e150adddd9425b",
+    "hitButton": "c1fb7a2a2ca5a3b7",
     "hitDamage": "78764110ba1a3fdd",
     "isBossKill": "4e70f4e006a8ab2a",
     "killZombie": "f24afd439d608803",
+    "layout": "f9b6d6e12249c87d",
     "maxHP": "85e54826f897f7c7",
     "migrate": "f7ef8c70ad7c767b",
     "partsPerSecondEstimate": "02bde987992b2e2e",
     "playerDPS": "6e388f9e36329ce1",
     "regenPerSec": "73badd17c9fc2857",
     "revive": "34ef58959a8d7729",
+    "rewardMult": "bff5bcb3e94a3395",
     "spawnZombie": "d4054c63f48a4d4a",
     "statCost": "3915c9b212b37571",
+    "statDef": "e7ad6087978fd6ec",
     "statOf": "bd53f6155e340e8d",
     "stepCombat": "9a390a08bfe2fae5",
+    "weaponOf": "cd23351858d3c448",
     "weaponPower": "0a8ae8face6a1394",
     "weaponUpgradeCost": "d865ed90770874b1",
     "zoneDPS": "9abab3ae0b004352",
@@ -166,6 +186,47 @@ def drift():
         if got != want:
             out.append((name, want, got))
     return out
+
+
+# ── 배치 — 원본에서 전역인 것들. 여기서도 모듈 전역으로 둔다 ─────────
+L = {"GAME_H": 960.0, "PANEL_TOP": 540.0, "ARENA_BOT": 530.0, "GROUND_Y": 478.0,
+     "cssW": 0.0, "cssH": 0.0, "backW": 0.0, "backH": 0.0, "dpr": 1.0}
+
+
+def layout(zombies=None):
+    """원본 `layout()`. 바닥선이 움직이면 살아 있는 좀비도 같이 옮긴다."""
+    prev = L["GROUND_Y"]
+    L["PANEL_TOP"] = L["GAME_H"] - PANEL_H
+    L["ARENA_BOT"] = L["PANEL_TOP"] - 10
+    L["GROUND_Y"] = L["ARENA_BOT"] - 52
+    dy = L["GROUND_Y"] - prev
+    if dy and zombies:
+        for z in zombies:
+            z["y"] += dy
+
+
+def fit_game(vw, vh, device_dpr=1.0, zombies=None):
+    """원본 `fitGame()`. 캔버스가 없으므로 크기 계산만 한다.
+
+    돌려주는 것: 논리 세로 · CSS 크기 · 백버퍼 크기 · 실제 dpr · 여백 비율."""
+    L["GAME_H"] = max(MIN_GAME_H, min(MAX_GAME_H, round(GAME_W * vh / max(1, vw))))
+    asp = GAME_W / L["GAME_H"]
+    layout(zombies)
+    if vw / float(vh) > asp:
+        h, w = float(vh), vh * asp
+    else:
+        w, h = float(vw), vw / asp
+    L["cssW"], L["cssH"] = round(w), round(h)
+    L["dpr"] = min(device_dpr, 3)
+    L["backW"] = round(L["cssW"] * L["dpr"])
+    if L["backW"] > MAX_BACK_W:
+        L["backW"] = MAX_BACK_W
+        L["dpr"] = L["backW"] / float(L["cssW"])
+    L["backH"] = round(L["cssH"] * L["dpr"])
+    waste = 1.0 - (L["cssW"] * L["cssH"]) / float(vw * vh)
+    return dict(GAME_H=L["GAME_H"], cssW=L["cssW"], cssH=L["cssH"],
+                backW=L["backW"], backH=L["backH"], dpr=L["dpr"],
+                waste=waste, scale=L["cssW"] / GAME_W)
 
 
 # ── 난수 — 게임의 Math.random() 과 같지 않다. 결정적으로 만들 뿐이다 ──
@@ -197,6 +258,7 @@ class Sim(object):
         self.t = 0.0
         self.offlineReport = None
         self.adLog = []
+        self.tab = "stat"
 
     # ---- 저장 ----
     def freshState(self):
@@ -306,16 +368,80 @@ class Sim(object):
         self.G["weapon"] = wid
         return True
 
+    def equip(self, wid):
+        if self.G["owned"].get(wid):
+            self.G["weapon"] = wid
+            return True
+        return False
+
+    # ---- 버튼 배치 ----
+    def buildButtons(self):
+        """원본 `buildButtons()` 의 **자리와 상태만** 옮긴 것.
+
+        글자(label/sub)는 그리기용이라 옮기지 않는다. 대신 `kind` 로 무엇인지 구분한다.
+        7.1(탭 대상 크기) · 7.2(한 화면 공존) · 5.2(팝업만 남는지) 를 이걸로 잰다."""
+        bs = []
+
+        def b(kind, x, y, w, h, tone, enabled=True, wid=None):
+            bs.append(dict(kind=kind, x=x, y=y, w=w, h=h, tone=tone,
+                           enabled=enabled, wid=wid))
+
+        if self.offlineReport:
+            b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
+            if not self.offlineReport.get("doubled"):
+                b("offline2x", 90, L["GAME_H"] / 2 + 40, 360, 52, "ad")
+            b("offline_close", 150, L["GAME_H"] / 2 + 104, 240, 46, "ghost")
+            return bs
+
+        b("tab_stat", 24, L["PANEL_TOP"], 240, 46, "on" if self.tab == "stat" else "off")
+        b("tab_weapon", 276, L["PANEL_TOP"], 240, 46, "on" if self.tab == "weapon" else "off")
+
+        listTop = L["PANEL_TOP"] + 58
+        if self.tab == "stat":
+            for i, s in enumerate(STATS):
+                cost = self.statCost(s["id"])
+                b("stat", 24, listTop + i * 64, GAME_W - 48, 56, "buy",
+                  self.G["parts"] >= cost, s["id"])
+        else:
+            for i, w in enumerate(WEAPON_TYPES):
+                tier = self.G["owned"].get(w["id"], 0)
+                cost = self.weaponUpgradeCost(w["id"])
+                maxed = tier >= TIER_MAX
+                b("weapon", 24, listTop + i * 48, GAME_W - 48, 44,
+                  "equipped" if self.G["weapon"] == w["id"] else "buy",
+                  (not maxed) and cost is not None and self.G["parts"] >= cost, w["id"])
+
+        adY = L["GAME_H"] - 60
+        b("ad_boost", 24, adY, 240, 44, "ad", not self.boostActive())
+        b("tab_toggle", 276, adY, 240, 44, "ghost")
+
+        if self.dead:
+            b("revive_ad", 90, L["ARENA_BOT"] - 134, 360, 56, "ad")
+            b("revive_plain", 150, L["ARENA_BOT"] - 68, 240, 46, "ghost")
+        return bs
+
+    def hitButton(self, px, py, bs=None):
+        bs = self.buildButtons() if bs is None else bs
+        for b in reversed(bs):
+            if b["x"] <= px <= b["x"] + b["w"] and b["y"] <= py <= b["y"] + b["h"]:
+                return b
+        return None
+
     # ---- 전투 ----
     def spawnZombie(self):
         if len(self.zombies) >= MAX_ONSCREEN_ZOMBIES:
             return
         boss = self.isBossKill(self.G["zone"], self.killIndex + len(self.zombies))
         hp = self.zoneHP(self.G["zone"]) * (BOSS_HP_MULT if boss else 1)
+        # 난수를 원본과 **같은 개수·같은 순서**로 뽑는다.
+        # 원본은 x → y → (보스가 아닐 때만) speed → wob 순이다.
+        # 개수가 다르면 수열이 어긋나 시드별 값이 원본 구조와 달라진다 (9차 감사 지적).
+        x = SPAWN_X + self.rnd() * 30
+        y = L["GROUND_Y"] - self.rnd() * 12
+        speed = 17.0 if boss else 24 + self.rnd() * 12
+        wob = self.rnd() * 6
         self.zombies.append(dict(
-            x=SPAWN_X + self.rnd() * 30,
-            hp=hp, max=hp, boss=boss,
-            speed=17.0 if boss else 24 + self.rnd() * 12,
+            x=x, y=y, hp=hp, max=hp, boss=boss, speed=speed, wob=wob,
             held=False, charge=0.0,
             nextCharge=BOSS_CHARGE_EVERY if boss else 0.0))
 
@@ -339,9 +465,12 @@ class Sim(object):
             self.damageZombie(target, take)
 
     def killZombie(self, z):
-        if z not in self.zombies:
+        # 원본 `indexOf` 는 **참조** 동일성이다. `in` / `remove` 는 값 동일성이라
+        # 필드가 전부 같은 좀비가 둘이면 다른 마리를 지운다 (9차 감사 지적).
+        i = next((k for k, x in enumerate(self.zombies) if x is z), -1)
+        if i < 0:
             return
-        self.zombies.remove(z)
+        del self.zombies[i]
         gain = self.zoneReward(self.G["zone"]) * (BOSS_EVERY if z["boss"] else 1) * self.rewardMult()
         self.G["parts"] += gain
         self.G["totalKills"] += 1
@@ -447,16 +576,31 @@ class Sim(object):
 
 
 # ── 자동구매 1런 — 감사가 매번 다시 짜던 절차를 여기 고정한다 ────────
-def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP):
+def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
+             offline_every_min=None, offline_hours=8):
     """가장 싼 것부터 계속 사면서 구역 10 까지 간다.
+
+    `offline_every_min` 을 주면 그만큼 놀고 나서 `offline_hours` 시간 자리를 비운다.
+    예측 B4(오프라인 계수를 2배로 바꿔도 진행이 20% 넘게 흔들리지 않는다)를 재는 데 쓴다.
 
     돌아오는 값: 구역별 도달 시각(분) · 벽(10분 넘게 정체한 구역) · 사망 수 · 총 분."""
     s = Sim(seed=seed)
     s.G["hp"] = s.maxHP()
     zone_at, wall = {1: 0.0}, {}
     deaths, buyT, stuck_from, last_zone = 0, 0.0, 0.0, 1
+    off_t, off_n, off_gain = 0.0, 0, 0.0
     while s.t < max_min * 60 and s.G["zone"] < ZONE_COUNT:
         s.step(dt)
+        if offline_every_min:
+            off_t += dt
+            if off_t >= offline_every_min * 60:
+                off_t = 0.0
+                s.G["lastSeen"] = s.now_ms - offline_hours * 3600 * 1000
+                r = s.applyOffline()
+                if r:
+                    off_n += 1
+                    off_gain += r["gain"]
+                s.G["lastSeen"] = s.now_ms
         if s.dead:
             deaths += 1
             s.revive()
@@ -487,7 +631,7 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP):
         wall[s.G["zone"]] = round((s.t - stuck_from) / 60)
     return dict(zone_min={z: round(v / 60, 1) for z, v in sorted(zone_at.items())},
                 wall=wall, deaths=deaths, total_min=round(s.t / 60, 1),
-                final_zone=s.G["zone"])
+                final_zone=s.G["zone"], offline_n=off_n, offline_gain=off_gain)
 
 
 # ── 자기 점검 ─────────────────────────────────────────────────────────
