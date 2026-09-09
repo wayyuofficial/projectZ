@@ -84,7 +84,11 @@ const AD_BOOST_MIN = 10;
    (2026-09-09 7차 감사 지적). 이제 여백 없이 꽉 찬다.
    너무 납작하거나 너무 긴 화면에서는 아래 상한·하한에서 멈추고 그때만 레터박스가 생긴다. */
 const GAME_W = 540;
-const MIN_GAME_H = 760;    // 4:3 태블릿 세로(=720)보다 조금 크게. 패널이 들어갈 최소 높이
+/* 하한을 760 -> 720 으로 내렸다. 4:3 세로(=720)가 딱 들어가 태블릿·Surface Duo 의
+   여백 5.2% 가 0 이 된다 (11차 감사 지적). 더 내리지 않는 이유: 664 아래로 가면
+   사망 화면의 '광고 보고 부활' 버튼이 HUD 를 침범하고, 740 아래면 사망 문구가 HUD 에 닿는다.
+   접는 폰 안쪽(649 필요)까지 채우려면 배치 자체를 다시 짜야 한다 — 그건 별도 작업이다. */
+const MIN_GAME_H = 720;
 const MAX_GAME_H = 1500;   // 21:9 폰(=1260)보다 넉넉하게
 let GAME_H = 960;
 let GAME_ASP = GAME_W / GAME_H;
@@ -174,16 +178,24 @@ function save() {
 
 /* 불러오기 실패는 따로 담는다. saveError 에 담으면 바로 뒤 start() 의 save() 가
    성공하면서 null 로 지워져, **진행이 통째로 초기화됐는데 화면에 아무 표시가 안 남는다**
-   (2026-09-09 10차 감사 적발. 사례 '조용한실패' 와 같은 종류다). */
+   (2026-09-09 10차 감사 적발. 사례 '조용한실패' 와 같은 종류다).
+   여기에는 화면에 띄울 문구를 그대로 담는다. */
 let loadError = null;
 
 function load() {
   try {
     const t = localStorage.getItem(SAVE_KEY);
     if (!t) return false;
-    G = migrate(JSON.parse(t));
+    const raw = JSON.parse(t);
+    /* 버전이 다르면 migrate() 가 처음 상태로 되돌린다. 그것도 진행이 통째로 사라지는 일인데
+       11차 감사까지 아무 표시가 없었다 — 위 결함과 같은 종류가 이 경로에 남아 있었다.
+       지금은 SAVE_VERSION 이 1뿐이라 안 터질 뿐이다. */
+    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION) {
+      loadError = '저장 형식이 바뀌어 처음부터 시작한다';
+    }
+    G = migrate(raw);
     return true;
-  } catch (e) { loadError = String(e); G = freshState(); return false; }
+  } catch (e) { loadError = '저장본이 깨져 처음부터 시작한다'; G = freshState(); return false; }
 }
 
 /* =========================================================================
@@ -792,7 +804,7 @@ function drawHUD() {
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   // maxWidth 를 줘서 긴 오류 문구가 화면 밖으로 넘치지 않게 한다
   ctx.fillText(saveError ? '저장 실패 — 진행이 남지 않는다'
-    : loadError ? '저장본이 깨져 처음부터 시작한다'
+    : loadError ? loadError
     : '체력 ' + fmt(G.hp) + ' / ' + fmt(maxHP()) + '     DPS ' + fmt(playerDPS())
       + (boostActive() ? '     부품 2배' : ''), GAME_W / 2, 94, GAME_W - 48);
 }

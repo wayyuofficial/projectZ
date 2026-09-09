@@ -70,8 +70,13 @@ mcp__Claude_Browser__javascript_tool { action: "javascript_exec", text: "..." }
 - 페이지가 **`data:` URL** 로 열린다. origin 이 null 이라 **`localStorage` 가 SecurityError** 를 낸다.
   그래서 HUD 에 "저장 실패 — 진행이 남지 않는다" 가 뜬다. **이 창의 성질이지 게임 결함이 아니다.**
   (거꾸로, 게임이 저장 실패를 조용히 넘기지 않는다는 증거로는 쓸 수 있다.)
-- **`devicePixelRatio` 가 2 다.** 실기(LG V30)는 4 이고 게임이 3 으로 자른다.
-  그러므로 **이 창의 선명도는 실기보다 유리하다.** 실기 판정을 대체하지 않는다 (10.1 은 여전히 사람이 한다).
+- **`devicePixelRatio` 가 2 다.** 실기(LG V30)는 4 다. 게임은 이제 DPR 을 자르지 않는다
+  (2026-09-09 지시 #31 에서 상한 3 을 없앴다. 상한은 `MAX_BACK_W` 하나뿐이다).
+  그러므로 **이 창은 실기의 DPR 을 재현하지 못한다.** 실기 판정을 대체하지 않는다 (10.1 은 사람이 한다).
+- **창의 `data:` URL 이 거슬리면 로컬 서버를 띄워라.** `python -m http.server` 로 게임을 올리면
+  실 오리진이 되어 **`localStorage` 와 진짜 새로고침이 동작한다** (11차 감사가 이 방법으로 1.3 을 실제로 쟀다).
+- **이 도구가 안 보이면** 헤드리스 Chrome 을 `--remote-debugging-port` 로 띄우고 CDP 로 몰아도 된다.
+  10·11차가 그렇게 했다. **되는 방법을 쓰되 어느 쪽을 썼는지 보고에 적어라.**
 - 창이 가려져 있으면 `requestAnimationFrame` 이 안 돈다. 기다리는 대신
   `fitGame(); buildButtons(); draw();` 를 직접 부르고 픽셀을 읽어라.
 - 뷰포트를 바꿨으면 **끝나고 `resize_window { preset: "desktop" }`** 로 되돌려라.
