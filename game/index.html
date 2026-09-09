@@ -23,6 +23,23 @@
   /* image-rendering: pixelated 를 쓰지 않는다 — 비정수 배율에서 글자가 깨진다 (지시 #12) */
 </style>
 
+<!-- 자바스크립트를 실행하지 않는 뷰어(메신저 내장 뷰어 · 파일 관리자 미리보기 ·
+     드라이브 미리보기 등)에서는 캔버스가 300x150 회색 상자로만 남고 **아무 단서가 없다.**
+     2026-09-09 지시 #38·#39·#40 에서 이 화면을 세 번 봤다. 그때마다 원인이 안 보였다.
+     여기서 글자로 말한다. 스크립트가 아예 안 도는 경우는 스크립트로 못 잡는다 —
+     그래서 스크립트가 아닌 것으로 잡는다. -->
+<noscript>
+  <div style="position:fixed;inset:0;z-index:99;background:#0A1012;color:#E8F0EE;
+              font:14px/1.7 system-ui,-apple-system,'Malgun Gothic',sans-serif;padding:24px">
+    <p style="color:#E08A7A;font-weight:600;margin:0 0 12px">이 화면에서는 게임이 돌지 않는다</p>
+    <p style="margin:0 0 8px">자바스크립트가 실행되지 않았다. 파일이 잘못된 게 아니라 <b>여는 앱의 문제</b>다.</p>
+    <p style="margin:0 0 8px">메신저 내장 뷰어 · 파일 관리자 미리보기 · 클라우드 미리보기는
+       HTML 을 글자로만 보여주고 스크립트를 돌리지 않는다.</p>
+    <p style="margin:12px 0 0;color:#7FB0B2">폰에서는 <b>APK</b> 로 연다.
+       굳이 이 파일을 열려면 공유 &rarr; <b>Chrome 으로 열기</b> 를 고른다.</p>
+  </div>
+</noscript>
+
 <div id="stage"><canvas id="c"></canvas></div>
 
 <script>
