@@ -858,6 +858,10 @@ function drawArena() {
     else if (w.shape === 'long') ctx.fillRect(x + 12, fy - 36, 34, 5);
     else if (w.shape === 'disc') { ctx.beginPath(); ctx.arc(x + 24, fy - 32, 8, 0, 6.284); ctx.fill(); }
     else if (w.shape === 'cross'){ ctx.fillRect(x + 12, fy - 36, 24, 5); ctx.fillRect(x + 20, fy - 44, 5, 20); }
+    /* 화염방사기. 2026-09-09 14차 감사: 'nozzle' 이 어느 분기에도 안 걸려
+       쇠파이프와 **같은 사각형**으로 그려지고 있었다 — 모양이 6종이 아니라 5종이었다. */
+    else if (w.shape === 'nozzle'){ ctx.fillRect(x + 12, fy - 35, 18, 5);
+                                    ctx.fillRect(x + 28, fy - 39, 8, 13); }
     else                          ctx.fillRect(x + 12, fy - 34, 20, 6);
   }
 
