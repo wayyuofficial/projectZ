@@ -68,22 +68,27 @@ def run(root):
         if h(p.get("판정", "")) != p.get("판정해시"):
             bad.append("%s : 잠금 파일 안에서 판정과 해시가 어긋난다 (잠금이 손대졌다)" % pid)
             continue
-        row = None
+        # 같은 id 의 행이 여럿이면 미끼 행을 앞에 끼워 넣는 수법이 통한다 (7차 감사가 뚫었다)
+        rows = []
         for line in doc.splitlines():
             cells = [c.strip() for c in line.split("|")]
             if len(cells) > 2 and cells[1].replace("*", "").strip() == pid:
-                row = cells
-                break
-        if row is None:
+                rows.append(cells)
+        if not rows:
             bad.append("%s : GAMEDESIGN.md 예측표에서 이 항목의 행을 못 찾았다" % pid)
+        elif len(rows) > 1:
+            bad.append("%s : 같은 id 의 행이 %d개다 — 미끼 행을 끼워 넣었는가?" % (pid, len(rows)))
         else:
             want = norm(p.get("판정", ""))
-            # 판정 칸은 "**부분 성립** — 설명…" 처럼 설명이 붙는다.
-            # 설명을 떼고 **판정 토큰만** 정확히 비교한다.
-            # 포함으로 비교하면 "성립" 이 "부분 성립" 안에 들어 있어 등급 상향이 통과한다.
-            if not any(norm(c.split("—")[0]) == want for c in row):
-                bad.append("%s : 잠근 판정 [%s] 과 같은 판정 칸이 표에 없다 — 판정을 바꿨는가?"
-                           % (pid, p.get("판정", "")))
+            # **결과 칸(마지막 칸)만** 본다. 행 안의 아무 칸이나 보면
+            # 실측 칸에 "부분 성립" 을 적어두고 결과 칸을 "성립" 으로 올리는 수법이 통한다
+            # (7차 감사가 이 구멍을 뚫었다).
+            cells = [c for c in rows[0] if c != ""]
+            verdict = cells[-1] if cells else ""
+            # 판정 칸은 "**부분 성립** — 설명…" 처럼 설명이 붙는다. 설명을 떼고 토큰만 비교한다.
+            if norm(verdict.split("—")[0]) != want:
+                bad.append("%s : 결과 칸이 [%s] 인데 잠근 판정은 [%s] 다 — 판정을 바꿨는가?"
+                           % (pid, verdict.split("—")[0].strip()[:20], p.get("판정", "")))
 
         # 반증된 예측의 기록이 사라졌는지
         if p.get("판정") == "반증" and "반증" not in doc:

@@ -282,6 +282,21 @@ function damageZombie(z, dmg) {
   if (z.hp <= 0) killZombie(z);
 }
 
+/* 초과 피해를 앞줄 다음 좀비에게 넘긴다.
+   넘기지 않으면 마지막 타격의 남는 피해가 버려져 실제 처치 속도가 표시 DPS 보다 느려진다
+   (2026-09-09 6차 감사: 구역10 에서 타격당 674 로 HP 775 를 2타에 잡아 42.5% 낭비, 표시 DPS 대비 -37.60%). */
+function applyDamage(dmg) {
+  let left = dmg, guard = 0;
+  while (left > 1e-9 && zombies.length && guard++ < MAX_ONSCREEN_ZOMBIES + 2) {
+    let target = null, best = 1e9;
+    for (const z of zombies) { if (z.x < best) { best = z.x; target = z; } }
+    if (!target) break;
+    const take = Math.min(left, target.hp);
+    left -= take;
+    damageZombie(target, take);
+  }
+}
+
 function killZombie(z) {
   const i = zombies.indexOf(z);
   if (i < 0) return;
@@ -372,7 +387,7 @@ function stepCombat(dt) {
        기준을 낮추는 대신 구현을 고쳤다. 남는 것은 눈에 보이는 궤적뿐이다. */
     if (target) {
       shots.push({ x1: SURVIVOR_X + 30, y1: GROUND_Y - 34, x2: target.x, y2: target.y - 30, t: 0 });
-      damageZombie(target, hitDamage());
+      applyDamage(hitDamage());
     }
   }
   if (!zombies.length) attackTimer = interval;   // 다 죽였으면 다음 표적을 위해 채워 둔다
@@ -813,7 +828,9 @@ function drawOffline() {
    예전에는 dt 를 0.05 로 잘라버려서 10fps 기기에서 게임이 절반 속도로 흘렀다
    (2026-09-08 검증자 적발). 이제 남는 시간을 모아 1/60 씩 여러 번 돌린다. */
 const FIXED_STEP = 1 / 60;
-const MAX_STEPS = 12;      // 한 프레임에 따라잡을 최대 횟수. 넘으면 포기한다
+const MAX_STEPS = 30;      /* 한 프레임에 따라잡을 최대 횟수.
+     MAX_GAP(0.5초) 을 1/60 로 나눈 값이라 4fps 에서도 정확히 따라잡는다.
+     12 였을 때는 4fps 에서 60초가 48초로 흘렀다 (2026-09-09 6차 감사). */
 const MAX_GAP = 0.5;       // 탭 전환 등 큰 공백은 여기서 자른다. 나머지는 오프라인 보상이 맡는다
 let last = 0, saveTimer = 0, acc = 0;
 
