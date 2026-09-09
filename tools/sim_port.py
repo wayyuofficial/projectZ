@@ -146,7 +146,7 @@ MIRRORED = {
     "buyWeapon": "0c1bb6b5a33eb755",
     "damageZombie": "9dfa910d5cf6855b",
     "equip": "c815c6819c3b6edb",
-    "fitGame": "0e8d72ce743f9095",
+    "fitGame": "d526a00619b69c86",
     "freshState": "d3e150adddd9425b",
     "hitButton": "c1fb7a2a2ca5a3b7",
     "hitDamage": "78764110ba1a3fdd",
@@ -217,15 +217,23 @@ def fit_game(vw, vh, device_dpr=1.0, zombies=None):
     else:
         w, h = float(vw), vw / asp
     L["cssW"], L["cssH"] = round(w), round(h)
-    L["dpr"] = min(device_dpr, 3)
+    L["dpr"] = device_dpr                      # 원본이 DPR 상한 3 을 없앴다 (10차 감사)
     L["backW"] = round(L["cssW"] * L["dpr"])
     if L["backW"] > MAX_BACK_W:
         L["backW"] = MAX_BACK_W
         L["dpr"] = L["backW"] / float(L["cssW"])
     L["backH"] = round(L["cssH"] * L["dpr"])
     waste = 1.0 - (L["cssW"] * L["cssH"]) / float(vw * vh)
+    # 판정 ② 는 "백버퍼 = CSS 크기 x DPR" 이다. 여기서 DPR 은 **기기의** DPR 이지
+    # 코드가 잘라 쓴 값이 아니다. 잘린 값으로 재면 backW = round(cssW*dpr) 라
+    # **구조상 실패가 불가능한 항등식**이 된다 (10차 감사가 이 구멍을 뚫었다).
+    # 그래서 기기 DPR 기준 오차를 따로 돌려준다.
     return dict(GAME_H=L["GAME_H"], cssW=L["cssW"], cssH=L["cssH"],
-                backW=L["backW"], backH=L["backH"], dpr=L["dpr"],
+                backW=L["backW"], backH=L["backH"],
+                dpr=L["dpr"], device_dpr=device_dpr,
+                err_w=abs(L["backW"] - L["cssW"] * device_dpr),
+                err_h=abs(L["backH"] - L["cssH"] * device_dpr),
+                max_back_w_clamped=L["backW"] >= MAX_BACK_W,
                 waste=waste, scale=L["cssW"] / GAME_W)
 
 

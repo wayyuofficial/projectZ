@@ -110,8 +110,13 @@ function fitGame() {
   canvas.style.width = cssW + 'px';
   canvas.style.height = cssH + 'px';
 
-  // 백버퍼는 실제로 표시되는 물리 픽셀 수로 잡는다 (지시 #12)
-  dpr = Math.min(window.devicePixelRatio || 1, 3);
+  /* 백버퍼는 실제로 표시되는 물리 픽셀 수로 잡는다 (지시 #12).
+     DPR 을 3 으로 자르던 것을 없앴다. 자르면 DPR 4 기기(LG V30 = 1440x2880)에서
+     백버퍼가 물리 픽셀의 **0.75배**가 되어 글자가 확대되어 그려진다.
+     10차 감사가 deviceScaleFactor 4 를 실제로 걸고 잡았다 — 판정 ② 가 25% 미달이었고,
+     그때까지 이 판정을 재던 방식(잘린 dpr 로 cssW*dpr 을 계산)은 **구조상 실패가 불가능**했다.
+     상한은 MAX_BACK_W 하나로 남긴다. V30 은 360x4 = 1440 이라 상한 안이다. */
+  dpr = window.devicePixelRatio || 1;
   backW = Math.round(cssW * dpr);
   if (backW > MAX_BACK_W) { backW = MAX_BACK_W; dpr = backW / cssW; }
   // 세로도 실제 CSS 높이에서 뽑는다. 비율로 계산하면 비정수 DPR 에서 물리픽셀이 어긋난다
@@ -167,13 +172,18 @@ function save() {
   catch (e) { saveError = String(e); }   // 조용히 넘기지 않는다. HUD에 표시한다
 }
 
+/* 불러오기 실패는 따로 담는다. saveError 에 담으면 바로 뒤 start() 의 save() 가
+   성공하면서 null 로 지워져, **진행이 통째로 초기화됐는데 화면에 아무 표시가 안 남는다**
+   (2026-09-09 10차 감사 적발. 사례 '조용한실패' 와 같은 종류다). */
+let loadError = null;
+
 function load() {
   try {
     const t = localStorage.getItem(SAVE_KEY);
     if (!t) return false;
     G = migrate(JSON.parse(t));
     return true;
-  } catch (e) { saveError = String(e); G = freshState(); return false; }
+  } catch (e) { loadError = String(e); G = freshState(); return false; }
 }
 
 /* =========================================================================
@@ -778,10 +788,11 @@ function drawHUD() {
   ctx.fillStyle = hpPct > .3 ? '#5E9A6B' : '#B2554E';
   ctx.fillRect(px, 72, pw * hpPct, 9);
   ctx.textAlign = 'center';
-  ctx.fillStyle = saveError ? '#E08A7A' : '#9FB2B0';
+  ctx.fillStyle = (saveError || loadError) ? '#E08A7A' : '#9FB2B0';
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   // maxWidth 를 줘서 긴 오류 문구가 화면 밖으로 넘치지 않게 한다
   ctx.fillText(saveError ? '저장 실패 — 진행이 남지 않는다'
+    : loadError ? '저장본이 깨져 처음부터 시작한다'
     : '체력 ' + fmt(G.hp) + ' / ' + fmt(maxHP()) + '     DPS ' + fmt(playerDPS())
       + (boostActive() ? '     부품 2배' : ''), GAME_W / 2, 94, GAME_W - 48);
 }
