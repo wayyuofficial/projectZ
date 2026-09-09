@@ -858,12 +858,23 @@ function drawDeath() {
   ctx.fillStyle = 'rgba(5,8,10,.78)';
   ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
   ctx.textAlign = 'center';
+  /* 문구를 전투 영역 안에 가둔다. ARENA_BOT 에서만 빼면 화면이 짧을 때
+     글자가 어둠막 위로 올라가 HUD 의 부품·체력 막대를 덮는다
+     (2026-09-09 12차 감사: MIN_GAME_H 를 720 으로 내리자 GAME_H 720~739 에서 22px 겹쳤다).
+     짧은 화면에서만 글자를 줄이고 위로 붙인다 — GAME_H 767 이상(폰 전부)은 예전 그대로다.
+     30px 글자의 머리는 baseline 에서 약 22px 위다. */
+  const btnTop = ARENA_BOT - 134;             // '광고 보고 부활' 버튼 윗변
+  let ts = 30, gap = 32, titleY = ARENA_BOT - 210;
+  if (titleY - ts * 0.75 < ARENA_TOP + 4) {   // 제목 머리가 어둠막을 넘는다
+    ts = 22; gap = 24; titleY = ARENA_TOP + ts * 0.75 + 6;
+  }
   ctx.fillStyle = '#E8F0EE';
-  ctx.font = '700 30px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('쓰러졌다', GAME_W / 2, ARENA_BOT - 210);
+  ctx.font = '700 ' + ts + 'px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('쓰러졌다', GAME_W / 2, titleY);
   ctx.fillStyle = '#8FA5A3';
   ctx.font = '400 14px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('구역 ' + G.zone + ' 진행도가 초기화된다', GAME_W / 2, ARENA_BOT - 178);
+  ctx.fillText('구역 ' + G.zone + ' 진행도가 초기화된다', GAME_W / 2,
+    Math.min(titleY + gap, btnTop - 8));
 }
 
 function drawOffline() {

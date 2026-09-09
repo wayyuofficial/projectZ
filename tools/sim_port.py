@@ -193,6 +193,13 @@ L = {"GAME_H": 960.0, "PANEL_TOP": 540.0, "ARENA_BOT": 530.0, "GROUND_Y": 478.0,
      "cssW": 0.0, "cssH": 0.0, "backW": 0.0, "backH": 0.0, "dpr": 1.0}
 
 
+def jsround(x):
+    """JS 의 Math.round 는 floor(x+0.5) 다. 파이썬 round() 는 짝수로 붙이는 은행가 반올림이라
+    .5 에서 갈린다 — iPhone SE 320x568 의 GAME_H 가 브라우저 959 vs 포트 958 로 실제로 어긋났다
+    (2026-09-09 12차 감사 적발. 격자로 세면 5.03% 조합에서 1px 차이)."""
+    return math.floor(x + 0.5)
+
+
 def layout(zombies=None):
     """원본 `layout()`. 바닥선이 움직이면 살아 있는 좀비도 같이 옮긴다."""
     prev = L["GROUND_Y"]
@@ -209,20 +216,20 @@ def fit_game(vw, vh, device_dpr=1.0, zombies=None):
     """원본 `fitGame()`. 캔버스가 없으므로 크기 계산만 한다.
 
     돌려주는 것: 논리 세로 · CSS 크기 · 백버퍼 크기 · 실제 dpr · 여백 비율."""
-    L["GAME_H"] = max(MIN_GAME_H, min(MAX_GAME_H, round(GAME_W * vh / max(1, vw))))
+    L["GAME_H"] = max(MIN_GAME_H, min(MAX_GAME_H, jsround(GAME_W * vh / max(1, vw))))
     asp = GAME_W / L["GAME_H"]
     layout(zombies)
     if vw / float(vh) > asp:
         h, w = float(vh), vh * asp
     else:
         w, h = float(vw), vw / asp
-    L["cssW"], L["cssH"] = round(w), round(h)
+    L["cssW"], L["cssH"] = jsround(w), jsround(h)
     L["dpr"] = device_dpr                      # 원본이 DPR 상한 3 을 없앴다 (10차 감사)
-    L["backW"] = round(L["cssW"] * L["dpr"])
+    L["backW"] = jsround(L["cssW"] * L["dpr"])
     if L["backW"] > MAX_BACK_W:
         L["backW"] = MAX_BACK_W
         L["dpr"] = L["backW"] / float(L["cssW"])
-    L["backH"] = round(L["cssH"] * L["dpr"])
+    L["backH"] = jsround(L["cssH"] * L["dpr"])
     waste = 1.0 - (L["cssW"] * L["cssH"]) / float(vw * vh)
     # 판정 ② 는 "백버퍼 = CSS 크기 x DPR" 이다. 여기서 DPR 은 **기기의** DPR 이지
     # 코드가 잘라 쓴 값이 아니다. 잘린 값으로 재면 backW = round(cssW*dpr) 라
@@ -479,6 +486,10 @@ class Sim(object):
         if i < 0:
             return
         del self.zombies[i]
+        # 원본은 파편을 정상 7개·보스 16개 만들고 각각 난수를 3번(vx, vy, life) 뽑는다.
+        # 안 뽑으면 그 뒤 수열이 통째로 어긋난다 — 12차 감사가 t=4.05초에 갈리는 것을 잡았다.
+        for _ in range(3 * (16 if z["boss"] else 7)):
+            self.rnd()
         gain = self.zoneReward(self.G["zone"]) * (BOSS_EVERY if z["boss"] else 1) * self.rewardMult()
         self.G["parts"] += gain
         self.G["totalKills"] += 1
