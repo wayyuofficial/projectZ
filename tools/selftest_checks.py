@@ -6,7 +6,7 @@
 
 실행: python tools/selftest_checks.py
 """
-import io, os, sys, glob, time, shutil, importlib.util
+import io, os, re, sys, glob, time, shutil, importlib.util
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -101,6 +101,18 @@ def main():
                 _c[1] = "1,99999,999,999.9,1,1,1"
             io.open(csvp, "w", encoding="utf-8-sig").write("\n".join(_c) + "\n")
 
+        # c16: 포트의 잠금 해시 하나를 틀리게 만들어 fail 이 나야 한다.
+        # game/index.html 을 건드리지 않는다 — 다른 검사 6개가 같은 파일을 본다.
+        portp = os.path.join(ROOT, "tools", "sim_port.py")
+        port_backup = portp + ".selftest-backup"
+        if os.path.exists(portp):
+            shutil.copy2(portp, port_backup); made.append(port_backup)
+            _p = io.open(portp, encoding="utf-8").read()
+            _m = re.search(r'"(\w+)": "([0-9a-f]{16})",', _p)
+            if _m:
+                w(portp, _p.replace(_m.group(0),
+                                    '"%s": "%s",' % (_m.group(1), "0" * 16), 1))
+
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
         shutil.copy2(canon, backup); made.append(backup)
@@ -123,6 +135,7 @@ def main():
             ("c12_draw_order.py", ("warn",)),
             ("c13_balance_table.py", ("fail",)),
             ("c15_prediction_lock.py", ("fail",)),
+            ("c16_port_sync.py", ("fail",)),
         ]
 
         bad = []
@@ -170,6 +183,12 @@ def main():
             shutil.move(csv_backup, csvp)
             if csv_backup in made:
                 made.remove(csv_backup)
+        portp = os.path.join(ROOT, "tools", "sim_port.py")
+        port_backup = portp + ".selftest-backup"
+        if os.path.exists(port_backup):
+            shutil.move(port_backup, portp)
+            if port_backup in made:
+                made.remove(port_backup)
         for p in made:
             if os.path.exists(p):
                 os.remove(p)

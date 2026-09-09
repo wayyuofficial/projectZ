@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-09T15:52:16",
+  "ran_at": "2026-09-09T16:04:33",
   "blocking": 0,
   "warn": 0,
   "skip": 0,
@@ -61,6 +61,15 @@
     {
       "status": "ok",
       "detail": [
+        "옮긴 함수 25개가 게임과 일치"
+      ],
+      "check": "c16_port_sync.py",
+      "name": "파이썬 포트가 게임과 어긋났는지",
+      "priority": 1
+    },
+    {
+      "status": "ok",
+      "detail": [
         "규칙 3개 통과"
       ],
       "check": "c1_rule_hygiene.py",
@@ -115,7 +124,7 @@
     {
       "status": "ok",
       "detail": [
-        "파일 26개 통과"
+        "파일 29개 통과"
       ],
       "check": "c7_python_cmd.py",
       "name": "이 환경에 없는 파이썬 명령을 쓰는지",
