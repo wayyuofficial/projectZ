@@ -309,7 +309,15 @@ const SPAWN_X = GAME_W + 36;        // 화면 밖 오른쪽
 
 let zombies = [], shots = [], floats = [], particles = [];
 let spawnTimer = 0, attackTimer = 0, killIndex = 0;
-let dead = false, deathFlash = 0, shake = 0;
+let deathFlash = 0, shake = 0;
+
+/* 죽어도 멈추지 않는다 (지시 #35). 터치를 요구하면 자리를 비운 사이 죽었을 때
+   그 뒤 시간이 통째로 버려진다 — 그건 방치형이 아니다.
+   대신 몇 초 동안 "광고 보고 그 자리 유지" 를 띄운다. **안 눌러도 게임은 굴러간다.**
+   정본 31행의 광고 지점 2(사망 시 부활 1회)는 이렇게 살아 있다 —
+   막는 문이 아니라 되돌리는 선택지가 됐다. */
+const REVIVE_OFFER_SEC = 8;
+let reviveOffer = null;    // { zone: 죽은 구역, t: 흐른 시간 }
 
 function spawnZombie() {
   if (zombies.length >= MAX_ONSCREEN_ZOMBIES) return;
@@ -379,7 +387,6 @@ function killZombie(z) {
 }
 
 function stepCombat(dt) {
-  if (dead) return;
 
   /* 표적이 없다가 생기는 순간을 여기서 잡는다.
      스폰이 공격 판정보다 먼저 일어나므로, 아래에서 zombies.length 로 판단하면
@@ -452,7 +459,11 @@ function stepCombat(dt) {
 
   G.hp = Math.min(maxHP(), G.hp + regenPerSec() * dt - contactDPS * dt);
   if (contactDPS > 0) shake = Math.max(shake, 2);
-  if (G.hp <= 0) { G.hp = 0; dead = true; deathFlash = 1; zombies.length = 0; shots.length = 0; }
+  if (G.hp <= 0) onDeath();
+  if (reviveOffer) {
+    reviveOffer.t += dt;
+    if (reviveOffer.t >= REVIVE_OFFER_SEC) reviveOffer = null;
+  }
 
   for (let i = floats.length - 1; i >= 0; i--) {
     const f = floats[i]; f.t += dt; f.y -= 26 * dt;
@@ -466,12 +477,33 @@ function stepCombat(dt) {
   if (deathFlash > 0) deathFlash = Math.max(0, deathFlash - dt);
 }
 
-function revive() {
-  dead = false;
+/* 쓰러지면 한 구역 물러나 계속 싸운다. 멈추지 않는다.
+   물러난 구역은 이미 이겨본 곳이라 벌이가 되고, 그 벌이로 다시 올라간다 (지시 #35). */
+function onDeath() {
+  const from = G.zone;
+  G.hp = maxHP();
+  deathFlash = 1;
+  zombies.length = 0; shots.length = 0;
+  if (G.zone > 1) G.zone--;
+  killIndex = 0; G.kills = 0;
+  reviveOffer = { zone: from, t: 0 };
+  addFloat(GAME_W / 2, ARENA_TOP + 60,
+    G.zone < from ? '구역 ' + G.zone + ' 로 후퇴' : '버텼다', '#E08A7A', 22);
+  save();
+}
+
+/* 광고를 보면 죽은 그 구역으로 돌아간다. 안 보면 후퇴한 채로 계속 간다. */
+function acceptRevive() {
+  if (!reviveOffer) return false;
+  G.zone = Math.min(ZONE_COUNT, reviveOffer.zone);
+  G.bestZone = Math.max(G.bestZone, G.zone);
   G.hp = maxHP();
   killIndex = 0; G.kills = 0;
   zombies.length = 0; shots.length = 0;
+  reviveOffer = null;
+  addFloat(GAME_W / 2, ARENA_TOP + 60, '구역 ' + G.zone + ' 복귀', '#D9A24B', 22);
   save();
+  return true;
 }
 
 /* =========================================================================
@@ -507,7 +539,7 @@ function adReward(kind) {
     G.boostUntil = Math.max(Date.now(), G.boostUntil || 0) + AD_BOOST_MIN * 60000;
     addFloat(GAME_W / 2, ARENA_TOP + 90, '부품 2배 ' + AD_BOOST_MIN + '분', '#D9A24B', 22);
   } else if (kind === 'revive') {
-    revive();
+    acceptRevive();
   } else if (kind === 'offline2x' && offlineReport && !offlineReport.doubled) {
     G.parts += offlineReport.gain;
     offlineReport.doubled = true;
@@ -603,11 +635,13 @@ function buildButtons() {
         enabled: true, tone: 'ghost',
         onTap: () => { tab = tab === 'stat' ? 'weapon' : 'stat'; return true; } });
 
-  if (dead) {
-    btn({ x: 90, y: ARENA_BOT - 134, w: 360, h: 56, label: '광고 보고 부활', enabled: true, tone: 'ad',
-          onTap: () => adReward('revive') });
-    btn({ x: 150, y: ARENA_BOT - 68, w: 240, h: 46, label: '그냥 다시 시작', enabled: true, tone: 'ghost',
-          onTap: () => { revive(); return true; } });
+  /* 사망 제안. 전투 영역 아래쪽에 잠깐 떠 있다가 사라진다.
+     화면을 막지 않는다 — scrim 도 없고 다른 버튼도 그대로 살아 있다. */
+  if (reviveOffer) {
+    btn({ x: 90, y: ARENA_BOT - 62, w: 360, h: 46,
+          label: '광고 보고 구역 ' + reviveOffer.zone + ' 복귀 · '
+                 + Math.ceil(REVIVE_OFFER_SEC - reviveOffer.t) + '초',
+          enabled: true, tone: 'ad', onTap: () => adReward('revive') });
   }
 }
 
@@ -645,7 +679,6 @@ function draw() {
     ctx.fillStyle = 'rgba(180,40,40,' + (deathFlash * 0.35).toFixed(3) + ')';
     ctx.fillRect(0, 0, GAME_W, GAME_H);
   }
-  if (dead) drawDeath();
   if (offlineReport) drawOffline();
   // 버튼은 언제나 맨 위에 그린다. 오버레이가 자기 버튼을 덮으면 누를 수가 없다 (2026-09-08)
   drawButtons();
@@ -735,7 +768,7 @@ function drawArena() {
   }
   ctx.globalAlpha = 1;
 
-  if (!dead) {
+  {
     const w = weaponOf(G.weapon);
     const wt = weaponTint(G.weapon);
     const x = SURVIVOR_X, fy = GROUND_Y;
@@ -852,29 +885,6 @@ function drawButtons() {
       ctx.fillText(fmt(b.cost), b.x + b.w - 14, b.y + b.h / 2 + 5);
     }
   }
-}
-
-function drawDeath() {
-  ctx.fillStyle = 'rgba(5,8,10,.78)';
-  ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
-  ctx.textAlign = 'center';
-  /* 문구를 전투 영역 안에 가둔다. ARENA_BOT 에서만 빼면 화면이 짧을 때
-     글자가 어둠막 위로 올라가 HUD 의 부품·체력 막대를 덮는다
-     (2026-09-09 12차 감사: MIN_GAME_H 를 720 으로 내리자 GAME_H 720~739 에서 22px 겹쳤다).
-     짧은 화면에서만 글자를 줄이고 위로 붙인다 — GAME_H 767 이상(폰 전부)은 예전 그대로다.
-     30px 글자의 머리는 baseline 에서 약 22px 위다. */
-  const btnTop = ARENA_BOT - 134;             // '광고 보고 부활' 버튼 윗변
-  let ts = 30, gap = 32, titleY = ARENA_BOT - 210;
-  if (titleY - ts * 0.75 < ARENA_TOP + 4) {   // 제목 머리가 어둠막을 넘는다
-    ts = 22; gap = 24; titleY = ARENA_TOP + ts * 0.75 + 6;
-  }
-  ctx.fillStyle = '#E8F0EE';
-  ctx.font = '700 ' + ts + 'px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('쓰러졌다', GAME_W / 2, titleY);
-  ctx.fillStyle = '#8FA5A3';
-  ctx.font = '400 14px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('구역 ' + G.zone + ' 진행도가 초기화된다', GAME_W / 2,
-    Math.min(titleY + gap, btnTop - 8));
 }
 
 function drawOffline() {

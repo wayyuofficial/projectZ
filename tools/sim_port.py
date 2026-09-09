@@ -103,6 +103,7 @@ SPAWN_X = GAME_W + 36
 FIXED_STEP = 1.0 / 60
 MAX_STEPS = int(num("MAX_STEPS"))
 MAX_GAP = num("MAX_GAP")
+REVIVE_OFFER_SEC = num("REVIVE_OFFER_SEC")
 
 STATS = table("STATS")
 WEAPON_TYPES = table("WEAPON_TYPES")
@@ -137,11 +138,12 @@ def fingerprint(name):
 # 여기 적힌 함수는 아래 파이썬 구현이 **거울**이다.
 # 원본이 바뀌면 c16 이 막는다. 막히면 아래 구현을 손으로 다시 맞춘 뒤 --reseal 한다.
 MIRRORED = {
+    "acceptRevive": "76080cff2a1316f8",
     "applyDamage": "a42df6ae4cb6cf99",
     "applyOffline": "b7cab65995bd9534",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "527da4a1b4c51e3a",
+    "buildButtons": "510bca97c25210ab",
     "buyStat": "2b0b94e9a15bcaaa",
     "buyWeapon": "0c1bb6b5a33eb755",
     "damageZombie": "9dfa910d5cf6855b",
@@ -155,16 +157,16 @@ MIRRORED = {
     "layout": "f9b6d6e12249c87d",
     "maxHP": "85e54826f897f7c7",
     "migrate": "f7ef8c70ad7c767b",
+    "onDeath": "589239f3a352fe82",
     "partsPerSecondEstimate": "02bde987992b2e2e",
     "playerDPS": "6e388f9e36329ce1",
     "regenPerSec": "73badd17c9fc2857",
-    "revive": "34ef58959a8d7729",
     "rewardMult": "bff5bcb3e94a3395",
     "spawnZombie": "d4054c63f48a4d4a",
     "statCost": "3915c9b212b37571",
     "statDef": "e7ad6087978fd6ec",
     "statOf": "bd53f6155e340e8d",
-    "stepCombat": "9a390a08bfe2fae5",
+    "stepCombat": "722255f824e77e4b",
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "0a8ae8face6a1394",
     "weaponUpgradeCost": "d865ed90770874b1",
@@ -269,8 +271,9 @@ class Sim(object):
         self.spawnTimer = 0.0
         self.attackTimer = 0.0
         self.killIndex = 0
-        self.dead = False
         self.t = 0.0
+        self.reviveOffer = None      # {"zone": 죽은 구역, "t": 흐른 시간}
+        self.deaths = 0              # 포트에만 있는 계수기. 원본에는 없다
         self.offlineReport = None
         self.adLog = []
         self.tab = "stat"
@@ -430,9 +433,8 @@ class Sim(object):
         b("ad_boost", 24, adY, 240, 44, "ad", not self.boostActive())
         b("tab_toggle", 276, adY, 240, 44, "ghost")
 
-        if self.dead:
-            b("revive_ad", 90, L["ARENA_BOT"] - 134, 360, 56, "ad")
-            b("revive_plain", 150, L["ARENA_BOT"] - 68, 240, 46, "ghost")
+        if self.reviveOffer:
+            b("revive_ad", 90, L["ARENA_BOT"] - 62, 360, 46, "ad")
         return bs
 
     def hitButton(self, px, py, bs=None):
@@ -504,8 +506,6 @@ class Sim(object):
         self.G["kills"] = self.killIndex
 
     def stepCombat(self, dt):
-        if self.dead:
-            return
         hadTarget = len(self.zombies) > 0
 
         self.spawnTimer -= dt
@@ -559,18 +559,38 @@ class Sim(object):
         self.G["hp"] = min(self.maxHP(),
                            self.G["hp"] + self.regenPerSec() * dt - contactDPS * dt)
         if self.G["hp"] <= 0:
-            self.G["hp"] = 0.0
-            self.dead = True
-            del self.zombies[:]
-            self.shots = 0
+            self.onDeath()
+        if self.reviveOffer:
+            self.reviveOffer["t"] += dt
+            if self.reviveOffer["t"] >= REVIVE_OFFER_SEC:
+                self.reviveOffer = None
 
-    def revive(self):
-        self.dead = False
+    def onDeath(self):
+        """쓰러지면 한 구역 물러나 계속 싸운다 (지시 #35). 멈추지 않는다."""
+        self.deaths += 1
+        self.G["hp"] = self.maxHP()
+        del self.zombies[:]
+        self.shots = 0
+        frm = self.G["zone"]
+        if self.G["zone"] > 1:
+            self.G["zone"] -= 1
+        self.killIndex = 0
+        self.G["kills"] = 0
+        self.reviveOffer = {"zone": frm, "t": 0.0}
+
+    def acceptRevive(self):
+        """광고를 보면 죽은 그 구역으로 돌아간다."""
+        if not self.reviveOffer:
+            return False
+        self.G["zone"] = min(ZONE_COUNT, self.reviveOffer["zone"])
+        self.G["bestZone"] = max(self.G["bestZone"], self.G["zone"])
         self.G["hp"] = self.maxHP()
         self.killIndex = 0
         self.G["kills"] = 0
         del self.zombies[:]
         self.shots = 0
+        self.reviveOffer = None
+        return True
 
     def step(self, dt):
         """`frame()` 의 고정 시간 간격 한 칸. 시계도 같이 민다."""
@@ -607,9 +627,11 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
     s.G["hp"] = s.maxHP()
     zone_at, wall = {1: 0.0}, {}
     deaths, buyT, stuck_from, last_zone = 0, 0.0, 0.0, 1
+    # 사망은 이제 Sim 안에서 처리된다(자동 후퇴). 여기서는 세기만 한다.
     off_t, off_n, off_gain = 0.0, 0, 0.0
     while s.t < max_min * 60 and s.G["zone"] < ZONE_COUNT:
         s.step(dt)
+        deaths = s.deaths
         if offline_every_min:
             off_t += dt
             if off_t >= offline_every_min * 60:
@@ -620,9 +642,6 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
                     off_n += 1
                     off_gain += r["gain"]
                 s.G["lastSeen"] = s.now_ms
-        if s.dead:
-            deaths += 1
-            s.revive()
         buyT += dt
         if buyT >= buy_every:
             buyT = 0.0
@@ -677,8 +696,8 @@ def _selfcheck():
     s.G["hp"] = s.maxHP()
     for _ in range(60 * 60):
         s.step(FIXED_STEP)
-    print("60초 런(seed 1): 구역 %d / 처치 %d / 부품 %.1f / hp %.2f"
-          % (s.G["zone"], s.G["totalKills"], s.G["parts"], s.G["hp"]))
+    print("60초 런(seed 1): 구역 %d / 처치 %d / 부품 %.1f / hp %.2f / 사망 %d"
+          % (s.G["zone"], s.G["totalKills"], s.G["parts"], s.G["hp"], s.deaths))
     return 1 if d else 0
 
 
