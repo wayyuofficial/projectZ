@@ -62,19 +62,28 @@ def run(root):
         if norm(p["반증조건"]) not in norm(doc):
             bad.append("%s : 잠근 반증 조건이 GAMEDESIGN.md 에 없다 [%s]"
                        % (pid, p["반증조건"][:40]))
-        # 판정도 대조한다. 문구를 그대로 두고 판정만 올리는 수법을 막는다
-        # (2026-09-08 5차 감사: 이 구멍으로 B2 판정만 '부분 성립→성립' 으로 올려도 통과했다)
+        # 판정도 대조한다. 문구를 그대로 두고 판정만 올리는 수법을 막는다.
+        # **칸 단위로 정확히 비교한다.** 부분 문자열로 비교하면 "성립" 이 "부분 성립" 안에 들어 있어
+        # 부분 성립 → 성립 으로 올려도 통과한다 (2026-09-09 6차 감사가 이 구멍을 뚫었다).
+        if h(p.get("판정", "")) != p.get("판정해시"):
+            bad.append("%s : 잠금 파일 안에서 판정과 해시가 어긋난다 (잠금이 손대졌다)" % pid)
+            continue
         row = None
         for line in doc.splitlines():
             cells = [c.strip() for c in line.split("|")]
             if len(cells) > 2 and cells[1].replace("*", "").strip() == pid:
-                row = line
+                row = cells
                 break
         if row is None:
             bad.append("%s : GAMEDESIGN.md 예측표에서 이 항목의 행을 못 찾았다" % pid)
-        elif norm(p.get("판정", "")) not in norm(row):
-            bad.append("%s : 잠근 판정 [%s] 이 표의 행에 없다 — 판정만 바꿨는가?"
-                       % (pid, p.get("판정", "")))
+        else:
+            want = norm(p.get("판정", ""))
+            # 판정 칸은 "**부분 성립** — 설명…" 처럼 설명이 붙는다.
+            # 설명을 떼고 **판정 토큰만** 정확히 비교한다.
+            # 포함으로 비교하면 "성립" 이 "부분 성립" 안에 들어 있어 등급 상향이 통과한다.
+            if not any(norm(c.split("—")[0]) == want for c in row):
+                bad.append("%s : 잠근 판정 [%s] 과 같은 판정 칸이 표에 없다 — 판정을 바꿨는가?"
+                           % (pid, p.get("판정", "")))
 
         # 반증된 예측의 기록이 사라졌는지
         if p.get("판정") == "반증" and "반증" not in doc:
