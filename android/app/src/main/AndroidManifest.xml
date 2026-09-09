@@ -3,8 +3,16 @@
 
     <!-- 인터넷 권한을 요청하지 않는다. 게임은 서버 통신을 하지 않는다 (검사 C3). -->
 
+    <!-- 자동 백업을 끈다. 켜져 있으면(기본값 true) 안드로이드가 재설치 때
+         WebView 의 localStorage 까지 복원해서, **앱을 지웠다 깔아도 진행이 남는다.**
+         2026-09-09 실기 제보: "삭제하고 재설치해도 전 진행상황이 저장되어 있다".
+         시험할 때 초기 상태를 만들 수 없으면 사망 화면·초반 밸런스를 못 본다.
+         대가: 기기를 바꾸면 진행이 따라오지 않는다. M1 에는 클라우드 저장이 없으므로
+         어차피 없던 기능이고, 우연히 생긴 동작이지 설계한 것이 아니었다. -->
+
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"

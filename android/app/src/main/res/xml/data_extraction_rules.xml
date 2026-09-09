@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ 용. allowBackup="false" 와 같은 뜻을 새 방식으로도 적는다.
+     클라우드 백업도, 기기 간 전송도 하지 않는다. 진행은 이 기기에만 남는다. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+    </device-transfer>
+</data-extraction-rules>
