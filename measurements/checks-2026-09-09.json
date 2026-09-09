@@ -1,7 +1,7 @@
 {
-  "ran_at": "2026-09-09T18:10:45",
+  "ran_at": "2026-09-09T18:33:07",
   "blocking": 0,
-  "warn": 1,
+  "warn": 0,
   "skip": 0,
   "results": [
     {
@@ -131,9 +131,9 @@
       "priority": 1
     },
     {
-      "status": "warn",
+      "status": "ok",
       "detail": [
-        "wbs-M1.html : 원본 wbs-M1.md 이 바뀌었다. 뷰를 다시 만들고 sha256 을 갱신하라"
+        "뷰 1개가 원본과 일치"
       ],
       "check": "c8_view_freshness.py",
       "name": "뷰(HTML)가 원본 문서와 어긋났는지",
