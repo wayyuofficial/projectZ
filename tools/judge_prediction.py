@@ -42,14 +42,28 @@ def h(t):
     return hashlib.sha256(t.encode("utf-8")).hexdigest()[:16]
 
 
+def norm_id(s):
+    """′ ″ ‴ 는 터미널에서 치기 어렵다. ' '' ''' 로 쳐도 같은 id 로 본다 (2026-09-11 지시 #65)."""
+    return s.replace("‴", "'''").replace("″", "''").replace("′", "'")
+
+
 def main(argv):
+    # --why "근거" 를 명령줄에 붙이면 근거 프롬프트를 생략한다 (이름은 여전히 사람이 친다).
+    # 여러 명령을 한 번에 붙여 넣으면 프롬프트가 다음 줄을 입력으로 삼켜 엉킨다 — 한 줄씩 실행한다.
+    why_arg = None
+    if "--why" in argv:
+        i = argv.index("--why")
+        why_arg = argv[i + 1] if i + 1 < len(argv) else None
+        del argv[i:i + 2]
     if len(argv) != 3 or argv[2] not in ALLOWED:
-        print("쓰는 법: python tools/judge_prediction.py <예측id> <성립|부분 성립|반증>")
+        print("쓰는 법: python tools/judge_prediction.py <예측id> <성립|부분 성립|반증> [--why \"근거\"]")
         return 1
     pid, verdict = argv[1], argv[2]
 
     lock = json.load(io.open(LOCK, encoding="utf-8"))
-    rows = [p for p in lock.get("예측", []) if p.get("id") == pid]
+    rows = [p for p in lock.get("예측", []) if norm_id(p.get("id", "")) == norm_id(pid)]
+    if rows:
+        pid = rows[0]["id"]
     if len(rows) != 1:
         print("잠금 파일에 id %s 가 %d개다. 중단." % (pid, len(rows)))
         return 1
@@ -78,7 +92,7 @@ def main(argv):
 
     try:
         who = input("판정하는 사람의 이름을 적는다 (빈 줄이면 중단): ").strip()
-        why = input("근거를 한 줄로 적는다 (측정 파일 이름 등. 빈 줄이면 중단): ").strip() if who else ""
+        why = (why_arg or "").strip() if why_arg else (input("근거를 한 줄로 적는다 (측정 파일 이름 등. 빈 줄이면 중단): ").strip() if who else "")
     except (EOFError, KeyboardInterrupt):
         print("\n중단했다. 아무것도 바꾸지 않았다.")
         return 2
