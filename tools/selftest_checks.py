@@ -125,6 +125,11 @@ def main():
             _sc = io.open(scope, encoding="utf-8").read()
             w(scope, _sc.replace("SCOPE_MAX_STATS = 5", "SCOPE_MAX_STATS = 4"))
 
+        # c18: 곡선 밖 기록을 가장 새 것으로 심는다 — 도달 밖 21개, 벽 비 9, 골짜기 0.1 이면 warn 이 나야 한다
+        p = os.path.join(ROOT, "measurements", "balance-M2-_selftest.json")
+        w(p, '{"벽": true, "도달_밖": [10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30], "벽비": {"5": 9.0}, "골짜기": {"5": 0.1}}')
+        os.utime(p, (_future, _future)); made.append(p)
+
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
         shutil.copy2(canon, backup); made.append(backup)
@@ -149,6 +154,7 @@ def main():
             ("c15_prediction_lock.py", ("fail",)),
             ("c16_port_sync.py", ("fail",)),
             ("c17_exemplar_regression.py", ("fail",)),
+            ("c18_curve.py", ("warn",)),
         ]
 
         bad = []
