@@ -73,6 +73,7 @@ def report(stay, reach, seeds, wall):
 
 
 def main(argv):
+    global WALL_ON
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--no-wall", action="store_true")
@@ -85,7 +86,6 @@ def main(argv):
     if a.selftest:
         # R003: 이 검사가 떨어질 수 있는가. 보상 성장을 1.20 으로 낮추면 뒤 구역이 곡선 밖으로 나가야 한다.
         keep = SP.ZONE_RW_G; SP.ZONE_RW_G = 1.20
-        global WALL_ON
         WALL_ON = False
         try:
             stay, reach = measure(list(range(1, 6)), wall=False, max_min=600)
@@ -100,7 +100,6 @@ def main(argv):
     seeds = list(range(1, a.seeds + 1))
     if a.rw:
         SP.ZONE_RW_G = a.rw
-    global WALL_ON
     WALL_ON = not a.no_wall
     stay, reach = measure(seeds, wall=not a.no_wall, max_min=a.max_min)
     rows, outside, walls = report(stay, reach, seeds, not a.no_wall)
