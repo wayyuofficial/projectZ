@@ -40,7 +40,12 @@
   // --- 망가진 저장 ---
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 999 }));
   load();
-  chk('구버전 저장은 초기화', G.parts === 0 && G.zone === 1, G.parts + '/' + G.zone);
+  chk('모르는 버전 저장은 초기화', G.parts === 0 && G.zone === 1, G.parts + '/' + G.zone);
+
+  // M2: v1(M1) 저장본은 초기화하지 않고 v2 로 끌어올린다 — 사람의 15분이 날아가면 안 된다
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 1, bestZone: undefined }));
+  load();
+  chk('v1 저장본은 v2 로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.owned.rifle === 2, G.v + '/' + G.zone + '/' + G.bestZone);
 
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();

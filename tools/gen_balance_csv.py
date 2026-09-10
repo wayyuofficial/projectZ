@@ -13,7 +13,7 @@ import io, os, re, sys, math
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-HEADER = "구역,좀비HP,좀비DPS,처치보상_부품,필요DPS_3초컷,필요공격레벨,누적업그레이드비용"
+HEADER = "구역,좀비HP,좀비DPS,처치보상_부품,필요DPS_3초컷,필요공격레벨,누적업그레이드비용,처치수"
 
 
 def read_consts(root):
@@ -35,6 +35,9 @@ def read_consts(root):
         "ZONE_RW_G": num(r"ZONE_RW_G\s*=\s*([\d.]+)"),
         "DPS_RATIO": num(r"const ZOMBIE_DPS_RATIO\s*=\s*([\d.]+)"),
         "ZONES": int(num(r"const ZONE_COUNT\s*=\s*(\d+)")),
+        "WALL_EVERY": int(num(r"const WALL_EVERY\s*=\s*(\d+)")),   # M2 벽 (처치 수)
+        "WALL_KILLS": int(num(r"WALL_KILL_MULT\s*=\s*(\d+)")),
+        "KILLS": int(num(r"const KILLS_PER_ZONE\s*=\s*(\d+)")),
     }
     m = re.search(r"\{\s*id:\s*'atk'.*?base:\s*([\d.]+).*?growth:\s*([\d.]+)"
                   r".*?cost0:\s*([\d.]+).*?costG:\s*([\d.]+)", t, re.S)
@@ -50,13 +53,14 @@ def rows(c):
     for z in range(1, c["ZONES"] + 1):
         hp = c["ZONE_HP0"] * c["ZONE_HP_G"] ** (z - 1)
         dps = hp * c["DPS_RATIO"]
-        rw = c["ZONE_RW0"] * c["ZONE_RW_G"] ** (z - 1)
+        kills = c["KILLS"] * (c["WALL_KILLS"] if z % c["WALL_EVERY"] == 0 else 1)   # M2 벽 — 처치 수
+        rw = c["ZONE_RW0"] * c["ZONE_RW_G"] ** (z - 1) * c["KILLS"] / kills   # M2 벽: 처치당 보상 ÷3
         need = hp / 3.0
         lvl = math.log(need / c["ATK_BASE"]) / math.log(c["ATK_GROWTH"])
         lvl = max(0.0, lvl)
         g = c["ATK_COSTG"]
         cost = c["ATK_COST0"] * (g ** lvl - 1) / (g - 1)
-        out.append((z, round(hp), round(dps), round(rw, 1), round(need), round(lvl), round(cost)))
+        out.append((z, round(hp), round(dps), round(rw, 1), round(need), round(lvl), round(cost), kills))
     return out
 
 

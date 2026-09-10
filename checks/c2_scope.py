@@ -11,7 +11,7 @@
 2026-09-08 개정: 오토배틀러 어휘(UNIT_TYPES/WAVE_COUNT/STAR_MAX)에서
 방치형 어휘로 교체. 지시 #8·#9.
 """
-NAME = "스코프 상한 (무기6 / 구역10 / 등급3 / 능력치5)"
+NAME = "스코프 상한 (canon/10-scope.md 의 값 — 숫자를 여기 적지 않는다. 18차·M2 에서 두 번 낡았다)"
 PRIORITY = 1
 
 import io, os, re, glob

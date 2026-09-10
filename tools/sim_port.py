@@ -76,6 +76,7 @@ TIER_MAX = int(num("TIER_MAX"))
 MAX_ONSCREEN_ZOMBIES = int(num("MAX_ONSCREEN_ZOMBIES"))
 ZONE_HP0, ZONE_HP_G = num("ZONE_HP0"), num("ZONE_HP_G")
 ZONE_RW0, ZONE_RW_G = num("ZONE_RW0"), num("ZONE_RW_G")
+WALL_EVERY, WALL_KILL_MULT = int(num("WALL_EVERY")), int(num("WALL_KILL_MULT"))   # M2 벽 (처치 수)
 ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
 KILLS_PER_ZONE = int(num("KILLS_PER_ZONE"))
 BOSS_EVERY = int(num("BOSS_EVERY"))
@@ -151,7 +152,7 @@ MIRRORED = {
     "applyOffline": "b7cab65995bd9534",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "8d039f6d485f14d2",
+    "buildButtons": "5177d83c83d173b2",
     "buyStat": "2b0b94e9a15bcaaa",
     "buyWeapon": "0c1bb6b5a33eb755",
     "damageZombie": "9dfa910d5cf6855b",
@@ -160,13 +161,13 @@ MIRRORED = {
     "freshState": "34dde8559f5a60a9",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "78764110ba1a3fdd",
-    "isBossKill": "4e70f4e006a8ab2a",
-    "killZombie": "0aaaf8a5b275c51b",
+    "isBossKill": "e461a4a51bbb69c5",
+    "killZombie": "e55d18fdc4fe4b6c",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "46bb14aa20673823",
     "maxHP": "85e54826f897f7c7",
-    "migrate": "e90d09eade56be4f",
+    "migrate": "a04d77f10e8a6d88",
     "onDeath": "589239f3a352fe82",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "playerDPS": "6e388f9e36329ce1",
@@ -176,14 +177,14 @@ MIRRORED = {
     "statCost": "3915c9b212b37571",
     "statDef": "e7ad6087978fd6ec",
     "statOf": "bd53f6155e340e8d",
-    "stepCombat": "722255f824e77e4b",
+    "stepCombat": "477e00f37b335b3e",
     "tabRowY": "d001ac81a8afa161",
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "0a8ae8face6a1394",
-    "weaponUpgradeCost": "d865ed90770874b1",
+    "weaponUpgradeCost": "57e23cd55b81ff51",
     "zoneDPS": "9abab3ae0b004352",
     "zoneHP": "eafea50cbb2f5af6",
-    "zoneReward": "60bede52ceeb226c",
+    "zoneReward": "1a11949b7141abd1",
 }
 
 
@@ -364,16 +365,25 @@ class Sim(object):
         return Sim.zoneHP(z) * ZOMBIE_DPS_RATIO
 
     @staticmethod
+    def zoneKills(z):
+        return KILLS_PER_ZONE * (WALL_KILL_MULT if z % WALL_EVERY == 0 else 1)   # M2 벽: 처치 수만
+
+    @staticmethod
     def zoneReward(z):
-        return ZONE_RW0 * (ZONE_RW_G ** (z - 1))
+        return ZONE_RW0 * (ZONE_RW_G ** (z - 1)) * KILLS_PER_ZONE / Sim.zoneKills(z)   # M2 벽: 처치당 보상 ÷3
 
     @staticmethod
     def isBossKill(z, idx):
-        return (z % BOSS_EVERY == 0) and idx == KILLS_PER_ZONE - 1
+        return (z % BOSS_EVERY == 0) and idx == Sim.zoneKills(z) - 1
+
+    def weaponUnlocked(self, w):
+        return w.get("unlock", 1) <= self.G.get("bestZone", 1)
 
     def weaponUpgradeCost(self, wid):
         w = self.weaponOf(wid)
         tier = self.G["owned"].get(wid, 0)
+        if not self.weaponUnlocked(w):
+            return None
         if tier == 0:
             return w["cost"]
         if tier >= TIER_MAX:
@@ -462,7 +472,13 @@ class Sim(object):
                 cost = self.statCost(s["id"])
                 put_row("stat", "buy", self.G["parts"] >= cost, s["id"])
         else:
+            locked_shown = [False]
             for w in WEAPON_TYPES:
+                if not self.weaponUnlocked(w):
+                    if not locked_shown[0]:
+                        locked_shown[0] = True
+                        put_row("weapon_locked", "ghost", False, w["id"])
+                    continue
                 tier = self.G["owned"].get(w["id"], 0)
                 cost = self.weaponUpgradeCost(w["id"])
                 maxed = tier >= TIER_MAX
@@ -547,7 +563,7 @@ class Sim(object):
         self.G["parts"] += gain
         self.G["totalKills"] += 1
         self.killIndex += 1
-        if self.killIndex >= KILLS_PER_ZONE:
+        if self.killIndex >= self.zoneKills(self.G["zone"]):
             self.killIndex = 0
             if self.G["zone"] < ZONE_COUNT:
                 self.G["zone"] += 1
@@ -562,7 +578,7 @@ class Sim(object):
         self.spawnTimer -= dt
         ttk = self.zoneHP(self.G["zone"]) / max(1e-6, self.playerDPS())
         spawnGap = min(2.0, max(0.35, ttk * 0.9))
-        remaining = KILLS_PER_ZONE - self.killIndex
+        remaining = self.zoneKills(self.G["zone"]) - self.killIndex   # M2: 벽 구역은 처치 수 x3
         if self.spawnTimer <= 0 and len(self.zombies) < min(MAX_ONSCREEN_ZOMBIES, remaining):
             self.spawnZombie()
             self.spawnTimer = spawnGap

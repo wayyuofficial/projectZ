@@ -40,6 +40,8 @@ def run(root):
         rwg = num(r"ZONE_RW_G\s*=\s*([\d.]+)", "ZONE_RW_G")
         dpr = num(r"const ZOMBIE_DPS_RATIO\s*=\s*([\d.]+)", "ZOMBIE_DPS_RATIO")
         zones = int(num(r"const ZONE_COUNT\s*=\s*(\d+)", "ZONE_COUNT"))
+        wall_every = int(num(r"const WALL_EVERY\s*=\s*(\d+)", "WALL_EVERY"))     # M2 벽: 처치당 보상 ÷ 처치배수
+        wall_kills = num(r"WALL_KILL_MULT\s*=\s*(\d+)", "WALL_KILL_MULT")
     except ValueError as e:
         return {"status": "error", "detail": [str(e)]}
 
@@ -57,9 +59,9 @@ def run(root):
             bad.append("%d번째 행의 칸이 모자라다: %s" % (i + 1, line))
             continue
         z = i + 1
-        want_hp = round(hp0 * hpg ** (z - 1))
+        want_hp = round(hp0 * hpg ** (z - 1))   # M2 벽은 HP 가 아니라 처치 수라 표의 HP 는 기본 곡선이다
         want_dps = round(hp0 * hpg ** (z - 1) * dpr)
-        want_rw = round(rw0 * rwg ** (z - 1), 1)
+        want_rw = round(rw0 * rwg ** (z - 1) / (wall_kills if z % wall_every == 0 else 1), 1)   # M2 벽
         try:
             got_hp, got_dps, got_rw = int(cols[1]), int(cols[2]), float(cols[3])
         except ValueError:
