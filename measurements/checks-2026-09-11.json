@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-11T00:15:57",
+  "ran_at": "2026-09-11T00:47:48",
   "blocking": 0,
   "warn": 0,
   "skip": 0,
@@ -151,7 +151,7 @@
     {
       "status": "ok",
       "detail": [
-        "측정 기록 최신: balance-2026-09-08.json, storage-2026-09-10.json"
+        "측정 기록 최신: balance-extend-2026-09-11.json, storage-2026-09-10.json"
       ],
       "check": "c9_measurement_freshness.py",
       "name": "게임을 고치고 측정을 다시 안 했는지",
