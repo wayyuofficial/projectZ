@@ -1,7 +1,7 @@
 <title>좀비 RPG M1 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M1.md
-     source-sha256: 20054df1d515d3de217c79afb807d90898e10465ffe23a96007f0097120ace64
+     source-sha256: 867234b7c6d6e0122928f0b46ebb737781e81ebb66e46b496ebf397f6bc56672
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -227,9 +227,9 @@
   </header>
 
   <div class="status">
-    <p><strong>18차 전수 + 19·20차 빠른: 통과 26 · 실패 0 · 미검증 1.</strong>
-    사람이 빌드 <span class="mono">9b97c4d9</span> 를 폰에서 확인해 <span class="mono">8.1</span>·<span class="mono">10.2</span> 가 닫혔다.
-    남은 것: <strong><span class="mono">10.1</span> 미검증</strong> &mdash; <strong>내 요청서가 판정 문구 &#9317;의 절반("구역이 하나 내려간다")을 안 물었다.</strong> 한 줄만 더 확인하면 닫힌다. 그 뒤 마감 전 전수 1회.</p>
+    <p><strong>21차 전수(마감 전): 통과 27 · 실패 0 · 미검증 0.</strong> 27개 전부 이번 회차에 직접 실행했고 회귀 0, 판정 문구 변경 0줄.
+    검증자 판단: <strong>"마감 조건은 충족됐다 &mdash; 판정 문구 기준으로 남은 것이 없다."</strong>
+    <strong>마감 도장은 사람이 찍는다.</strong> 아래 <a href="#since">알고 찍는 것 셋</a>을 보고 찍는다.</p>
   </div>
 
   <div class="tiles">
@@ -238,9 +238,9 @@
     <div class="tile"><span class="k">기한</span><span class="v mono">14<small>일</small></span></div>
     <div class="tile"><span class="k">단계</span><span class="v mono">10</span></div>
     <div class="tile"><span class="k">작업</span><span class="v mono">27</span></div>
-    <div class="tile"><span class="k">통과</span><span class="v mono">26</span></div>
+    <div class="tile"><span class="k">통과</span><span class="v mono">27</span></div>
     <div class="tile"><span class="k">실패</span><span class="v mono">0</span></div>
-    <div class="tile"><span class="k">미검증</span><span class="v mono">1</span></div>
+    <div class="tile"><span class="k">미검증</span><span class="v mono">0</span></div>
   </div>
 
   <section>
@@ -271,7 +271,7 @@
 
   <section>
     <h2><span class="n">V</span>검증자 판정</h2>
-    <p class="note">만든 쪽의 "완료" 주장을 쓰지 않는다. 별도 인격(<span class="mono">.claude/agents/verifier.md</span>)이 <strong>직접 실행해서</strong> 판정했다. <strong>18차 전수</strong> 위에 19차·20차 빠른 회차의 범위 안 판정을 덧씌웠다 &mdash; 회차 칸이 출처다. 빠른 회차 범위 밖은 18차가 직접 실행한 판정이다. 근거: <span class="mono">verify-2026-09-10-18/19/20.json</span></p>
+    <p class="note">만든 쪽의 "완료" 주장을 쓰지 않는다. 별도 인격(<span class="mono">.claude/agents/verifier.md</span>)이 <strong>직접 실행해서</strong> 판정했다. <strong>21차 전수</strong>(27개 전부, 마감 전), 이전 회차와 병합하지 않았다. 근거: <span class="mono">measurements/verify/verify-2026-09-10-21.json</span></p>
     <div class="chart">
       <div class="axis"><div></div><div class="ticks"><span>0</span><span>전체 통과</span></div><div></div></div>
       <div class="bar-row"><div class="name"><em>1</em>기반</div><div class="track"><div class="fill" style="width:100%;background:var(--ok)"></div></div><div class="num">4/4</div></div>
@@ -283,38 +283,38 @@
       <div class="bar-row"><div class="name"><em>7</em>UI / HUD</div><div class="track"><div class="fill" style="width:100%;background:var(--ok)"></div></div><div class="num">3/3</div></div>
       <div class="bar-row"><div class="name"><em>8</em>밸런스 1회</div><div class="track"><div class="fill" style="width:100%;background:var(--ok)"></div></div><div class="num">2/2</div></div>
       <div class="bar-row"><div class="name"><em>9</em>검사 연결</div><div class="track"><div class="fill" style="width:100%;background:var(--ok)"></div></div><div class="num">2/2</div></div>
-      <div class="bar-row"><div class="name"><em>10</em>마무리</div><div class="track"><div class="fill" style="width:50%;background:var(--signal)"></div></div><div class="num">1/2</div></div>
+      <div class="bar-row"><div class="name"><em>10</em>마무리</div><div class="track"><div class="fill" style="width:100%;background:var(--ok)"></div></div><div class="num">2/2</div></div>
     </div>
     <div class="tablewrap"><table>
-      <thead><tr><th>#</th><th>판정</th><th>회차 · 15차 대비</th><th>근거 &mdash; 검증자가 실행한 것</th></tr></thead>
+      <thead><tr><th>#</th><th>21차 판정</th><th>15차 대비</th><th>근거 &mdash; 검증자가 실행한 것</th></tr></thead>
       <tbody>
-        <tr><td>1.1</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">① 헤드리스 Chrome 152 + CDP Emulation.setDeviceMetricsOverride 로 기기 26종을 실제로 걸어 잼(실오리진 http://127.0.0.1:8123, 페이지 안에서 서버가 준 파일을 fetch+SHA-256 해 60,735바이트/9b97c4d9ac5e8ad9 = 작업본 확인). 화면비 1.333~2.…</td></tr>
-        <tr><td>1.2</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">브라우저에서 requestAnimationFrame 을 끊고 frame(now) 에 합성 타임스탬프를 먹여 실시간 60초를 2.5/4/10/30/60/120fps 로 돌렸다(Math.random 을 LCG 로 고정). 4·10·30·60·120fps 에서 처치 6 · 부품 71.2 · 구역 2 로 전부 동일(60fps 기준 차이 0). s…</td></tr>
-        <tr><td>1.3</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">실오리진 + 진짜 localStorage + 진짜 페이지 이동. parts 4242.5 / zone 7 / lv{atk3,spd2} / weapon rifle 저장 → 같은 오리진 다른 경로로 나갔다 다시 열기 → 전부 복원, saveError·loadError 둘 다 null. 저장본 v 를 99 로 위조(게임 페이지 밖에서 써야 한다 …</td></tr>
-        <tr><td>1.4</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">브라우저에서 상수 직접 읽음: WEAPON_TYPES 6 · ZONE_COUNT 10 · TIER_MAX 3 · STATS 5(atk/spd/hp/reg/inc) · MAX_ONSCREEN_ZOMBIES 8. python checks/run.py 에서 c2_scope.py [ OK ] &#x27;게임 1개 상한 이내&#x27;, 건너뜀 0. canon/10…</td></tr>
-        <tr><td>2.1</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">브라우저 stepCombat 300초(18,000스텝, LCG seed5, 구역6, 불사): 동시 좀비 최대 8 = MAX_ONSCREEN_ZOMBIES, 상한 초과 프레임 0. 멈춘 좀비의 x 집합 = [142,160,178,196,214,232,250,268] = CONTACT_X 142 + i x ZOMBIE_GAP 18 (i=0..…</td></tr>
-        <tr><td>2.2</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">브라우저에서 damageZombie 를 감싸 좀비에게 실제로 들어간 HP 를 전부 합산했다(게임 파일 무수정, 페이지 안에서만 감쌌다). 구역6·기본스펙(표시 DPS 5): 60초 295 / 300초 1495 / 600초 2995 / 1800초 8995 — 부족분이 항상 정확히 5.0 으로 시간이 늘어도 안 커진다(= 표적이 새로 생길 때…</td></tr>
-        <tr><td>2.3</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">브라우저(LCG, 불사, 구역 고정): 처치할 때마다 부품 증가액이 구역1 4.000000 x6회 / 구역5 11.4244 x6회 / 구역10 42.417997 — 각각 이론값 zoneReward(z) x rewardMult() x statOf(&#x27;inc&#x27;) 와 소수점까지 일치.</td></tr>
-        <tr><td>2.4</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">브라우저(LCG seed3, 구역5 시작, 120초). t=18.083초 hp 0 → 구역 5→4 자동 후퇴, hp=maxHP 100 회복, reviveOffer 생성. 그때 buildButtons 의 tone = [on,off,buy,buy,buy,buy,buy,ad,ad] — scrim 없음, 탭·업그레이드·광고 버튼이 전부 살아 있다…</td></tr>
-        <tr><td>3.1</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">360x740@DPR3 에서 캔버스에 진짜 PointerEvent(pointerdown/up)를 CSS 좌표 (180.0, 462.7) 로 디스패치. 공격력 Lv.0→Lv.1, 부제 &#x27;5 ▸ 5.6&#x27;→&#x27;5.6 ▸ 6.3&#x27;, 비용 10→14, playerDPS 5→5.6, 부품 1,000,000→999,990 이 그 자리에서 갱신됐다.</td></tr>
-        <tr><td>3.2</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">브라우저 실측 playerDPS: pipe 5 / rifle 7.25 / shotgun 9.5 / flamer 13 / crossbow 17 / mine 22.5 — 6종 전부 다르다. c2_scope.py [ OK ].</td></tr>
-        <tr><td>3.3</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">무기6 x 등급3 = 18조합을 실제로 그려 생존자 무기 영역(25,200 물리픽셀)을 getImageData 로 153쌍 전수 비교: 완전히 같은 쌍 0, 가장 가까운 쌍(pipe_T1 vs pipe_T2)도 480픽셀 차. tierTint 결과 18개 전부 서로 다른 색.</td></tr>
-        <tr><td>3.4</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">진짜 PointerEvent 로 &#x27;공격력&#x27; 줄을 누른 채 frame() 을 60fps 로 4초 돌렸다(부품 1e40). 누적 구매 1.0초 8회 / 2.0초 62회 / 2.5초 95회 / 3.0초 128회 / 4.0초 195회 — 3초 안에 100회를 넘는다. holdBtn 유지됨.</td></tr>
-        <tr><td>4.1</td><td><span class="verdict ok">통과</span></td><td class="dep">19차</td><td class="judge">python tools/sim_port.py 로 zoneHP/zoneDPS/zoneReward 를 구역 1~10 전부 뽑아 plans/balance-zones.csv 10행과 직접 대조 — 어긋난 행 0 (구역1 15.0/2.1/4.0 vs 15/2/4.0, 구역5 86.5801/12.1212/11.4244 vs 87/12/11.4, 구역…</td></tr>
-        <tr><td>4.2</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">구역 1~10 의 아레나(1,056,240 물리픽셀)를 실제로 그려 getImageData 로 비교: 인접 구역 9쌍 전부 변한 픽셀 99.41%, 평균 RGB 차 5.13~15.29. 45쌍 전수에서 완전히 같은 쌍 0.</td></tr>
-        <tr><td>4.3</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">보스는 구역 5·10 의 killIndex 9 에서만 나온다(1~4,6~9 는 0개). 실제로 스폰해 재니 HP = zoneHP x 3.000000 (구역5 259.7403/86.5801, 구역10 2323.7949/774.5983). 20초 관찰: 돌진 시작 4.000/8.017/12.033/16.050초 = 주기 4.017초(한 프레임…</td></tr>
-        <tr><td>5.1</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">브라우저에서 G.lastSeen 을 과거로 심고 applyOffline() 을 직접 호출: 30초 null / 59초 null / 61초 gain 20.1227 capped 61 / 1시간 1187.5663 / 7시간59분55초 9498.8809 cappedHit false / 8시간10분 gain 9500.5303 capped 28800…</td></tr>
-        <tr><td>5.2</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">3시간 전 lastSeen 으로 applyOffline → offlineReport 생성(elapsed 10800, capped 10800, gain 3562.6988). buildButtons 가 만든 버튼이 3개(scrim/ad/ghost)뿐이고 업그레이드 버튼 0 — 목록 자리를 눌러도 뒤 버튼이 안 잡힌다. 실제로 그려 PNG 로 …</td></tr>
-        <tr><td>6.1</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">브라우저에서 adReward 3종 실행. boost: boostUntil = 지금+10.0000분, rewardMult() 2. revive: 제안 구역 7 로 복귀, hp 100 = maxHP, 제안 해제. offline2x: 부품 100→150(gain 50 만큼 더 줌), doubled true. checks c3_no_network…</td></tr>
-        <tr><td>7.1</td><td><span class="verdict ok">통과</span></td><td class="dep">18차 · <strong>실패 → 통과</strong></td><td class="judge">hitButton() 을 실제로 호출해 &#x27;눌리는 y 구간&#x27;을 이분법(60회)으로 직접 쟀다 — 계산이 아니라 실행이다. 기기 24종(폭 280~1024) x 탭 2종 x 스크롤 40+18개 지점 x 부활제안 유무 + 오프라인 팝업 2종 = 설정 2,952개 / 탭대상 표본 23,082개에서 29 미달 0건. 최소 29.000000(잘린 목…</td></tr>
-        <tr><td>7.2</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">2026-09-10 지시 #50 으로 사람이 바꾼 문구(&#x27;탭 2회 이내, 스크롤은 탭이 아니다&#x27;) 기준. 브라우저에서 기기 21종 x 업그레이드 11종 = 231조합을 돌려, 각 줄마다 listMax 를 400등분한 스크롤 위치를 훑으며 hitButton 이 그 줄을 돌려주는 자리가 있는지 확인했다. 도달 불가 0건 · 최대 탭 수 2(s…</td></tr>
-        <tr><td>7.3</td><td><span class="verdict ok">통과</span></td><td class="dep">18차</td><td class="judge">브라우저 fmt() 실측: 999→999, 1000→1K, 9999→10K, 49000→49K, 49999→50K, 999999→1M, 1234567→1.23M, 1e9→1B, 1.5e12→1.5T.</td></tr>
-        <tr><td>8.1</td><td><span class="verdict ok">통과</span></td><td class="dep">20차</td><td class="judge">사람 실측 기록 measurements/device-2026-09-10.json 의 빌드 도장을 내가 실행으로 대조: python -c hashlib → game/index.html 60,735바이트 sha256 9b97c4d9ac5e8ad9e75ceb05... (기록의 도장과 일치), zipfile 로 zombie-survival-deb…</td></tr>
-        <tr><td>8.2</td><td><span class="verdict ok">통과</span></td><td class="dep">19차 · <strong>실패 → 통과</strong></td><td class="judge">판정 문구 &#x27;예측 B1·B2·B3 판정 가능&#x27; 을 내가 직접 재서 확인했다. (a) tools/sim_port.auto_run 으로 시드 1~20 을 다시 돌림: 구역5 도달 중앙 6.55분(범위 6.5~7.5), 총 중앙 27.45분, 20/20 완주, 10분 넘게 정체한 구역 0/20, 한 구역 최대 체류 6.8분(시드1 구역9). (…</td></tr>
-        <tr><td>9.1</td><td><span class="verdict ok">통과</span></td><td class="dep">19차</td><td class="judge">python tools/selftest_checks.py → 17줄 전부 &#x27;[ OK ] 기대 == 실제&#x27;(c0·c1·c2·c3·c5·c6·c4·c7·c8·c9·c10·c11·c12·c13·c15·c16·c17), 마지막 줄 &#x27;자가진단 통과: 검사 17개 전부 위반을 잡아낸다.&#x27;, 종료코드 0. c2_scope.py 도 fail 을 제대로 …</td></tr>
-        <tr><td>9.2</td><td><span class="verdict ok">통과</span></td><td class="dep">20차</td><td class="judge">python checks/run.py → 마지막 줄 &#x27;차단 0 / 경고 0 / 건너뜀 0 / 전체 17&#x27;, 종료코드 0, 17개 전부 [ OK ] (SKIP 0). ls checks/*.py → 18개 = 검사 17 + run.py. 예측 P9 판정은 plans/plan-M1.md:38 에 &#x27;반증됨 — 9개 전부 통과, 단 검사를 알고 쓴…</td></tr>
-        <tr><td>10.1</td><td><span class="verdict un">미검증</span></td><td class="dep">20차</td><td class="judge">확인된 것: (1) 빌드 도장 — 기록 measurements/device-2026-09-10.json 의 9b97c4d9ac5e8ad9 가 현재 game/index.html sha256 과 일치하고 APK(zombie-survival-debug.apk 46,612바이트) 의 assets/index.html 이 그 파일과 바이트 동일(내가…</td></tr>
-        <tr><td>10.2</td><td><span class="verdict ok">통과</span></td><td class="dep">20차</td><td class="judge">exemplars/good/2026-09-10-M1-first-playable.html 50,577바이트 sha256 c15ff5522cc2a3b575c581cfac1b426a1f308a58358cf491f9993f77c06cea24 (내가 hashlib 로 계산) = .md 4행에 적힌 값과 완전 일치. .md 에 사람(wayyu) 원문…</td></tr>
+        <tr><td>1.1</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">① tools/sim_port.fit_game 로 폭 280~1196(4px 간격) x 화면비 1.333~2.778(0.005 간격) = 66,700 조합 스윕: 여백 최대 0.1651%(812x1086.5), 0.5% 초과 0건 — 남는 것은 cssW/cssH 정수 반올림(&lt;=0.5 CSS px)뿐이다. 헤드리스 Chrome(CDP Em…</td></tr>
+        <tr><td>1.2</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저에서 requestAnimationFrame 을 끊고 frame(now) 에 합성 타임스탬프를 먹여 실시간 60초를 2.5/4/10/30/60/120fps 로 돌렸다(Math.random 을 LCG 로 고정, seed 7). 여섯 프레임레이트 전부 처치 15 · 구역 2 · 부품 66.0000 으로 동일. hp 만 76.48~80.…</td></tr>
+        <tr><td>1.3</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">실오리진 + 진짜 localStorage + 진짜 페이지 이동. parts 4242.5 / zone 7 / lv{atk3,spd2} / weapon rifle / owned{pipe1,rifle2} / kills 4 를 save() → 저장 문자열 187바이트, saveError null → 같은 오리진의 다른 경로(/measurement…</td></tr>
+        <tr><td>1.4</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저에서 상수를 직접 읽음: WEAPON_TYPES 6 · ZONE_COUNT 10 · TIER_MAX 3 · STATS 5(atk/spd/hp/reg/inc) · MAX_ONSCREEN_ZOMBIES 8 · SAVE_VERSION 1. python checks/run.py → c2_scope.py [ OK ] &#x27;게임 1개 상한 이내&#x27;…</td></tr>
+        <tr><td>2.1</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저 stepCombat 300초(18,000스텝, LCG seed5, 구역6, 불사): 동시 좀비 최대 8 = MAX_ONSCREEN_ZOMBIES, 상한 초과 프레임 0. 8마리가 다 선 프레임의 x = [142,160,178,196,214,232,250,268] = CONTACT_X+i*ZOMBIE_GAP 이론값과 완전히 같다(대…</td></tr>
+        <tr><td>2.2</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저에서 damageZombie 를 페이지 안에서만 감싸 좀비에게 실제로 들어간 HP 를 합산했다(게임 파일 무수정). 구역6·기본스펙(표시 DPS 5): 60초 290 / 300초 1490 / 600초 2990 / 1800초 8990. 부족분이 항상 정확히 10 이라 구간 속도는 (8990-290)/(1800-60) = 5.0000 …</td></tr>
+        <tr><td>2.3</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저(LCG, 불사, 구역 고정)에서 killZombie 를 감싸 처치마다 부품 증가액을 쟀다: 구역1 4.000000 x6회 / 구역5 11.424400 x6회 / 구역10 42.417997 x3회 — 각각 이론값 zoneReward(z)*rewardMult()*statOf(&#x27;inc&#x27;) 와 소수점까지 같다.</td></tr>
+        <tr><td>2.4</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저(LCG seed3, 구역5 시작). t=19.817초에 hp 0 → 구역 5→4 자동 후퇴, hp = maxHP 100 회복, reviveOffer{zone:5} 생성. 그때 buildButtons 버튼 9개 tone=[on,off,buy,buy,buy,buy,buy,ad,ad], scrim 0개 — 막지 않는다. 120초 뒤 구…</td></tr>
+        <tr><td>3.1</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">CDP Input.dispatchMouseEvent 로 캔버스에 실제 포인터 입력(pointerdown/up)을 &#x27;공격력&#x27; 줄 중앙에 넣었다. 부품 1000 → 공격력 Lv.0→Lv.1, statCost 10→14(=ceil(10*1.322)), playerDPS 5→5.6, 부품 1000→990, 줄 라벨 &#x27;공격력 Lv.1&#x27; · 부제 &#x27;…</td></tr>
+        <tr><td>3.2</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저 실측 playerDPS: pipe 5 / rifle 7.25 / shotgun 9.5 / flamer 13 / crossbow 17 / mine 22.5 — 6종 전부 다르다. c2_scope.py [ OK ].</td></tr>
+        <tr><td>3.3</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">무기6 x 등급3 = 18조합을 실제로 그려 생존자 무기 영역(36,000 물리픽셀)을 getImageData 로 153쌍 전수 비교: 완전히 같은 쌍 0, 가장 가까운 쌍(pipe_T1 vs pipe_T2)도 480픽셀 차. tierTint 결과 18개 전부 서로 다른 색.</td></tr>
+        <tr><td>3.4</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">&#x27;공격력&#x27; 줄을 holdBtn 으로 잡고 frame() 을 60fps 로 4초 돌렸다(부품 1e40). 누적 구매 1.0초 8회 / 2.0초 64회 / 2.5초 97회 / 3.0초 131회 / 4.0초 197회 — 3초 안에 100회를 넘는다.</td></tr>
+        <tr><td>4.1</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">python tools/sim_port.py 의 zoneHP/zoneDPS/zoneReward 를 구역 1~10 전부 뽑아 plans/balance-zones.csv 10행과 직접 대조 — 어긋난 행 0 (구역1 15.0000/2.1000/4.0000 vs 15/2/4.0, 구역5 86.5801/12.1212/11.4244 vs 87/12…</td></tr>
+        <tr><td>4.2</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">구역 1~10 의 아레나(1,056,240 물리픽셀)를 실제로 그려 getImageData 로 비교: 인접 구역 9쌍 전부 변한 픽셀 99.41%, 45쌍 전수에서 완전히 같은 쌍 0.</td></tr>
+        <tr><td>4.3</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">보스는 구역 5·10 의 killIndex 9 에서만 나온다(구역 1~4,6~9 는 0개). 실제로 스폰해 재니 HP = zoneHP x 3.000000 (구역5 259.7403/86.5801, 구역10 2323.7949/774.5983). 20초 관찰: 돌진 시작 4.017 / 8.033 / 12.050 / 16.067초, 종료 4.81…</td></tr>
+        <tr><td>5.1</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저에서 G.lastSeen 을 과거로 심고 applyOffline() 직접 호출: 30초 null / 59초 null / 61초 capped 61 gain 40.6667 / 1시간 capped 3600 gain 2400 / 7시59분55초 capped 28795 cappedHit false / 8시간+5초 capped 28800 ca…</td></tr>
+        <tr><td>5.2</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">3시간 전 lastSeen 으로 applyOffline → offlineReport(elapsed 10800, gain 7200) 생성. buildButtons 가 만든 버튼이 3개(scrim/ad/ghost)뿐이고 업그레이드 버튼 0개. 그려서 PNG 로 직접 봤다 — &#x27;자리를 비운 동안 / 3시간 0분 동안 모았다 / +7.2K&#x27; 와 …</td></tr>
+        <tr><td>6.1</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저에서 adReward 3종 실행. boost: boostUntil = 지금+10.0000분, rewardMult() 2, boostActive true. revive: 제안 구역 7 로 복귀, hp 100 = maxHP, 제안 해제. offline2x: 부품 100→150(gain 50 만큼), doubled true. adLog=…</td></tr>
+        <tr><td>7.1</td><td><span class="verdict ok">통과</span></td><td class="dep"><strong>실패 → 통과</strong></td><td class="judge">게임의 hitButton() 을 실제로 호출해 &#x27;눌리는 y 구간&#x27;을 이분법(60회)으로 쟀다. 기기 22종 x 탭 2종 x 스크롤 21지점 + 부활제안 + 오프라인 팝업 2종 = 탭 대상 표본 7,511개. 세로 실기 범위(폭 280~1024)에서 29 미달 0건 · 최소 29.1667(360x740) / 30.0741(280x653). …</td></tr>
+        <tr><td>7.2</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저에서 기기 16종 x 업그레이드 11종 = 176조합. 각 줄마다 listMax 를 400등분한 스크롤 위치를 훑으며 게임의 hitButton 이 그 줄을 돌려주는 자리가 있는지 확인 — 도달 불가 0건, 최대 탭 수 2(능력치 탭은 1회, 무기 탭은 전환 1 + 줄 1). &#x27;스크롤은 탭이 아니다&#x27; 를 문구 그대로 적용.</td></tr>
+        <tr><td>7.3</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">브라우저 fmt() 실측: 999→999, 1000→1K, 9999→10K, 49000→49K, 49999→50K, 999999→1M, 1234567→1.23M, 1e9→1B, 1.5e12→1.5T, 12345→12.3K.</td></tr>
+        <tr><td>8.1</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">사람(wayyu)이 폰(LG V30)에서 처음부터 플레이해 잰 값이 measurements/device-2026-09-10.json 에 있다 — 구역1→5 3분(그때 능력치 7/5/6/5/4), 구역1→10 15분. 그 기록의 빌드 도장을 내가 실행으로 대조: python hashlib → game/index.html 60,735바이트 s…</td></tr>
+        <tr><td>8.2</td><td><span class="verdict ok">통과</span></td><td class="dep"><strong>실패 → 통과</strong></td><td class="judge">(a) 내가 tools/sim_port.auto_run 으로 시드 1~20 을 독립 재측정: 구역5 도달 중앙 6.55분(범위 6.5~7.5), 총 중앙 27.45분(26.6~29.0), 완주 20/20, 10분 넘게 정체한 구역 0개, 한 구역 최대 체류 6.80분(구역9). measurements/balance-2026-09-08.js…</td></tr>
+        <tr><td>9.1</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">python tools/selftest_checks.py → 17줄 전부 &#x27;[ OK ] 기대 == 실제&#x27;(c0 c1 c2 c3 c5 c6 c4 c7 c8 c9 c10 c11 c12 c13 c15 c16 c17), 마지막 줄 &#x27;자가진단 통과: 검사 17개 전부 위반을 잡아낸다.&#x27;, 종료코드 0. c2_scope.py 는 canon/10-sc…</td></tr>
+        <tr><td>9.2</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">python checks/run.py → 마지막 줄 &#x27;차단 0 / 경고 0 / 건너뜀 0 / 전체 17&#x27;, 종료코드 0, 17개 전부 [ OK ] (SKIP 0). ls checks/*.py → 18개 = 검사 17 + run.py. 예측 P9 판정은 plans/plan-M1.md 38행에 &#x27;반증됨 — 9개 전부 통과. 단 검사를 알고 쓴…</td></tr>
+        <tr><td>10.1</td><td><span class="verdict ok">통과</span></td><td class="dep"><strong>미검증 → 통과</strong></td><td class="judge">(1) 빌드 도장을 내가 실행으로 대조: game/index.html 60,735바이트 sha256 9b97c4d9ac5e8ad9e75ceb05... = measurements/device-2026-09-10.json 의 도장. zipfile 로 zombie-survival-debug.apk(46,612바이트)의 assets/index.h…</td></tr>
+        <tr><td>10.2</td><td><span class="verdict ok">통과</span></td><td class="dep">—</td><td class="judge">exemplars/good/2026-09-10-M1-first-playable.html 50,577바이트 sha256 c15ff5522cc2a3b575c581cfac1b426a1f308a58358cf491f9993f77c06cea24 (내가 hashlib 로 계산) = 같은 폴더 .md 에 적힌 값과 일치. .md 에 사람(wayyu)의 …</td></tr>
       </tbody>
     </table></div>
   </section>
@@ -338,6 +338,7 @@
         <tr><td>18차</td><td class="judge">전수. 통과 25 · 실패 1 · 미검증 1 &mdash; 남은 것 8.2 실패 · 10.1 미검증</td></tr>
         <tr><td>19차</td><td class="judge"><strong>사람이 B2 판정을 반증으로</strong> (<span class="mono">judge_prediction.py</span>, 판정이력에 이름·시각·tty). 검증자가 20시드를 직접 돌려 B1~B4 판정 5개가 잠금과 맞는 것을 확인 &rarr; <span class="mono">8.2</span> 통과. 경고: 그 도구의 사람 보증은 <span class="mono">isatty</span> 하나뿐이다 &mdash; <strong>통과 근거는 이력이 아니라 다시 잰 숫자</strong>다</td></tr>
         <tr><td>20차</td><td class="judge">사람이 빌드 <span class="mono">9b97c4d9</span> 를 폰에서 확인 &rarr; <span class="mono">8.1</span> <span class="mono">10.2</span> 통과. <strong><span class="mono">10.1</span> 은 미검증 &mdash; 내 요청서가 판정 문구 &#9317;의 절반("구역이 하나 내려간다")을 안 물었다.</strong> 사람 기록에 그 관측이 없고 포트는 폰이 아니다. 그리고 <span class="mono">8.1</span> 의 3분은 <strong>광고 부스트를 켠 플레이</strong>에서만 재현된다(부스트 없는 포트 6.6분) &mdash; 밸런스 표가 어느 쪽 시간대를 뜻하는지 문구에 없다</td></tr>
+        <tr><td>21차</td><td class="judge"><strong>전수, 27/27.</strong> 사람이 "구역 1 줄었다" 를 추가 관측해 <span class="mono">10.1</span> 이 닫혔다. 회귀 0, 기준 약화 없음. 검증자는 통과와 별개로 셋을 남겼다 &mdash; <span class="mono">7.1</span> 은 문구에 없는 조건(세로·폭 270) 위에서 여유 0 · <span class="mono">10.1</span> 의 근거는 사람의 말 · <span class="mono">8.1</span> 의 3분은 광고 부스트 켠 플레이. 포트 대조도 다시 했다: 파이썬 난수 20,000개를 브라우저에 먹여 60초 전투가 매초 동일</td></tr>
       </tbody>
     </table></div>
     <p class="note">9·10차가 같은 종류라 규칙으로 올렸다 &mdash; <span class="mono">rules/R003-실패가능성.md</span>:
@@ -357,28 +358,20 @@
 
 
   <section id="since">
-    <h2><span class="n">N</span>남은 것 1개</h2>
-    <p class="note">20차 뒤 남은 것이다. <strong>사람만 할 수 있는 판정</strong>이고, 이번엔 <strong>내 요청서가 덜 물은 것</strong>이 원인이다.</p>
-    <div class="tablewrap"><table>
-      <thead><tr><th>#</th><th>판정</th><th>검증자 근거</th><th>누가 · 어떻게</th></tr></thead>
-      <tbody>
-        <tr><td>10.1</td><td><span class="verdict un">미검증</span></td><td class="judge">확인된 것: (1) 빌드 도장 — 기록 measurements/device-2026-09-10.json 의 9b97c4d9ac5e8ad9 가 현재 game/index.html sha256 과 일치하고 APK(zombie-survival-debug.apk 46,612바이트) 의 assets/index.html 이 그 파일과 바이트 동일(내가 zipfile 로 열어 대조, True). git diff bec0c9c..HEAD -- game/ checks/ tools/ plans/ canon/ rules/ procedures/ android/ 가 비었으므로 폰에서 본 파일…</td><td class="judge"><strong>사람</strong> — 한 줄만 더: &quot;죽었을 때 HUD 의 구역 숫자가 1 줄었나&quot; (판정 ⑥의 앞 절반. 요청서가 이것을 안 물었다)</td></tr>
-      </tbody>
-    </table></div>
-
-    <h3>마감까지</h3>
+    <h2><span class="n">N</span>알고 찍는 것 셋</h2>
+    <p class="note">21차 검증자의 말: <strong>"통과가 위험이 없다는 뜻은 아니다. 마감 도장을 찍는 사람이 알고 찍어야 하는 것 셋을 남긴다."</strong> 판정 위반은 아니다.</p>
     <ul class="plain">
-      <li><strong>사람</strong> &mdash; "죽었을 때 HUD 의 구역 숫자가 1 줄었나" 한 줄. 요청서 3번이 버튼과 진행만 물었다 &mdash; 판정 문구를 요약해서 옮긴 내 실수(<span class="mono">cases/2026-09-10-15-요청서축약.md</span>).</li>
-      <li><strong>검증자</strong> &mdash; 그 답을 기록한 뒤 <strong>마감 전 전수 1회</strong> (절차 50: 마일스톤 마감 전 = 전수. 지금 20개 항목의 마지막 실행 판정이 18차다).</li>
+      <li><strong><span class="mono">7.1</span> 은 문구에 없는 조건 위에서만 참이다 — 여유 0.</strong> 세로 고정 · CSS 폭 270 이상에서만 판정선(29)을 넘는다. 폭 269 면 371개 중 369개 미달, 가로 모드는 실기(iPhone SE 25.78 · Fold 겉 22.56)가 미달. 잘린-줄 가지는 코드가 판정선 상수를 들고 있어 실패가 구조적으로 불가능(R003). <strong>판정 문구에 &quot;세로 · CSS 폭 270 이상&quot; 을 적어 넣는 것이 정직하다</strong> — 문구는 사람이 고친다.</li>
+      <li><strong><span class="mono">10.1</span> 의 최종 근거는 사람의 말이다.</strong> 검증자가 실행으로 확인한 것은 빌드 도장(= 현재 파일 = APK assets 바이트 동일)과 판정 7개 절 ↔ 관측 대조(빠진 절 0)뿐. ③ &quot;가상 뷰포트 980px 이 아니다&quot; 는 코드(meta viewport · <span class="mono">setUseWideViewPort</span>)를 읽어 확인했지 폰에서 잰 값이 아니다. 이 항목은 구조적으로 감사가 대체할 수 없다.</li>
+      <li><strong><span class="mono">8.1</span> 과 B1 이 서로 다른 플레이의 숫자다.</strong> 사람의 3분은 <strong>광고 부스트를 켠 플레이</strong>에서만 재현된다(부스트 ON 포트 3.27분 · 7/5/7/5/4 — 사람의 7/5/6/5/4 와 거의 같다). 밸런스 표와 B1 잠금은 부스트 없는 6.55분 시간대다. 같은 표가 두 값을 지지하는 것처럼 보인다 — M2 밸런스에서 둘을 분리해야 한다.</li>
     </ul>
-    <h3>디자인 단계로 넘긴 것</h3>
+    <h3>디자인 · M2 로 넘긴 것</h3>
     <ul class="plain">
-      <li>스크롤 끝에서 반쯤 잘린 줄이 <strong>보이기는</strong> 한다(눌리지는 않는다). 스냅은 디자인 때.</li>
+      <li>스크롤 끝에서 반쯤 잘린 줄이 <strong>보이기는</strong> 한다(눌리지는 않는다) &mdash; 320x568 에서 최대 28.77 CSS px 짜리 47개. 스냅이 답.</li>
       <li><span class="mono">GAME_H</span> 720 에서 부활 제안 버튼 아래 40 이 바닥선에 겹친다(17차).</li>
-      <li>탭 대상 여유 폭 10 CSS px · 문구에 없는 <strong>폭 270 암묵 조건</strong>(18차). 문구를 고치는 것은 사람이다.</li>
-      <li><span class="mono">8.1</span> 의 시간대가 <strong>광고 부스트 켠 플레이</strong>인지 문구에 없다(20차). 밸런스 표·예측이 어느 쪽을 뜻하는지 정하는 것은 사람이다.</li>
+      <li><span class="mono">2.2</span> 는 60초 창에서 3.3% 모자라 보인다(<span class="mono">dmgBank</span> 잔량 10). 속도는 정확하지만 "1분 재보고 판단" 하면 어긋나 보인다(21차).</li>
       <li>정본 38행의 "벽" &mdash; B2 반증 확정으로 잠금과도 어긋난다. 구역 확장 설계와 함께.</li>
-      <li><span class="mono">data:</span> 창처럼 저장소 접근이 막히면 "저장본이 깨져" 로 오분류한다(20차 부수). 폰에서 저장소가 막히는 경우도 같다.</li>
+      <li><span class="mono">data:</span> 창처럼 저장소 접근이 막히면 "저장본이 깨져" 로 오분류한다(20차).</li>
     </ul>
   </section>
 
@@ -493,7 +486,7 @@
     </div>
 
     <div class="stage">
-      <div class="stage-head"><span class="idx">10</span><span class="title">마무리</span><span class="days" style="color:var(--signal)">1.0일 · 1/2 통과</span></div>
+      <div class="stage-head"><span class="idx">10</span><span class="title">마무리</span><span class="days" style="color:var(--ok)">1.0일 · 2/2 통과</span></div>
       <div class="tablewrap"><table>
         <thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead>
         <tbody>
@@ -553,7 +546,7 @@
 
   <footer>
     <div>원본: <code>plans/wbs-M1.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div>
-    <div>원본 sha256 <code>20054df1d515…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
+    <div>원본 sha256 <code>867234b7c6d6…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div>
     <div>근거: <code>canon/00-identity.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #8·#9·#10</div>
   </footer>
 
