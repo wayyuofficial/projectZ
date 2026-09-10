@@ -37,6 +37,7 @@ def read_consts(root):
         "ZONES": int(num(r"const ZONE_COUNT\s*=\s*(\d+)")),
         "WALL_EVERY": int(num(r"const WALL_EVERY\s*=\s*(\d+)")),   # M2 벽 (처치 수)
         "WALL_KILLS": int(num(r"WALL_KILL_MULT\s*=\s*(\d+)")),
+        "WALL_START": int(num(r"WALL_START\s*=\s*(\d+)")),
         "KILLS": int(num(r"const KILLS_PER_ZONE\s*=\s*(\d+)")),
     }
     m = re.search(r"\{\s*id:\s*'atk'.*?base:\s*([\d.]+).*?growth:\s*([\d.]+)"
@@ -53,7 +54,7 @@ def rows(c):
     for z in range(1, c["ZONES"] + 1):
         hp = c["ZONE_HP0"] * c["ZONE_HP_G"] ** (z - 1)
         dps = hp * c["DPS_RATIO"]
-        kills = c["KILLS"] * (c["WALL_KILLS"] if z % c["WALL_EVERY"] == 0 else 1)   # M2 벽 — 처치 수
+        kills = c["KILLS"] * (c["WALL_KILLS"] if (z >= c["WALL_START"] and z % c["WALL_EVERY"] == 0) else 1)   # M2 벽 — 구역 10 부터
         rw = c["ZONE_RW0"] * c["ZONE_RW_G"] ** (z - 1) * c["KILLS"] / kills   # M2 벽: 처치당 보상 ÷3
         need = hp / 3.0
         lvl = math.log(need / c["ATK_BASE"]) / math.log(c["ATK_GROWTH"])

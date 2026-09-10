@@ -21,8 +21,10 @@ import sim_port as SP
 
 TARGET_BASE, TARGET_G = 4.0, 1.05
 TOL = 0.30
-ARRIVE_TOL = 0.20      # M2-B1': 도달 시각(누적) 기준 ±20%, 구역 10~30
-WALL_MULT_TARGET = 3.0
+ARRIVE_TOL = 0.20      # M2-B1‴: 구역 10 도달 시각을 기준점으로, 11~30 의 상대 도달 시각 ±20%
+WALL_MULT_TARGET = 2.0   # 지시 #63: 벽 ×2
+WALL_START_TARGET = 10   # 곡선은 구역 10 부터 (1~9 는 M1 실측 그대로)
+CURVE_FROM = 10
 Z_FROM, Z_TO = 5, 29          # 1~4 는 튜토리얼 구간. 30 은 다음 구역이 없어 체류를 못 잰다
 
 
@@ -30,11 +32,12 @@ WALL_ON = True     # --no-wall 이면 False. 벽을 끄고 재면 목표에서�
 
 
 def target(z):
-    return TARGET_BASE * TARGET_G ** z * (WALL_MULT_TARGET if (WALL_ON and z % 5 == 0) else 1)
+    return TARGET_BASE * TARGET_G ** z * (WALL_MULT_TARGET if (WALL_ON and z >= WALL_START_TARGET and z % 5 == 0) else 1)
 
 
 def target_arrive(z):
-    return sum(target(k) for k in range(1, z))
+    """구역 10 도달을 0 으로 놓은 목표 누적 (지시 #63: 곡선은 10~30 만)."""
+    return sum(target(k) for k in range(CURVE_FROM, z))
 
 
 def measure(seeds, wall=True, max_min=900):
@@ -65,7 +68,7 @@ def report(stay, reach, seeds, wall):
         if bad: outside.append(z)
         out.append((z, m, target(z), ratio, n))
     if wall:
-        for z in range(SP.WALL_EVERY, Z_TO + 1, SP.WALL_EVERY):
+        for z in range(SP.WALL_START, Z_TO + 1, SP.WALL_EVERY):
             nb = [stay[k][0] for k in (z - 1, z + 1) if k in stay]
             if z in stay and nb:
                 walls[z] = stay[z][0] / (sum(nb) / len(nb))
@@ -110,12 +113,12 @@ def main(argv):
         print("%4d | %7s | %5.1f | %5s | %d%s" % (z, ("%.1f" % m) if m is not None else "-", t, ("%.2f" % r) if r is not None else "-", n, flag))
     trough = {}
     if walls:
-        print("벽 구역 체류 / 이웃 평균:", {z: round(v, 2) for z, v in walls.items()}, "(M2-B2': 2.5~3.5)")
+        print("벽 구역 체류 / 이웃 평균:", {z: round(v, 2) for z, v in walls.items()}, "(M2-B2‴: 1.7~2.5)")
         trough = {z: round(stay[z + 1][0] / stay[z - 1][0], 2) for z in walls if z + 1 in stay and z - 1 in stay and stay[z - 1][0] > 0}
-        print("벽 다음 구역 / 벽 앞 구역 (골짜기):", trough, "(M2-B2': 0.5 이상)")
-    arr = {z: (reach[z] / target_arrive(z)) for z in range(10, SP.ZONE_COUNT + 1) if z in reach}
+        print("벽 다음 구역 / 벽 앞 구역 (골짜기):", trough, "(M2-B2‴: 0.5 이상)")
+    arr = {z: ((reach[z] - reach[CURVE_FROM]) / target_arrive(z)) for z in range(CURVE_FROM + 1, SP.ZONE_COUNT + 1) if z in reach and CURVE_FROM in reach}
     arr_out = [z for z, r in arr.items() if abs(math.log(r)) > math.log(1 + ARRIVE_TOL)]
-    print("도달 시각 / 목표 누적 (구역 10~30):", {z: round(r, 2) for z, r in arr.items()}, "· ±%d%% 밖 %d개 %s (M2-B1': 3개 이하)" % (ARRIVE_TOL * 100, len(arr_out), arr_out))
+    print("도달 시각 / 목표 누적 (구역 10~30):", {z: round(r, 2) for z, r in arr.items()}, "· ±%d%% 밖 %d개 %s (M2-B1‴: 3개 이하, 구역 10 기준 상대)" % (ARRIVE_TOL * 100, len(arr_out), arr_out))
     print("곡선 밖: %d개 %s · 30 도달(중앙) %s분" % (len(outside), outside, ("%.1f" % reach[30]) if 30 in reach else "-"))
     if a.out:
         json.dump({"측정일": datetime.date.today().isoformat(), "도구": "tools/curve_check.py", "시드": seeds, "벽": not a.no_wall,

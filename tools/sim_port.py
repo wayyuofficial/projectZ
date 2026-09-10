@@ -76,7 +76,7 @@ TIER_MAX = int(num("TIER_MAX"))
 MAX_ONSCREEN_ZOMBIES = int(num("MAX_ONSCREEN_ZOMBIES"))
 ZONE_HP0, ZONE_HP_G = num("ZONE_HP0"), num("ZONE_HP_G")
 ZONE_RW0, ZONE_RW_G = num("ZONE_RW0"), num("ZONE_RW_G")
-WALL_EVERY, WALL_KILL_MULT = int(num("WALL_EVERY")), int(num("WALL_KILL_MULT"))   # M2 벽 (처치 수)
+WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_KILL_MULT")), int(num("WALL_START"))   # M2 벽 (처치 수, 구역 10 부터)
 ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
 KILLS_PER_ZONE = int(num("KILLS_PER_ZONE"))
 BOSS_EVERY = int(num("BOSS_EVERY"))
@@ -366,7 +366,7 @@ class Sim(object):
 
     @staticmethod
     def zoneKills(z):
-        return KILLS_PER_ZONE * (WALL_KILL_MULT if z % WALL_EVERY == 0 else 1)   # M2 벽: 처치 수만
+        return KILLS_PER_ZONE * (WALL_KILL_MULT if (z >= WALL_START and z % WALL_EVERY == 0) else 1)   # M2 벽: 구역 10 부터, 처치 수만
 
     @staticmethod
     def zoneReward(z):

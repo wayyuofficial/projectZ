@@ -138,7 +138,7 @@ const ZONE_RW0 = 4,   ZONE_RW_G = 1.30;   /* M2: 1.35 로 올렸다가 1.30 으�
    벽에서 과성장해 골짜기가 생긴다. HP 는 기본 곡선 그대로 두고 같은 좀비를 3배 오래 잡게 한다 (M2-B2′).
    그것만으로는 벽에서 3배 번 돈이 다음 구역을 0.1~0.7분에 지나가게 했다 — 처치당 보상도 ÷3 (M2-B2″). 벽은 순수한 시간 비용이고, 광고가 그 시간을 사는 것이다.
    measurements/balance-M2-curve-wall-2026-09-11.json */
-const WALL_EVERY = 5, WALL_KILL_MULT = 3;
+const WALL_EVERY = 5, WALL_KILL_MULT = 2, WALL_START = 10;   // 지시 #63: 구역 10 부터, x2/÷2. 1~9 는 M1 그대로
 const ZOMBIE_DPS_RATIO = 0.14;   /* 2026-09-08 지시 #23 재보정.
      접촉 판정을 위치 기준으로 고치면서 때리는 좀비가 최대 8마리에서 3마리로 줄었다.
      실제 전투 루프로 배수를 훑어 0.07 -> 0.14 를 골랐다 (구역5 10.2분 / 구역10 69.4분). */
@@ -305,7 +305,7 @@ function regenPerSec() { return statOf('reg'); }
 
 function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1); }
 function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO; }
-function zoneKills(z) { return KILLS_PER_ZONE * ((z % WALL_EVERY === 0) ? WALL_KILL_MULT : 1); }   // M2 벽: 처치 수만 늘어난다
+function zoneKills(z) { return KILLS_PER_ZONE * ((z >= WALL_START && z % WALL_EVERY === 0) ? WALL_KILL_MULT : 1); }   // M2 벽: 처치 수만 늘어난다
 function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z); }   // M2 벽: 처치당 보상 ÷3 — 벽의 총수입은 보통 구역과 같다 (M2-B2″)
 function isBossKill(z, idx) { return (z % BOSS_EVERY === 0) && idx === zoneKills(z) - 1; }
 function weaponUnlocked(w) { return (w.unlock || 1) <= (G.bestZone || 1); }   // M2: 해금 구역은 최고 도달 구역 기준
