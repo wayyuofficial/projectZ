@@ -1,9 +1,14 @@
 {
-  "approved_at": "2026-09-09T20:36:16",
-  "note": "사람이 승인한 정본 상태. AI가 이 파일을 갱신하면 감시가 무의미해진다.",
+  "approved_at": "2026-09-11T01:05:43",
+  "approved_by": "황창식",
+  "stdin_is_tty": true,
+  "changed_since_last": [
+    "10-scope.md"
+  ],
+  "note": "사람이 승인한 정본 상태. AI가 이 파일을 갱신하면 감시가 무의미해진다. approved_by 는 사람이 직접 타이핑한 값이다 — 터미널이 아니면 도구가 거부한다.",
   "hashes": {
     "00-identity.md": "4b9d7a194a137f35c1d50b02e9f1e160ad18c40e8da2c726eb9edfebd4170840",
-    "10-scope.md": "c0cd943ca4438ba73f3f4013a8bb9b58b6175266f6f9ba6921a69907bebb1531",
+    "10-scope.md": "ad407810292a2d7057999ebd12617151f658e535e02f4fda44443f1d5f0b2e22",
     "20-principles.md": "20af86ca5ad9cddef5123da58f9146064b7f6c42d8430f3f261ef82279eb78ee",
     "30-forbidden.md": "596798c5023910ea7559cc80cd0bb51eb51a2ce49ad6058f42f829b398cb4376",
     "README.md": "32523329426f82a74e01ae3d9939eae652609335a74c6226ee41281b8258781c"
