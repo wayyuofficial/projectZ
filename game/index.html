@@ -633,8 +633,17 @@ const HDR_H = 24;
 const buttons = [];
 const panelHeaders = [];   // 목록 안의 구역 제목. 버튼이 아니라 글자다
 let listScroll = 0, listMax = 0;
+/* 관성 스크롤. 손을 떼면 그 자리에 서는 것은 폰에서 쓰는 목록처럼 느껴지지 않는다
+   (2026-09-10 실기 제보). 뗀 순간의 속도로 미끄러지다 마찰로 선다.
+   FRICTION 6 이면 1초에 e^-6 ≈ 0.25% 로 줄어든다 — 약 0.6초 미끄러진다.
+   세게 쓸면 끝까지 가고 살살 쓸면 조금만 간다. '한 번에 끝까지' 가 아니다. */
+const LIST_FRICTION = 6;
+const LIST_VEL_MAX = 4000;    // 논리 px/초. 이보다 빠른 손짓은 잘라낸다
+const LIST_VEL_STOP = 20;     // 이보다 느려지면 세운다
+let listVel = 0;
 let holdBtn = null, holdTime = 0, holdRepeat = 0;
-let drag = null;           // { y0, scroll0, moved, btn }
+let drag = null;           // { y0, scroll0, moved, btn, samples }
+const LIST_VEL_WINDOW = 90;   // ms. 이 안의 움직임만 보고 속도를 낸다
 
 function listTopY() { return PANEL_TOP + 8; }
 function adRowY() { return GAME_H - ROW_H - 10; }
@@ -1078,6 +1087,17 @@ function frame(now) {
     }
   }
 
+  // 관성 스크롤 — 손을 뗀 뒤 마찰로 선다
+  if (listVel !== 0 && !drag) {
+    listScroll += listVel * dt;
+    if (listScroll <= 0) { listScroll = 0; listVel = 0; }
+    else if (listScroll >= listMax) { listScroll = listMax; listVel = 0; }
+    else {
+      listVel *= Math.exp(-LIST_FRICTION * dt);
+      if (Math.abs(listVel) < LIST_VEL_STOP) listVel = 0;
+    }
+  }
+
   saveTimer += dt;
   if (saveTimer > 30) { saveTimer = 0; save(); }
 
@@ -1099,8 +1119,10 @@ canvas.addEventListener('pointerdown', (e) => {
   const inList = p.y >= listTopY() && p.y <= listBotY() && !offlineReport;
 
   if (inList) {
+    listVel = 0;                       // 미끄러지는 중에 짚으면 그 자리에 선다
     drag = { y0: p.y, scroll0: listScroll, moved: false,
-             btn: (b && b.enabled !== false) ? b : null };
+             btn: (b && b.enabled !== false) ? b : null,
+             samples: [{ y: p.y, t: performance.now() }] };
     holdBtn = (drag.btn && drag.btn.tone === 'buy') ? drag.btn : null;
     holdTime = 0; holdRepeat = 0;
     return;
@@ -1123,6 +1145,12 @@ canvas.addEventListener('pointermove', (e) => {
   if (!drag.moved && Math.abs(dy) > 6) { drag.moved = true; holdBtn = null; }
   if (drag.moved) {
     listScroll = Math.max(0, Math.min(listMax, drag.scroll0 - dy));
+    /* 뗄 때 쓸 속도는 **최근 90ms 창**의 움직임으로만 낸다.
+       옛 속도를 비율로 섞으면 끌다 멈춘 뒤 떼도 그 30% 가 남아 미끄러진다
+       (2026-09-10, 넣자마자 브라우저 시험으로 잡았다 — 36px 미끄러졌다). */
+    const now = performance.now();
+    drag.samples.push({ y: p.y, t: now });
+    while (drag.samples.length > 2 && now - drag.samples[0].t > LIST_VEL_WINDOW) drag.samples.shift();
     buildButtons();
   }
 });
@@ -1130,12 +1158,29 @@ canvas.addEventListener('pointermove', (e) => {
 canvas.addEventListener('pointerup', (e) => {
   if (!drag) return;
   const d = drag; drag = null;
+  if (d.moved) {
+    const now = performance.now();
+    const sm = d.samples;
+    while (sm.length > 2 && now - sm[0].t > LIST_VEL_WINDOW) sm.shift();
+    let v = 0;
+    const span = (sm[sm.length - 1].t - sm[0].t) / 1000;
+    // 창 안에 실제 움직임이 있을 때만 속도가 있다. 멈춘 채로 뗐으면 0 이다
+    if (sm.length >= 2 && span > 0.005 && now - sm[sm.length - 1].t <= LIST_VEL_WINDOW) {
+      v = -(sm[sm.length - 1].y - sm[0].y) / span;
+    }
+    listVel = Math.max(-LIST_VEL_MAX, Math.min(LIST_VEL_MAX, v));
+    if (Math.abs(listVel) < LIST_VEL_STOP) listVel = 0;
+  }
   if (d.moved || !d.btn) return;
   // 끌지 않고 뗐다 = 구매
   if (holdTime <= 0.3) { d.btn.onTap(); buildButtons(); save(); }
 });
-['pointerup', 'pointercancel', 'pointerleave'].forEach(ev =>
-  canvas.addEventListener(ev, () => { holdBtn = null; drag = null; }));
+/* 정리. **pointerup 에서는 listVel 을 지우지 않는다** — 바로 위에서 방금 넣은 관성 속도를
+   지워버려서 손을 떼면 그 자리에 서 있었다 (2026-09-10, 넣자마자 브라우저 시험으로 잡았다).
+   취소·이탈은 "손짓이 무효가 된 것" 이므로 그때는 지운다. */
+canvas.addEventListener('pointerup', () => { holdBtn = null; drag = null; });
+['pointercancel', 'pointerleave'].forEach(ev =>
+  canvas.addEventListener(ev, () => { holdBtn = null; drag = null; listVel = 0; }));
 
 window.addEventListener('resize', fitGame);
 window.addEventListener('orientationchange', () => setTimeout(fitGame, 80));
