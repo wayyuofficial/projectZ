@@ -43,8 +43,14 @@ def h(t):
 
 
 def norm_id(s):
-    """′ ″ ‴ 는 터미널에서 치기 어렵다. ' '' ''' 로 쳐도 같은 id 로 본다 (2026-09-11 지시 #65)."""
-    return s.replace("‴", "'''").replace("″", "''").replace("′", "'")
+    """′ ″ ‴ 는 터미널에서 치기 어렵다. 같은 id 로 보는 표기 (2026-09-11 지시 #65·#66):
+       M2-B1-1 = M2-B1′ · M2-B2-2 = M2-B2″ · M2-B1-3 = M2-B1‴  (끝의 -N = 프라임 N개)
+       ' '' ''' 도 받지만 PowerShell 에서는 따옴표로 먹혀 깨진다 — -N 표기를 쓴다."""
+    s = s.replace("‴", "'''").replace("″", "''").replace("′", "'")
+    m = re.match(r"^(.*?)-([123])$", s)
+    if m:
+        s = m.group(1) + "'" * int(m.group(2))
+    return s
 
 
 def main(argv):
