@@ -93,7 +93,10 @@ MIN_GAME_H = num("MIN_GAME_H")
 MAX_GAME_H = num("MAX_GAME_H")
 MAX_BACK_W = num("MAX_BACK_W")
 HUD_H = num("HUD_H")
-PANEL_H = num("PANEL_H")
+PANEL_H_MIN = num("PANEL_H_MIN")
+PANEL_H_MAX = num("PANEL_H_MAX")
+PANEL_H_RATIO = num("PANEL_H_RATIO")
+ARENA_MIN = num("ARENA_MIN")
 ARENA_TOP = HUD_H                    # 원본도 ARENA_TOP = HUD_H 다
 SURVIVOR_X = num("SURVIVOR_X")
 CONTACT_X = SURVIVOR_X + 46          # 원본도 SURVIVOR_X + 46 으로 쓴다
@@ -158,7 +161,7 @@ MIRRORED = {
     "hitDamage": "78764110ba1a3fdd",
     "isBossKill": "4e70f4e006a8ab2a",
     "killZombie": "0aaaf8a5b275c51b",
-    "layout": "f9b6d6e12249c87d",
+    "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "46bb14aa20673823",
     "maxHP": "85e54826f897f7c7",
@@ -198,7 +201,7 @@ def drift():
 
 
 # ── 배치 — 원본에서 전역인 것들. 여기서도 모듈 전역으로 둔다 ─────────
-L = {"GAME_H": 960.0, "PANEL_TOP": 540.0, "ARENA_BOT": 530.0, "GROUND_Y": 478.0,
+L = {"GAME_H": 960.0, "PANEL_H": 420.0, "PANEL_TOP": 540.0, "ARENA_BOT": 530.0, "GROUND_Y": 478.0,
      "cssW": 0.0, "cssH": 0.0, "backW": 0.0, "backH": 0.0, "dpr": 1.0}
 
 
@@ -212,7 +215,10 @@ def jsround(x):
 def layout(zombies=None):
     """원본 `layout()`. 바닥선이 움직이면 살아 있는 좀비도 같이 옮긴다."""
     prev = L["GROUND_Y"]
-    L["PANEL_TOP"] = L["GAME_H"] - PANEL_H
+    L["PANEL_H"] = max(PANEL_H_MIN,
+                   min(PANEL_H_MAX,
+                   min(jsround(L["GAME_H"] * PANEL_H_RATIO), L["GAME_H"] - ARENA_TOP - ARENA_MIN - 10)))
+    L["PANEL_TOP"] = L["GAME_H"] - L["PANEL_H"]
     L["ARENA_BOT"] = L["PANEL_TOP"] - 10
     L["GROUND_Y"] = L["ARENA_BOT"] - 52
     dy = L["GROUND_Y"] - prev
