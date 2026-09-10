@@ -84,7 +84,10 @@ def main(argv):
     ap.add_argument("--out", default=None)
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--rw", type=float, default=None, help="보상 성장률을 잠시 바꿔 잰다 (격자용). 게임 파일은 안 건드린다")
+    ap.add_argument("--no-new-weapons", action="store_true", help="M2 무기(unlock 있는 것)를 빼고 잰다 — 예측 M2-B3 의 '무기 넣기 전' 곡선")
     a = ap.parse_args(argv)
+    if a.no_new_weapons:
+        SP.WEAPON_TYPES[:] = [w for w in SP.WEAPON_TYPES if not w.get("unlock")]
 
     if a.selftest:
         # R003: 이 검사가 떨어질 수 있는가. 보상 성장을 1.20 으로 낮추면 뒤 구역이 곡선 밖으로 나가야 한다.
