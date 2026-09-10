@@ -115,6 +115,16 @@ def main():
                 io.open(gamep, "w", encoding="utf-8-sig").write(
                     _g2.replace(_old, _old + " /*selftest*/", 1))
 
+        # c17: **기준을 엄하게 만들어** 본보기가 떨어지는지 본다.
+        # 이게 c17 이 막겠다고 한 것이다 — "검사가 좋다고 판정된 산출물을 떨어뜨리는가".
+        # 정본의 능력치 상한을 5 -> 4 로 되돌리면 c2 가 본보기(능력치 5종)를 떨어뜨린다.
+        scope = os.path.join(ROOT, "canon", "10-scope.md")
+        scope_backup = scope + ".selftest-backup"
+        if os.path.exists(scope):
+            shutil.copy2(scope, scope_backup); made.append(scope_backup)
+            _sc = io.open(scope, encoding="utf-8").read()
+            w(scope, _sc.replace("SCOPE_MAX_STATS = 5", "SCOPE_MAX_STATS = 4"))
+
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
         shutil.copy2(canon, backup); made.append(backup)
@@ -138,6 +148,7 @@ def main():
             ("c13_balance_table.py", ("fail",)),
             ("c15_prediction_lock.py", ("fail",)),
             ("c16_port_sync.py", ("fail",)),
+            ("c17_exemplar_regression.py", ("fail",)),
         ]
 
         bad = []
@@ -185,6 +196,12 @@ def main():
             shutil.move(csv_backup, csvp)
             if csv_backup in made:
                 made.remove(csv_backup)
+        scope = os.path.join(ROOT, "canon", "10-scope.md")
+        scope_backup = scope + ".selftest-backup"
+        if os.path.exists(scope_backup):
+            shutil.move(scope_backup, scope)
+            if scope_backup in made:
+                made.remove(scope_backup)
         gamep = os.path.join(ROOT, "game", "index.html")
         game_backup = gamep + ".selftest-backup"
         if os.path.exists(game_backup):
