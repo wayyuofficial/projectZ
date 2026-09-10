@@ -353,7 +353,7 @@ const HUD_H = 100;
    **긴 폰에서도 4줄만 보였다** — 남는 높이를 전투 영역이 전부 먹었다.
    ARENA_MIN 은 전투 영역이 최소한 확보해야 하는 높이다. 식으로 세운다:
    좀비 머리가 ARENA_TOP 아래에 있어야 한다 → GROUND_Y - 40 ≥ ARENA_TOP → 전투 영역 ≥ 92.
-   부활 제안 버튼(ARENA_BOT - 62)도 ARENA_TOP 아래여야 한다 → 전투 영역 ≥ 62.
+   부활 제안 버튼(ARENA_BOT - 70)도 ARENA_TOP 아래여야 한다 → 전투 영역 ≥ 70.
    둘 중 큰 92 에 여유를 얹어 150 으로 둔다.
    (처음에 192 로 잡았다가 GAME_H 720~721 에서 스스로 어겼다 — ARENA_BOT 이 PANEL_TOP 보다
     10 위라는 것을 빼먹었기 때문이다. 아래 식에 그 10 을 넣었다.) */
@@ -658,7 +658,9 @@ const ROW_H = 58;          // 58 x (280/540) = 30.07 CSS px — 판정선 29 위
 /* 탭 대상의 최소 높이(CSS px). WBS 7.1 판정선.
    목록이 스크롤되면 위아래 끝에서 줄이 잘리는데, 잘린 줄이 이보다 얇으면 **눌리지 않는다.**
    15차 감사: 280x530 에서 1.04 CSS px 로 잘린 줄이 눌려 구매가 일어났다 (LG V30 은 28.67).
-   온전한 줄은 폭 280 이상 어느 기기에서나 30.07 이라 이 규칙에 걸리지 않는다. */
+   온전한 줄은 폭 280 이상 어느 기기에서나 30.07 이라 이 규칙에 걸리지 않는다.
+   16차 감사: 목록 밖의 고정 버튼(부활 제안 46 · 닫기 46 · 광고 2배 52)이 iPhone SE 폭에서 27.26 이었다.
+   그래서 **탭 대상은 전부 ROW_H(58)** 다. 58 x 280/540 = 30.07 — 어느 폭에서도 판정선 위. */
 const MIN_TAP_CSS = 29;
 const ROW_GAP = 6;
 const ROW_PITCH = ROW_H + ROW_GAP;
@@ -718,10 +720,10 @@ function buildButtons() {
     btn({ x: 0, y: 0, w: GAME_W, h: GAME_H, label: '', enabled: true, tone: 'scrim',
           onTap: () => { offlineReport = null; save(); return true; } });
     if (!offlineReport.doubled) {
-      btn({ x: 90, y: GAME_H / 2 + 40, w: 360, h: 52, label: '광고 보고 2배 받기', enabled: true, tone: 'ad',
+      btn({ x: 90, y: GAME_H / 2 + 40, w: 360, h: ROW_H, label: '광고 보고 2배 받기', enabled: true, tone: 'ad',
             onTap: () => adReward('offline2x') });
     }
-    btn({ x: 150, y: GAME_H / 2 + 104, w: 240, h: 46, label: '닫기', enabled: true, tone: 'ghost',
+    btn({ x: 150, y: GAME_H / 2 + 108, w: 240, h: ROW_H, label: '닫기', enabled: true, tone: 'ghost',
           onTap: () => { offlineReport = null; save(); return true; } });
     return;
   }
@@ -781,7 +783,7 @@ function buildButtons() {
   /* 사망 제안. 전투 영역 아래쪽에 잠깐 떠 있다가 사라진다.
      화면을 막지 않는다 — scrim 도 없고 다른 버튼도 그대로 살아 있다. */
   if (reviveOffer) {
-    btn({ x: 90, y: ARENA_BOT - 62, w: 360, h: 46,
+    btn({ x: 90, y: ARENA_BOT - 70, w: 360, h: ROW_H,
           label: '광고 보고 구역 ' + reviveOffer.zone + ' 복귀 · '
                  + Math.ceil(REVIVE_OFFER_SEC - reviveOffer.t) + '초',
           enabled: true, tone: 'ad', onTap: () => adReward('revive') });

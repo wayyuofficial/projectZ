@@ -151,7 +151,7 @@ MIRRORED = {
     "applyOffline": "b7cab65995bd9534",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "f84fb7d54c3442ba",
+    "buildButtons": "8d039f6d485f14d2",
     "buyStat": "2b0b94e9a15bcaaa",
     "buyWeapon": "0c1bb6b5a33eb755",
     "damageZombie": "9dfa910d5cf6855b",
@@ -439,8 +439,8 @@ class Sim(object):
         if self.offlineReport:
             b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
             if not self.offlineReport.get("doubled"):
-                b("offline2x", 90, L["GAME_H"] / 2 + 40, 360, 52, "ad")
-            b("offline_close", 150, L["GAME_H"] / 2 + 104, 240, 46, "ghost")
+                b("offline2x", 90, L["GAME_H"] / 2 + 40, 360, ROW_H, "ad")
+            b("offline_close", 150, L["GAME_H"] / 2 + 108, 240, ROW_H, "ghost")
             return bs
 
         b("tab_stat", 24, self.tabRowY(), 240, ROW_H, "on" if self.tab == "stat" else "off")
@@ -475,12 +475,12 @@ class Sim(object):
         b("ad_boost", 24, self.adRowY(), GAME_W - 48, ROW_H, "ad", not self.boostActive())
 
         if self.reviveOffer:
-            b("revive_ad", 90, L["ARENA_BOT"] - 62, 360, 46, "ad")
+            b("revive_ad", 90, L["ARENA_BOT"] - 70, 360, ROW_H, "ad")
         return bs
 
     def hitButton(self, px, py, bs=None):
         bs = self.buildButtons() if bs is None else bs
-        css_per = L.get("cssW", GAME_W) / float(GAME_W)   # fit_game 을 안 돌렸으면 1
+        css_per = (L.get("cssW") or GAME_W) / float(GAME_W)   # fit_game 전엔 cssW 가 0.0 이라 or 로 1 (16차 감사 지적)
         for b in reversed(bs):
             top = max(b["y"], b["clip"][0]) if b.get("clip") else b["y"]
             bot = min(b["y"] + b["h"], b["clip"][1]) if b.get("clip") else b["y"] + b["h"]
