@@ -146,7 +146,7 @@ def fingerprint(name):
 MIRRORED = {
     "acceptRevive": "76080cff2a1316f8",
     "adRowY": "5ed5d78e1b23b919",
-    "applyDamage": "a42df6ae4cb6cf99",
+    "applyDamage": "44f3fc0acd0ea484",
     "applyOffline": "b7cab65995bd9534",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
@@ -286,6 +286,7 @@ class Sim(object):
         self.killIndex = 0
         self.t = 0.0
         self.reviveOffer = None      # {"zone": 죽은 구역, "t": 흐른 시간}
+        self.dmgBank = 0.0           # 좀비가 없어 남은 초과 피해. 다음 좀비에게 얹는다
         self.deaths = 0              # 포트에만 있는 계수기. 원본에는 없다
         self.offlineReport = None
         self.adLog = []
@@ -509,7 +510,8 @@ class Sim(object):
             self.killZombie(z)
 
     def applyDamage(self, dmg):
-        left, guard = dmg, 0
+        left, guard = dmg + self.dmgBank, 0
+        self.dmgBank = 0.0
         while left > 1e-9 and self.zombies and guard < MAX_ONSCREEN_ZOMBIES + 2:
             guard += 1
             target, best = None, 1e9
@@ -521,6 +523,8 @@ class Sim(object):
             take = min(left, target["hp"])
             left -= take
             self.damageZombie(target, take)
+        if left > 1e-9:
+            self.dmgBank = left
 
     def killZombie(self, z):
         # 원본 `indexOf` 는 **참조** 동일성이다. `in` / `remove` 는 값 동일성이라
