@@ -1,0 +1,182 @@
+{
+  "검증일": "2026-09-10",
+  "회차": 20,
+  "범위": "빠른",
+  "대상": "HEAD 13e97d4 (직전 감사 커밋 bec0c9c 이후). 변경 파일 3개: measurements/device-2026-09-10.json(신규) · instructions-log.md · measurements/checks-2026-09-10.json. game/ checks/ tools/ plans/ canon/ rules/ procedures/ android/ 무변경(git diff 비었음), game/index.html sha256 앞 16자리 9b97c4d9ac5e8ad9 · 60,735바이트.",
+  "범위근거": "절차 50 — 변경 영향권(사람 실기 기록 = 10.1 · 8.1, 검사 기록 = 9.2) + 직전 회차(19차) 미검증 전부(10.1) + 10.1 선행 관계로 10.2. 빠른 회차 2연속(19·20). 다음 빠른이 3연속째이고 그 뒤는 전수여야 한다.",
+  "포트확인": "python tools/sim_port.py → '원본 대조: 옮긴 함수 39개 전부 일치', 종료코드 0. checks/run.py 에서 c16_port_sync.py [ OK ].",
+  "기준약화확인": "git diff bec0c9c..HEAD -- plans/ 결과 0줄. c15_prediction_lock.py [ OK ] (예측 5개 문구가 잠근 그대로).",
+  "환경": "Windows 11 / python 3.12 / Claude 브라우저 창(preview_start, file:///D:/project2/game/index.html → data: URL, DPR 2, 360x720 에뮬레이트 후 desktop 복원)",
+  "결과": [
+    {
+      "항목": "1.1",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "1.2",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "1.3",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "1.4",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "2.1",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "2.2",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "2.3",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "2.4",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "3.1",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "3.2",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "3.3",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "3.4",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "4.1",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 19차. 통과가 아니다."
+    },
+    {
+      "항목": "4.2",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "4.3",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "5.1",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "5.2",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "6.1",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "7.1",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "7.2",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "7.3",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 18차. 통과가 아니다."
+    },
+    {
+      "항목": "8.1",
+      "판정": "통과",
+      "근거": "사람 실측 기록 measurements/device-2026-09-10.json 의 빌드 도장을 내가 실행으로 대조: python -c hashlib → game/index.html 60,735바이트 sha256 9b97c4d9ac5e8ad9e75ceb05... (기록의 도장과 일치), zipfile 로 zombie-survival-debug.apk 를 열어 assets/index.html 60,735바이트 sha256 9b97c4d9... 및 repo 파일과 바이트 동일 True (android/app/build/outputs/apk/debug/app-debug.apk 도 같은 apk 해시 aa20f413120d5476). 기록된 사람 실측: 구역1→5 3분, 그때 능력치 atk7 spd5 hp6 reg5 inc4, 구역1→10 15분. 포트 대조(내가 실행, tools/sim_port.py 그대로): auto_run 12시드 → zone5 [7.4,6.5,6.5,7.5,7.5,6.6,6.5,6.5,6.6,6.5,6.7,6.6] 중앙 6.6분, zone10 중앙 27.2분, 사망 21~24. 광고 2배를 계속 켠 실험(Sim.boostActive 를 프로세스 안에서만 True 로 몽키패치, AD_BOOST_MIN=10 이므로 10분마다 광고를 누르면 끊기지 않는다) → zone5 중앙 3.7분, zone10 중앙 13.8분; seed3 은 3.3분에 lv atk7 spd5 hp7 reg5 inc4. 사람의 3분·7/5/6/5/4 와 15분이 시간·레벨 벡터까지 함께 재현된다. 구 빌드 실측 2분(c15ff552, atk9 spd7 hp0 reg0 inc5)과의 차이는 부품을 체력·회복에도 쓴 전략 차이로 설명되고, 부스트 없는 포트(6.6분)와 부스트 포트(3.7분) 사이에 두 값이 다 들어간다. 판정에 쓴 값은 사람의 것이고 포트 값은 그럴듯함 확인에만 썼다."
+    },
+    {
+      "항목": "8.2",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 19차. 통과가 아니다."
+    },
+    {
+      "항목": "9.1",
+      "판정": "범위밖",
+      "근거": "20차 빠른 회차 범위 밖 (변경은 measurements/device-2026-09-10.json · instructions-log.md · measurements/checks-2026-09-10.json 뿐). 마지막 실행 판정 회차 19차. 통과가 아니다."
+    },
+    {
+      "항목": "9.2",
+      "판정": "통과",
+      "근거": "python checks/run.py → 마지막 줄 '차단 0 / 경고 0 / 건너뜀 0 / 전체 17', 종료코드 0, 17개 전부 [ OK ] (SKIP 0). ls checks/*.py → 18개 = 검사 17 + run.py. 예측 P9 판정은 plans/plan-M1.md:38 에 '반증됨 — 9개 전부 통과, 단 검사를 알고 쓴 산출물이라 약한 증거'로 남아 있다. 부수: 이 실행이 measurements/checks-2026-09-10.json 의 ran_at 만 23:28:23→23:29:10 로 바꿨다(blocking 0 동일). 검사 실행기 자신의 기록이라 되돌리지 않았다."
+    },
+    {
+      "항목": "10.1",
+      "판정": "미검증",
+      "근거": "확인된 것: (1) 빌드 도장 — 기록 measurements/device-2026-09-10.json 의 9b97c4d9ac5e8ad9 가 현재 game/index.html sha256 과 일치하고 APK(zombie-survival-debug.apk 46,612바이트) 의 assets/index.html 이 그 파일과 바이트 동일(내가 zipfile 로 열어 대조, True). git diff bec0c9c..HEAD -- game/ checks/ tools/ plans/ canon/ rules/ procedures/ android/ 가 비었으므로 폰에서 본 파일 = 지금 파일. (2) 요청서(instructions-log.md:2857~) 는 절차 60 의 다섯 칸을 다 채웠고 3번의 여섯 항목마다 '잘못:' 이 붙어 있다. (3) 사람 답 여섯 항목 전부 '이상없음'. 덮이지 않는 것: WBS 10.1 ⑥ 은 '죽으면 **구역이 하나 내려가고** 8초짜리 광고 제안이 뜬다 — 안 눌러도 계속 굴러간다' 인데 요청서 3번은 8초 버튼과 '안 눌러도 굴러가는지' 만 물었고 **구역이 하나 내려갔는지는 묻지 않았다** — 사람 기록에 그 관측이 없다. 그 절반은 포트로만 확인했다(내가 실행: zone4 에서 사망 → zone3, reviveOffer={'zone':4}, REVIVE_OFFER_SEC=8, buildButtons 에 revive_ad 1개(360x740 DPR4 에서 38.67 CSS px), 안 누르고 30초 진행 시 계속 굴러감. onDeath 는 MIRRORED 해시 일치 함수다). 포트는 폰이 아니고 판정 문구는 '폰에서 전부 확인한다' 다. ③('가상 뷰포트 980px 이 아니다') 는 요청서가 '여백·주소창 없음' 으로 물어 증상이 다르지만, 내가 브라우저로 직접 확인: 360x720 에서 innerWidth 360 / documentElement.clientWidth 360 (980 아님), viewport meta 'width=device-width,...', android/app/src/main/java/.../MainActivity.java:41 setUseWideViewPort(true)+meta 조합이므로 덮인 것으로 본다. 또한 사람이 그 APK 를 실제로 폰에 설치했는지는 실행으로 확인할 수 없다(APK 는 git 미추적, 도장 일치까지만 확인). 한 항목의 절반이 사람 기록에 없어 미검증으로 둔다 — 요청 한 줄('죽었을 때 HUD 의 구역 숫자가 1 줄었는지')로 닫힌다."
+    },
+    {
+      "항목": "10.2",
+      "판정": "통과",
+      "근거": "exemplars/good/2026-09-10-M1-first-playable.html 50,577바이트 sha256 c15ff5522cc2a3b575c581cfac1b426a1f308a58358cf491f9993f77c06cea24 (내가 hashlib 로 계산) = .md 4행에 적힌 값과 완전 일치. .md 에 사람(wayyu) 원문 판정('이건 게임이다')과 근거 실기 기록이 있다. python checks/run.py 에서 c17_exemplar_regression.py [ OK ] — '본보기 1개 × 검사 6회 전부 통과'. 짚어둘 것: 본보기는 구 빌드(c15ff552)이고 현재 빌드(9b97c4d9)에 대한 사람의 '좋다' 판정은 없다. 판정 문구가 최신 빌드를 요구하지 않아 통과."
+    }
+  ],
+  "요약": {
+    "통과": 3,
+    "실패": 0,
+    "미검증": 1,
+    "범위밖": 23
+  },
+  "마지막_실행판정_회차": {
+    "1.1": 18,
+    "1.2": 18,
+    "1.3": 18,
+    "1.4": 18,
+    "2.1": 18,
+    "2.2": 18,
+    "2.3": 18,
+    "2.4": 18,
+    "3.1": 18,
+    "3.2": 18,
+    "3.3": 18,
+    "3.4": 18,
+    "4.1": 19,
+    "4.2": 18,
+    "4.3": 18,
+    "5.1": 18,
+    "5.2": 18,
+    "6.1": 18,
+    "7.1": 18,
+    "7.2": 18,
+    "7.3": 18,
+    "8.1": 20,
+    "8.2": 19,
+    "9.1": 19,
+    "9.2": 20,
+    "10.1": 20,
+    "10.2": 20
+  }
+}
