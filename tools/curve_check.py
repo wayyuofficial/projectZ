@@ -26,8 +26,11 @@ WALL_MULT_TARGET = 3.0
 Z_FROM, Z_TO = 5, 29          # 1~4 는 튜토리얼 구간. 30 은 다음 구역이 없어 체류를 못 잰다
 
 
+WALL_ON = True     # --no-wall 이면 False. 벽을 끄고 재면 목표에서도 벽을 뺀다 (22차 감사 지적)
+
+
 def target(z):
-    return TARGET_BASE * TARGET_G ** z * (WALL_MULT_TARGET if z % 5 == 0 else 1)
+    return TARGET_BASE * TARGET_G ** z * (WALL_MULT_TARGET if (WALL_ON and z % 5 == 0) else 1)
 
 
 def target_arrive(z):
@@ -82,6 +85,8 @@ def main(argv):
     if a.selftest:
         # R003: 이 검사가 떨어질 수 있는가. 보상 성장을 1.20 으로 낮추면 뒤 구역이 곡선 밖으로 나가야 한다.
         keep = SP.ZONE_RW_G; SP.ZONE_RW_G = 1.20
+        global WALL_ON
+        WALL_ON = False
         try:
             stay, reach = measure(list(range(1, 6)), wall=False, max_min=600)
         finally:
@@ -95,6 +100,8 @@ def main(argv):
     seeds = list(range(1, a.seeds + 1))
     if a.rw:
         SP.ZONE_RW_G = a.rw
+    global WALL_ON
+    WALL_ON = not a.no_wall
     stay, reach = measure(seeds, wall=not a.no_wall, max_min=a.max_min)
     rows, outside, walls = report(stay, reach, seeds, not a.no_wall)
     print("목표 체류(z) = %.1f x %.2f^z 분 · 허용 ±%d%% · 구역 %d~%d · %d시드 · 벽 %s" % (TARGET_BASE, TARGET_G, TOL * 100, Z_FROM, Z_TO, len(seeds), "켬" if not a.no_wall else "끔"))
@@ -116,7 +123,7 @@ def main(argv):
                    "목표": "%.1f x %.2f^z" % (TARGET_BASE, TARGET_G), "허용": TOL, "구간": [Z_FROM, Z_TO],
                    "구역별": {str(z): {"체류": round(m, 3) if m is not None else None, "목표": round(t, 3), "비율": round(r, 4) if r is not None else None} for z, m, t, r, n in rows},
                    "곡선밖": outside, "벽비": {str(z): round(v, 4) for z, v in walls.items()}, "골짜기": {str(z): v for z, v in trough.items()},
-                   "도달비": {str(z): round(r, 4) for z, r in arr.items()}, "도달_밖": arr_out, "보상성장_사용": SP.ZONE_RW_G,
+                   "도달비": {str(z): round(r, 4) for z, r in arr.items()}, "도달_밖": arr_out, "보상성장_사용": SP.ZONE_RW_G, "빌드도장": __import__("hashlib").sha256(open(SP.GAME, "rb").read()).hexdigest()[:16],
                    "도달_중앙_분": {str(z): round(v, 2) for z, v in reach.items()},
                    "판정하지_않는다": "M2-B1/B2 판정은 검증자·사람 몫이다. 여기는 만든 쪽의 측정이다."},
                   io.open(a.out, "w", encoding="utf-8"), ensure_ascii=False, indent=2)

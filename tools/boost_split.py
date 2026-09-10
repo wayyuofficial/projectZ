@@ -45,6 +45,7 @@ def main(argv):
     print("ON/OFF 가 0.5~0.7 안인 구역: %d/%d (M2-B4)" % (len(inside), len(ratio)))
     if a.out:
         json.dump({"측정일": datetime.date.today().isoformat(), "도구": "tools/boost_split.py", "시드": seeds,
+                   "보상성장_사용": SP.ZONE_RW_G, "빌드도장": __import__("hashlib").sha256(open(SP.GAME, "rb").read()).hexdigest()[:16],
                    "부스트_OFF_도달_분": off, "부스트_ON_도달_분": on, "ON_OFF_비": ratio,
                    "사람_실측_시간대": "사람 실측은 measurements/device-*.json 에 어느 열인지 적는다. M1 지시 #45·#57 의 3분/2분은 부스트 ON 이다(21차 감사).",
                    "판정하지_않는다": "M2-B4 판정은 사람 몫이다."},

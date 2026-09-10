@@ -159,6 +159,13 @@ def main():
 
         bad = []
         print("=" * 60)
+        # 도구 자가진단도 여기서 돈다 (22차 감사: curve_check --selftest 가 어디에도 안 걸려 있었다)
+        import subprocess
+        r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "curve_check.py"), "--selftest"], capture_output=True, text=True, encoding="utf-8")
+        tool_ok = (r.returncode == 0)
+        print("[%s] %-22s 기대 %-6s 실제 %s" % ("  OK  " if tool_ok else " MISS ", "curve_check --selftest", "0", r.returncode))
+        if not tool_ok:
+            bad.append("curve_check --selftest")
         for name, want in expect:
             got = load(name).run(ROOT).get("status")
             ok = got in want
