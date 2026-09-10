@@ -1,7 +1,7 @@
 {
-  "ran_at": "2026-09-11T02:58:23",
+  "ran_at": "2026-09-11T02:59:43",
   "blocking": 0,
-  "warn": 2,
+  "warn": 0,
   "skip": 0,
   "results": [
     {
@@ -77,10 +77,10 @@
       "priority": 1
     },
     {
-      "status": "warn",
+      "status": "ok",
       "detail": [
-        "balance-M2-curve-d-2026-09-11.json: 벽 비가 1.5~3 밖 {'15': 4.61}",
-        "balance-M2-curve-d-2026-09-11.json: 벽 다음 구역 골짜기 {'20': 0.37} (선: 0.5 이상)"
+        "balance-M2-curve-d-2026-09-11.json — 도달 밖 2개 (선 3)",
+        "벽 비 {'10': 1.68, '15': 4.61, '20': 2.04, '25': 1.77} · 골짜기 {'10': 1.11, '15': 0.76, '20': 0.37, '25': 2.62} (정보 — 지시 #65 (a) 로 벽은 그대로)"
       ],
       "check": "c18_curve.py",
       "name": "목표 체류 곡선 기록이 낡았거나 곡선 밖인지 (M2)",
@@ -159,9 +159,9 @@
       "priority": 2
     },
     {
-      "status": "warn",
+      "status": "ok",
       "detail": [
-        "index.html 가 저장·오프라인 기록(storage-2026-09-11.json)보다 새롭다 — 다시 재라"
+        "측정 기록 최신: balance-M2-curve-d-2026-09-11.json, storage-2026-09-11.json"
       ],
       "check": "c9_measurement_freshness.py",
       "name": "게임을 고치고 측정을 다시 안 했는지",

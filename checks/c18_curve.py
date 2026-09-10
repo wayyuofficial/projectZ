@@ -5,7 +5,7 @@ M2 는 밸런스를 상수가 아니라 **곡선**(plans/GAMEDESIGN.md M2 절: �
 `tools/curve_check.py --out measurements/balance-M2-*.json` 이 그 곡선 대비 측정을 남기고, 이 검사는 그 기록을 본다:
   1. 기록이 게임 파일보다 새로운가 (게임을 고치고 곡선을 다시 안 쟀으면 낡은 것 — c9 와 같은 논리)
   2. 구역 10 기준 상대 도달 시각이 목표 누적의 ±20% 밖인 구역이 3개 이하인가 (M2-B1‴ 의 반증선)
-  3. 벽 비가 1.5~3, 벽 다음 구역이 0.5 이상인가 (M2-B2‴ 의 반증선 — 지시 #63 벽 ×2)
+  3. 벽 비·골짜기는 **정보로만** 적는다 — 지시 #65 (a): B2‴ 는 반증으로 확정하고 벽은 그대로 둔다. 잣대가 이웃 톱니에 흔들려 경고로 두면 영원히 울린다
 
 근거: 가설(계획 M2 의 예측)이지 사례가 아니다 → 2순위. 막지 않고 경고만 한다.
 곡선을 어겨서 실제로 문제가 된 사례가 1건이라도 생기면 PRIORITY 를 1로 올린다.
@@ -41,13 +41,8 @@ def run(root):
     if len(out) > 3:
         bad.append("%s: 도달 시각이 목표의 ±20%% 밖인 구역 %d개 %s (선: 3개 이하)" % (base, len(out), out))
     walls = d.get("벽비", {}) or {}
-    wbad = {z: v for z, v in walls.items() if not (1.5 <= v <= 3.0)}
-    if wbad:
-        bad.append("%s: 벽 비가 1.5~3 밖 %s" % (base, {z: round(v, 2) for z, v in wbad.items()}))
     tro = d.get("골짜기", {}) or {}
-    tbad = {z: v for z, v in tro.items() if v < 0.5}
-    if tbad:
-        bad.append("%s: 벽 다음 구역 골짜기 %s (선: 0.5 이상)" % (base, tbad))
+    info = "벽 비 %s · 골짜기 %s (정보 — 지시 #65 (a) 로 벽은 그대로)" % ({z: round(v, 2) for z, v in walls.items()}, tro)
     if bad:
-        return {"status": "warn", "detail": bad}
-    return {"status": "ok", "detail": ["%s — 도달 밖 %d개 · 벽 %d곳 전부 1.5~3 · 골짜기 없음" % (base, len(out), len(walls))]}
+        return {"status": "warn", "detail": bad + [info]}
+    return {"status": "ok", "detail": ["%s — 도달 밖 %d개 (선 3)" % (base, len(out)), info]}
