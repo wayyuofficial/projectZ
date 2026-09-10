@@ -107,7 +107,6 @@ REVIVE_OFFER_SEC = num("REVIVE_OFFER_SEC")
 ROW_H = num("ROW_H")
 ROW_GAP = num("ROW_GAP")
 ROW_PITCH = ROW_H + ROW_GAP
-HDR_H = num("HDR_H")
 
 STATS = table("STATS")
 WEAPON_TYPES = table("WEAPON_TYPES")
@@ -148,7 +147,7 @@ MIRRORED = {
     "applyOffline": "b7cab65995bd9534",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "d9a056c24711cae7",
+    "buildButtons": "f84fb7d54c3442ba",
     "buyStat": "2b0b94e9a15bcaaa",
     "buyWeapon": "0c1bb6b5a33eb755",
     "damageZombie": "9dfa910d5cf6855b",
@@ -161,7 +160,7 @@ MIRRORED = {
     "killZombie": "0aaaf8a5b275c51b",
     "layout": "f9b6d6e12249c87d",
     "listBotY": "58cb9bb82a45c13d",
-    "listTopY": "754b8f651be3f961",
+    "listTopY": "46bb14aa20673823",
     "maxHP": "85e54826f897f7c7",
     "migrate": "e90d09eade56be4f",
     "onDeath": "589239f3a352fe82",
@@ -174,6 +173,7 @@ MIRRORED = {
     "statDef": "e7ad6087978fd6ec",
     "statOf": "bd53f6155e340e8d",
     "stepCombat": "722255f824e77e4b",
+    "tabRowY": "d001ac81a8afa161",
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "0a8ae8face6a1394",
     "weaponUpgradeCost": "d865ed90770874b1",
@@ -283,6 +283,7 @@ class Sim(object):
         self.deaths = 0              # 포트에만 있는 계수기. 원본에는 없다
         self.offlineReport = None
         self.adLog = []
+        self.tab = "stat"
         self.listScroll = 0.0
         self.listMax = 0.0
 
@@ -402,8 +403,11 @@ class Sim(object):
         return False
 
     # ---- 버튼 배치 ----
+    def tabRowY(self):
+        return L["PANEL_TOP"]
+
     def listTopY(self):
-        return L["PANEL_TOP"] + 8
+        return L["PANEL_TOP"] + ROW_H + 8
 
     def adRowY(self):
         return L["GAME_H"] - ROW_H - 10
@@ -431,13 +435,12 @@ class Sim(object):
             b("offline_close", 150, L["GAME_H"] / 2 + 104, 240, 46, "ghost")
             return bs
 
+        b("tab_stat", 24, self.tabRowY(), 240, ROW_H, "on" if self.tab == "stat" else "off")
+        b("tab_weapon", 276, self.tabRowY(), 240, ROW_H, "on" if self.tab == "weapon" else "off")
+
         top, bot = self.listTopY(), self.listBotY()
         clip = (top, bot)
         cy = [0.0]
-
-        def put_header(text):
-            self.headers.append((text, top + cy[0] - self.listScroll + 17))
-            cy[0] += HDR_H
 
         def put_row(kind, tone, enabled, wid):
             y = top + cy[0] - self.listScroll
@@ -446,17 +449,17 @@ class Sim(object):
                 return
             b(kind, 24, y, GAME_W - 48, ROW_H, tone, enabled, wid, clip)
 
-        put_header("능력치")
-        for s in STATS:
-            cost = self.statCost(s["id"])
-            put_row("stat", "buy", self.G["parts"] >= cost, s["id"])
-        put_header("무기")
-        for w in WEAPON_TYPES:
-            tier = self.G["owned"].get(w["id"], 0)
-            cost = self.weaponUpgradeCost(w["id"])
-            maxed = tier >= TIER_MAX
-            put_row("weapon", "equipped" if self.G["weapon"] == w["id"] else "buy",
-                    (not maxed) and cost is not None and self.G["parts"] >= cost, w["id"])
+        if self.tab == "stat":
+            for s in STATS:
+                cost = self.statCost(s["id"])
+                put_row("stat", "buy", self.G["parts"] >= cost, s["id"])
+        else:
+            for w in WEAPON_TYPES:
+                tier = self.G["owned"].get(w["id"], 0)
+                cost = self.weaponUpgradeCost(w["id"])
+                maxed = tier >= TIER_MAX
+                put_row("weapon", "equipped" if self.G["weapon"] == w["id"] else "buy",
+                        (not maxed) and cost is not None and self.G["parts"] >= cost, w["id"])
 
         self.listMax = max(0.0, cy[0] - (bot - top))
         self.listScroll = min(max(0.0, self.listScroll), self.listMax)

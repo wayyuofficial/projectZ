@@ -629,9 +629,13 @@ function adReward(kind) {
 const ROW_H = 58;          // 58 x (280/540) = 30.07 CSS px — 판정선 29 위
 const ROW_GAP = 6;
 const ROW_PITCH = ROW_H + ROW_GAP;
-const HDR_H = 24;
+/* 탭으로 되돌렸다 (지시 #50). 지시 #46 에서 탭을 없앤 것은 판정 `7.2`("한 화면에서 다 만짐")를
+   맞추려던 것인데, 그 문구가 **항목 수가 고정이라는 가정** 위에 있었다.
+   구역·항목이 뒤로 계속 늘어날 예정이므로 평평한 목록 하나는 반드시 무너진다.
+   사람이 판정 문구를 "탭 2회 이내로 살 수 있다" 로 바꿨고, 그래서 탭이 맞는 구조가 됐다.
+   **스크롤·관성·잘라내기는 그대로 쓴다** — 버린 것은 "한 목록에 다 쌓기" 뿐이다. */
+let tab = 'stat';
 const buttons = [];
-const panelHeaders = [];   // 목록 안의 구역 제목. 버튼이 아니라 글자다
 let listScroll = 0, listMax = 0;
 /* 관성 스크롤. 손을 떼면 그 자리에 서는 것은 폰에서 쓰는 목록처럼 느껴지지 않는다
    (2026-09-10 실기 제보). 뗀 순간의 속도로 미끄러지다 마찰로 선다.
@@ -645,7 +649,8 @@ let holdBtn = null, holdTime = 0, holdRepeat = 0;
 let drag = null;           // { y0, scroll0, moved, btn, samples }
 const LIST_VEL_WINDOW = 90;   // ms. 이 안의 움직임만 보고 속도를 낸다
 
-function listTopY() { return PANEL_TOP + 8; }
+function tabRowY() { return PANEL_TOP; }
+function listTopY() { return PANEL_TOP + ROW_H + 8; }
 function adRowY() { return GAME_H - ROW_H - 10; }
 function listBotY() { return adRowY() - 8; }
 
@@ -688,13 +693,17 @@ function buildButtons() {
     return;
   }
 
-  /* 목록을 하나로 쌓는다. 능력치 5줄 + 무기 6줄 = 11줄이 한 목록에 있고,
-     모드 전환 없이 스크롤로 전부 닿는다. */
-  panelHeaders.length = 0;
+  /* 탭 2개. 높이를 ROW_H 로 맞춰 탭 대상 크기(7.1)를 지킨다. */
+  btn({ x: 24, y: tabRowY(), w: 240, h: ROW_H, label: '능력치', enabled: true,
+        tone: tab === 'stat' ? 'on' : 'off',
+        onTap: () => { if (tab !== 'stat') { tab = 'stat'; listScroll = 0; listVel = 0; } return true; } });
+  btn({ x: 276, y: tabRowY(), w: 240, h: ROW_H, label: '무기', enabled: true,
+        tone: tab === 'weapon' ? 'on' : 'off',
+        onTap: () => { if (tab !== 'weapon') { tab = 'weapon'; listScroll = 0; listVel = 0; } return true; } });
+
   const top = listTopY(), bot = listBotY(), clip = [top, bot];
   let cy = 0;                                   // 목록 안 좌표 (스크롤 전)
 
-  const putHeader = (text) => { panelHeaders.push({ text: text, y: top + cy - listScroll + 17 }); cy += HDR_H; };
   const putRow = (o) => {
     const y = top + cy - listScroll;
     cy += ROW_PITCH;
@@ -704,28 +713,29 @@ function buildButtons() {
     btn(o);
   };
 
-  putHeader('능력치');
-  STATS.forEach((s) => {
-    const cost = statCost(s.id), val = statOf(s.id);
-    putRow({ label: s.name + '  Lv.' + (G.lv[s.id] || 0),
-             sub: fmt(val) + s.unit + '  ▸  ' + fmt(val * s.growth) + s.unit,
-             cost: cost, enabled: G.parts >= cost, tone: 'buy',
-             onTap: () => buyStat(s.id) });
-  });
-  putHeader('무기');
-  WEAPON_TYPES.forEach((w) => {
-    const tier = G.owned[w.id] || 0;
-    const cost = weaponUpgradeCost(w.id);
-    const maxed = tier >= TIER_MAX;
-    putRow({ label: w.name + (tier ? '  ★' + tier : ''),
-             sub: maxed ? '최대 등급 · 위력 ×' + (w.mult * (1 + TIER_POWER * (TIER_MAX - 1))).toFixed(2)
-                  : (tier ? '강화' : '해금'),
-             cost: maxed ? null : cost,
-             enabled: !maxed && G.parts >= cost,
-             tone: G.weapon === w.id ? 'equipped' : 'buy',
-             tint: tierTint(w.tint, tier || 1), wid: w.id,
-             onTap: () => { if (!maxed && G.parts >= cost) return buyWeapon(w.id); return equip(w.id); } });
-  });
+  if (tab === 'stat') {
+    STATS.forEach((s) => {
+      const cost = statCost(s.id), val = statOf(s.id);
+      putRow({ label: s.name + '  Lv.' + (G.lv[s.id] || 0),
+               sub: fmt(val) + s.unit + '  ▸  ' + fmt(val * s.growth) + s.unit,
+               cost: cost, enabled: G.parts >= cost, tone: 'buy',
+               onTap: () => buyStat(s.id) });
+    });
+  } else {
+    WEAPON_TYPES.forEach((w) => {
+      const tier = G.owned[w.id] || 0;
+      const cost = weaponUpgradeCost(w.id);
+      const maxed = tier >= TIER_MAX;
+      putRow({ label: w.name + (tier ? '  ★' + tier : ''),
+               sub: maxed ? '최대 등급 · 위력 ×' + (w.mult * (1 + TIER_POWER * (TIER_MAX - 1))).toFixed(2)
+                    : (tier ? '강화' : '해금'),
+               cost: maxed ? null : cost,
+               enabled: !maxed && G.parts >= cost,
+               tone: G.weapon === w.id ? 'equipped' : 'buy',
+               tint: tierTint(w.tint, tier || 1), wid: w.id,
+               onTap: () => { if (!maxed && G.parts >= cost) return buyWeapon(w.id); return equip(w.id); } });
+    });
+  }
 
   listMax = Math.max(0, cy - (bot - top));
   if (listScroll > listMax) { listScroll = listMax; }
@@ -958,16 +968,7 @@ function drawPanelBg() {
   if (offlineReport) return;
   const top = listTopY(), bot = listBotY();
 
-  // 목록 안 구역 제목
-  ctx.save();
-  ctx.beginPath(); ctx.rect(0, top, GAME_W, bot - top); ctx.clip();
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#6F8180';
-  ctx.font = '600 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  for (const h of panelHeaders) ctx.fillText(h.text, 26, h.y);
-  ctx.restore();
-
-  // 스크롤 막대 — 더 있다는 것을 알려준다
+  // 스크롤 막대 — 탭 이름이 구역을 말해주므로 목록 안 제목은 없앴다 — 더 있다는 것을 알려준다
   if (listMax > 0) {
     const trackH = bot - top;
     const barH = Math.max(24, trackH * trackH / (trackH + listMax));
