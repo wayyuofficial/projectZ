@@ -47,9 +47,9 @@
   chk('항목이 빠진 저장 보정', G.zone === 1 && G.lv.reg === 0 && G.owned.pipe === 1, JSON.stringify(G.lv));
 
   store[SAVE_KEY] = '{{{깨진';
-  saveError = null;
+  loadError = null;                       // 불러오기 실패는 saveError 가 아니라 loadError 다 (11차 감사 뒤)
   const ok2 = load();
-  chk('깨진 저장은 error 로 남고 초기화', ok2 === false && saveError !== null, String(saveError).slice(0, 40));
+  chk('깨진 저장은 error 로 남고 초기화', ok2 === false && loadError !== null, String(loadError).slice(0, 40));
 
   // --- 오프라인 보상 ---
   const fresh = (z, atk) => { G = freshState(); G.zone = z; G.lv.atk = atk; };
@@ -83,7 +83,7 @@
 
   // 원복
   G = freshState(); offlineReport = null;
-  zombies.length = 0; shots.length = 0; killIndex = 0; dead = false;
+  zombies.length = 0; shots.length = 0; killIndex = 0;   // `dead` 는 지시 #35(자동 후퇴)로 사라졌다
 
   return { 실패: R.filter(r => r.결과 === 'FAIL').length, 전체: R.length, 결과: R };
 })();

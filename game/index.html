@@ -655,6 +655,11 @@ function adReward(kind) {
    줄을 58 로 키우면 11줄이 패널에 안 들어간다 — 그래서 스크롤한다.
    **11줄이 동시에 보이지는 않는다.** 사라진 것은 "모드 전환" 이지 "스크롤" 이 아니다. */
 const ROW_H = 58;          // 58 x (280/540) = 30.07 CSS px — 판정선 29 위
+/* 탭 대상의 최소 높이(CSS px). WBS 7.1 판정선.
+   목록이 스크롤되면 위아래 끝에서 줄이 잘리는데, 잘린 줄이 이보다 얇으면 **눌리지 않는다.**
+   15차 감사: 280x530 에서 1.04 CSS px 로 잘린 줄이 눌려 구매가 일어났다 (LG V30 은 28.67).
+   온전한 줄은 폭 280 이상 어느 기기에서나 30.07 이라 이 규칙에 걸리지 않는다. */
+const MIN_TAP_CSS = 29;
 const ROW_GAP = 6;
 const ROW_PITCH = ROW_H + ROW_GAP;
 /* 탭으로 되돌렸다 (지시 #50). 지시 #46 에서 탭을 없앤 것은 판정 `7.2`("한 화면에서 다 만짐")를
@@ -784,11 +789,15 @@ function buildButtons() {
 }
 
 function hitButton(p) {
+  const cssPer = cssW / GAME_W;              // 게임 좌표 1 이 CSS px 몇 개인지
   for (let i = buttons.length - 1; i >= 0; i--) {
     const b = buttons[i];
     // 목록 줄은 잘린 만큼만 눌린다. 잘려 나간 부분이 눌리면 안 보이는 것을 누르는 것이다
     const top = b.clip ? Math.max(b.y, b.clip[0]) : b.y;
     const bot = b.clip ? Math.min(b.y + b.h, b.clip[1]) : b.y + b.h;
+    // 잘려서 판정선(MIN_TAP_CSS)보다 얇아진 줄은 탭 대상이 아니다.
+    // 스치기만 해도 구매가 되던 구멍이다 (15차 감사). 온전한 줄은 그 줄 높이 그대로 받는다.
+    if (b.clip && (bot - top) * cssPer < Math.min(MIN_TAP_CSS, b.h * cssPer) - 1e-9) continue;
     if (p.x >= b.x && p.x <= b.x + b.w && p.y >= top && p.y <= bot) return b;
   }
   return null;

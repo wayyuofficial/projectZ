@@ -110,6 +110,7 @@ REVIVE_OFFER_SEC = num("REVIVE_OFFER_SEC")
 ROW_H = num("ROW_H")
 ROW_GAP = num("ROW_GAP")
 ROW_PITCH = ROW_H + ROW_GAP
+MIN_TAP_CSS = num("MIN_TAP_CSS")
 
 STATS = table("STATS")
 WEAPON_TYPES = table("WEAPON_TYPES")
@@ -157,7 +158,7 @@ MIRRORED = {
     "equip": "c815c6819c3b6edb",
     "fitGame": "d526a00619b69c86",
     "freshState": "34dde8559f5a60a9",
-    "hitButton": "97f61d677b2d087a",
+    "hitButton": "8564f49dbd9cc319",
     "hitDamage": "78764110ba1a3fdd",
     "isBossKill": "4e70f4e006a8ab2a",
     "killZombie": "0aaaf8a5b275c51b",
@@ -479,9 +480,13 @@ class Sim(object):
 
     def hitButton(self, px, py, bs=None):
         bs = self.buildButtons() if bs is None else bs
+        css_per = L.get("cssW", GAME_W) / float(GAME_W)   # fit_game 을 안 돌렸으면 1
         for b in reversed(bs):
             top = max(b["y"], b["clip"][0]) if b.get("clip") else b["y"]
             bot = min(b["y"] + b["h"], b["clip"][1]) if b.get("clip") else b["y"] + b["h"]
+            # 잘려서 판정선보다 얇아진 줄은 탭 대상이 아니다 (원본과 같은 규칙)
+            if b.get("clip") and (bot - top) * css_per < min(MIN_TAP_CSS, b["h"] * css_per) - 1e-9:
+                continue
             if b["x"] <= px <= b["x"] + b["w"] and top <= py <= bot:
                 return b
         return None
