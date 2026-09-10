@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-11T01:06:14",
+  "ran_at": "2026-09-11T01:07:16",
   "blocking": 0,
   "warn": 0,
   "skip": 0,
@@ -142,7 +142,7 @@
     {
       "status": "ok",
       "detail": [
-        "뷰 1개가 원본과 일치"
+        "뷰 2개가 원본과 일치"
       ],
       "check": "c8_view_freshness.py",
       "name": "뷰(HTML)가 원본 문서와 어긋났는지",
