@@ -104,6 +104,10 @@ FIXED_STEP = 1.0 / 60
 MAX_STEPS = int(num("MAX_STEPS"))
 MAX_GAP = num("MAX_GAP")
 REVIVE_OFFER_SEC = num("REVIVE_OFFER_SEC")
+ROW_H = num("ROW_H")
+ROW_GAP = num("ROW_GAP")
+ROW_PITCH = ROW_H + ROW_GAP
+HDR_H = num("HDR_H")
 
 STATS = table("STATS")
 WEAPON_TYPES = table("WEAPON_TYPES")
@@ -139,22 +143,25 @@ def fingerprint(name):
 # 원본이 바뀌면 c16 이 막는다. 막히면 아래 구현을 손으로 다시 맞춘 뒤 --reseal 한다.
 MIRRORED = {
     "acceptRevive": "76080cff2a1316f8",
+    "adRowY": "5ed5d78e1b23b919",
     "applyDamage": "a42df6ae4cb6cf99",
     "applyOffline": "b7cab65995bd9534",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "5bd7e49545d01e31",
+    "buildButtons": "d9a056c24711cae7",
     "buyStat": "2b0b94e9a15bcaaa",
     "buyWeapon": "0c1bb6b5a33eb755",
     "damageZombie": "9dfa910d5cf6855b",
     "equip": "c815c6819c3b6edb",
     "fitGame": "d526a00619b69c86",
     "freshState": "34dde8559f5a60a9",
-    "hitButton": "c1fb7a2a2ca5a3b7",
+    "hitButton": "97f61d677b2d087a",
     "hitDamage": "78764110ba1a3fdd",
     "isBossKill": "4e70f4e006a8ab2a",
     "killZombie": "0aaaf8a5b275c51b",
     "layout": "f9b6d6e12249c87d",
+    "listBotY": "58cb9bb82a45c13d",
+    "listTopY": "754b8f651be3f961",
     "maxHP": "85e54826f897f7c7",
     "migrate": "e90d09eade56be4f",
     "onDeath": "589239f3a352fe82",
@@ -276,7 +283,8 @@ class Sim(object):
         self.deaths = 0              # 포트에만 있는 계수기. 원본에는 없다
         self.offlineReport = None
         self.adLog = []
-        self.tab = "stat"
+        self.listScroll = 0.0
+        self.listMax = 0.0
 
     # ---- 저장 ----
     def freshState(self):
@@ -394,16 +402,27 @@ class Sim(object):
         return False
 
     # ---- 버튼 배치 ----
+    def listTopY(self):
+        return L["PANEL_TOP"] + 8
+
+    def adRowY(self):
+        return L["GAME_H"] - ROW_H - 10
+
+    def listBotY(self):
+        return self.adRowY() - 8
+
     def buildButtons(self):
         """원본 `buildButtons()` 의 **자리와 상태만** 옮긴 것.
 
         글자(label/sub)는 그리기용이라 옮기지 않는다. 대신 `kind` 로 무엇인지 구분한다.
-        7.1(탭 대상 크기) · 7.2(한 화면 공존) · 5.2(팝업만 남는지) 를 이걸로 잰다."""
+        7.1(탭 대상 크기) · 7.2(한 화면 공존) · 5.2(팝업만 남는지) 를 이걸로 잰다.
+        지시 #46 으로 탭 2개 -> 스크롤 목록 하나가 됐다."""
         bs = []
+        self.headers = []
 
-        def b(kind, x, y, w, h, tone, enabled=True, wid=None):
+        def b(kind, x, y, w, h, tone, enabled=True, wid=None, clip=None):
             bs.append(dict(kind=kind, x=x, y=y, w=w, h=h, tone=tone,
-                           enabled=enabled, wid=wid))
+                           enabled=enabled, wid=wid, clip=clip))
 
         if self.offlineReport:
             b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
@@ -412,27 +431,37 @@ class Sim(object):
             b("offline_close", 150, L["GAME_H"] / 2 + 104, 240, 46, "ghost")
             return bs
 
-        b("tab_stat", 24, L["PANEL_TOP"], 240, 46, "on" if self.tab == "stat" else "off")
-        b("tab_weapon", 276, L["PANEL_TOP"], 240, 46, "on" if self.tab == "weapon" else "off")
+        top, bot = self.listTopY(), self.listBotY()
+        clip = (top, bot)
+        cy = [0.0]
 
-        listTop = L["PANEL_TOP"] + 58
-        if self.tab == "stat":
-            for i, s in enumerate(STATS):
-                cost = self.statCost(s["id"])
-                b("stat", 24, listTop + i * 60, GAME_W - 48, 56, "buy",
-                  self.G["parts"] >= cost, s["id"])
-        else:
-            for i, w in enumerate(WEAPON_TYPES):
-                tier = self.G["owned"].get(w["id"], 0)
-                cost = self.weaponUpgradeCost(w["id"])
-                maxed = tier >= TIER_MAX
-                b("weapon", 24, listTop + i * 48, GAME_W - 48, 44,
-                  "equipped" if self.G["weapon"] == w["id"] else "buy",
-                  (not maxed) and cost is not None and self.G["parts"] >= cost, w["id"])
+        def put_header(text):
+            self.headers.append((text, top + cy[0] - self.listScroll + 17))
+            cy[0] += HDR_H
 
-        adY = L["GAME_H"] - 60
-        b("ad_boost", 24, adY, 240, 44, "ad", not self.boostActive())
-        b("tab_toggle", 276, adY, 240, 44, "ghost")
+        def put_row(kind, tone, enabled, wid):
+            y = top + cy[0] - self.listScroll
+            cy[0] += ROW_PITCH
+            if y + ROW_H < top or y > bot:
+                return
+            b(kind, 24, y, GAME_W - 48, ROW_H, tone, enabled, wid, clip)
+
+        put_header("능력치")
+        for s in STATS:
+            cost = self.statCost(s["id"])
+            put_row("stat", "buy", self.G["parts"] >= cost, s["id"])
+        put_header("무기")
+        for w in WEAPON_TYPES:
+            tier = self.G["owned"].get(w["id"], 0)
+            cost = self.weaponUpgradeCost(w["id"])
+            maxed = tier >= TIER_MAX
+            put_row("weapon", "equipped" if self.G["weapon"] == w["id"] else "buy",
+                    (not maxed) and cost is not None and self.G["parts"] >= cost, w["id"])
+
+        self.listMax = max(0.0, cy[0] - (bot - top))
+        self.listScroll = min(max(0.0, self.listScroll), self.listMax)
+
+        b("ad_boost", 24, self.adRowY(), GAME_W - 48, ROW_H, "ad", not self.boostActive())
 
         if self.reviveOffer:
             b("revive_ad", 90, L["ARENA_BOT"] - 62, 360, 46, "ad")
@@ -441,7 +470,9 @@ class Sim(object):
     def hitButton(self, px, py, bs=None):
         bs = self.buildButtons() if bs is None else bs
         for b in reversed(bs):
-            if b["x"] <= px <= b["x"] + b["w"] and b["y"] <= py <= b["y"] + b["h"]:
+            top = max(b["y"], b["clip"][0]) if b.get("clip") else b["y"]
+            bot = min(b["y"] + b["h"], b["clip"][1]) if b.get("clip") else b["y"] + b["h"]
+            if b["x"] <= px <= b["x"] + b["w"] and top <= py <= bot:
                 return b
         return None
 

@@ -621,9 +621,24 @@ function adReward(kind) {
    9. UI — WBS 7
    ========================================================================= */
 
-let tab = 'stat';
+/* 업그레이드 패널 — 탭 2개에서 **하나의 스크롤 목록**으로 바꿨다 (지시 #46).
+   왜: 탭을 전환해야 했으므로 "능력치·무기를 한 화면에서 다 만짐"(7.2)이 성립하지 않았고,
+   목록 줄 높이가 44 라 작은 폰에서 탭 대상이 22.8 CSS px 로 판정선 29 에 못 미쳤다(7.1).
+   줄을 58 로 키우면 11줄이 패널에 안 들어간다 — 그래서 스크롤한다.
+   **11줄이 동시에 보이지는 않는다.** 사라진 것은 "모드 전환" 이지 "스크롤" 이 아니다. */
+const ROW_H = 58;          // 58 x (280/540) = 30.07 CSS px — 판정선 29 위
+const ROW_GAP = 6;
+const ROW_PITCH = ROW_H + ROW_GAP;
+const HDR_H = 24;
 const buttons = [];
+const panelHeaders = [];   // 목록 안의 구역 제목. 버튼이 아니라 글자다
+let listScroll = 0, listMax = 0;
 let holdBtn = null, holdTime = 0, holdRepeat = 0;
+let drag = null;           // { y0, scroll0, moved, btn }
+
+function listTopY() { return PANEL_TOP + 8; }
+function adRowY() { return GAME_H - ROW_H - 10; }
+function listBotY() { return adRowY() - 8; }
 
 function btn(o) { buttons.push(o); return o; }
 
@@ -664,48 +679,52 @@ function buildButtons() {
     return;
   }
 
-  btn({ x: 24, y: PANEL_TOP, w: 240, h: 46, label: '능력치', enabled: true,
-        tone: tab === 'stat' ? 'on' : 'off', onTap: () => { tab = 'stat'; return true; } });
-  btn({ x: 276, y: PANEL_TOP, w: 240, h: 46, label: '무기', enabled: true,
-        tone: tab === 'weapon' ? 'on' : 'off', onTap: () => { tab = 'weapon'; return true; } });
+  /* 목록을 하나로 쌓는다. 능력치 5줄 + 무기 6줄 = 11줄이 한 목록에 있고,
+     모드 전환 없이 스크롤로 전부 닿는다. */
+  panelHeaders.length = 0;
+  const top = listTopY(), bot = listBotY(), clip = [top, bot];
+  let cy = 0;                                   // 목록 안 좌표 (스크롤 전)
 
-  const listTop = PANEL_TOP + 58;
-  if (tab === 'stat') {
-    STATS.forEach((s, i) => {
-      const cost = statCost(s.id), val = statOf(s.id);
-      /* 줄 간격 64 -> 60. 능력치가 5종이 되면서 마지막 줄이 광고줄을 10px 파고들었다
-         (지시 #42, 넣자마자 계산으로 잡았다). 60 이면 마지막 줄 아래가 광고줄 위보다 6px 위다.
-         버튼 높이 56 은 그대로 둔다 — 줄이면 7.1(탭 대상 크기)이 더 나빠진다. */
-      btn({ x: 24, y: listTop + i * 60, w: GAME_W - 48, h: 56,
-            label: s.name + '  Lv.' + (G.lv[s.id] || 0),
-            sub: fmt(val) + s.unit + '  ▸  ' + fmt(val * s.growth) + s.unit,
-            cost: cost, enabled: G.parts >= cost, tone: 'buy',
-            onTap: () => buyStat(s.id) });
-    });
-  } else {
-    WEAPON_TYPES.forEach((w, i) => {
-      const tier = G.owned[w.id] || 0;
-      const cost = weaponUpgradeCost(w.id);
-      const maxed = tier >= TIER_MAX;
-      btn({ x: 24, y: listTop + i * 48, w: GAME_W - 48, h: 44,
-            label: w.name + (tier ? '  ★'.repeat(1) + tier : ''),
-            sub: maxed ? '최대 등급 · 위력 ×' + (w.mult * (1 + TIER_POWER * (TIER_MAX - 1))).toFixed(2)
-                 : (tier ? '강화' : '해금'),
-            cost: maxed ? null : cost,
-            enabled: !maxed && G.parts >= cost,
-            tone: G.weapon === w.id ? 'equipped' : 'buy',
-            tint: tierTint(w.tint, tier || 1), wid: w.id,
-            onTap: () => { if (!maxed && G.parts >= cost) return buyWeapon(w.id); return equip(w.id); } });
-    });
-  }
+  const putHeader = (text) => { panelHeaders.push({ text: text, y: top + cy - listScroll + 17 }); cy += HDR_H; };
+  const putRow = (o) => {
+    const y = top + cy - listScroll;
+    cy += ROW_PITCH;
+    // 목록 밖으로 완전히 나간 줄은 만들지 않는다. 안 보이는 버튼이 눌리면 안 된다 (지시 #19)
+    if (y + ROW_H < top || y > bot) return;
+    o.x = 24; o.y = y; o.w = GAME_W - 48; o.h = ROW_H; o.clip = clip;
+    btn(o);
+  };
 
-  const adY = GAME_H - 60;
-  btn({ x: 24, y: adY, w: 240, h: 44,
+  putHeader('능력치');
+  STATS.forEach((s) => {
+    const cost = statCost(s.id), val = statOf(s.id);
+    putRow({ label: s.name + '  Lv.' + (G.lv[s.id] || 0),
+             sub: fmt(val) + s.unit + '  ▸  ' + fmt(val * s.growth) + s.unit,
+             cost: cost, enabled: G.parts >= cost, tone: 'buy',
+             onTap: () => buyStat(s.id) });
+  });
+  putHeader('무기');
+  WEAPON_TYPES.forEach((w) => {
+    const tier = G.owned[w.id] || 0;
+    const cost = weaponUpgradeCost(w.id);
+    const maxed = tier >= TIER_MAX;
+    putRow({ label: w.name + (tier ? '  ★' + tier : ''),
+             sub: maxed ? '최대 등급 · 위력 ×' + (w.mult * (1 + TIER_POWER * (TIER_MAX - 1))).toFixed(2)
+                  : (tier ? '강화' : '해금'),
+             cost: maxed ? null : cost,
+             enabled: !maxed && G.parts >= cost,
+             tone: G.weapon === w.id ? 'equipped' : 'buy',
+             tint: tierTint(w.tint, tier || 1), wid: w.id,
+             onTap: () => { if (!maxed && G.parts >= cost) return buyWeapon(w.id); return equip(w.id); } });
+  });
+
+  listMax = Math.max(0, cy - (bot - top));
+  if (listScroll > listMax) { listScroll = listMax; }
+  if (listScroll < 0) { listScroll = 0; }
+
+  btn({ x: 24, y: adRowY(), w: GAME_W - 48, h: ROW_H,
         label: boostActive() ? '2배 ' + fmtTime((G.boostUntil - Date.now()) / 1000) : '광고 · 부품 2배',
         enabled: !boostActive(), tone: 'ad', onTap: () => adReward('boost') });
-  btn({ x: 276, y: adY, w: 240, h: 44, label: tab === 'stat' ? '무기 보기' : '능력치 보기',
-        enabled: true, tone: 'ghost',
-        onTap: () => { tab = tab === 'stat' ? 'weapon' : 'stat'; return true; } });
 
   /* 사망 제안. 전투 영역 아래쪽에 잠깐 떠 있다가 사라진다.
      화면을 막지 않는다 — scrim 도 없고 다른 버튼도 그대로 살아 있다. */
@@ -720,7 +739,10 @@ function buildButtons() {
 function hitButton(p) {
   for (let i = buttons.length - 1; i >= 0; i--) {
     const b = buttons[i];
-    if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return b;
+    // 목록 줄은 잘린 만큼만 눌린다. 잘려 나간 부분이 눌리면 안 보이는 것을 누르는 것이다
+    const top = b.clip ? Math.max(b.y, b.clip[0]) : b.y;
+    const bot = b.clip ? Math.min(b.y + b.h, b.clip[1]) : b.y + b.h;
+    if (p.x >= b.x && p.x <= b.x + b.w && p.y >= top && p.y <= bot) return b;
   }
   return null;
 }
@@ -923,11 +945,35 @@ function drawPanelBg() {
   ctx.fillRect(0, ARENA_BOT, GAME_W, GAME_H - ARENA_BOT);
   ctx.strokeStyle = 'rgba(127,176,178,0.18)';
   ctx.beginPath(); ctx.moveTo(0, ARENA_BOT + .5); ctx.lineTo(GAME_W, ARENA_BOT + .5); ctx.stroke();
+
+  if (offlineReport) return;
+  const top = listTopY(), bot = listBotY();
+
+  // 목록 안 구역 제목
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, top, GAME_W, bot - top); ctx.clip();
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#6F8180';
+  ctx.font = '600 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  for (const h of panelHeaders) ctx.fillText(h.text, 26, h.y);
+  ctx.restore();
+
+  // 스크롤 막대 — 더 있다는 것을 알려준다
+  if (listMax > 0) {
+    const trackH = bot - top;
+    const barH = Math.max(24, trackH * trackH / (trackH + listMax));
+    const barY = top + (trackH - barH) * (listScroll / listMax);
+    ctx.fillStyle = 'rgba(127,176,178,0.10)';
+    ctx.fillRect(GAME_W - 10, top, 4, trackH);
+    ctx.fillStyle = 'rgba(127,176,178,0.45)';
+    ctx.fillRect(GAME_W - 10, barY, 4, barH);
+  }
 }
 
 function drawButtons() {
   for (const b of buttons) {
     if (b.tone === 'scrim') continue;   // 배경 닫기 영역은 그리지 않는다
+    if (b.clip) { ctx.save(); ctx.beginPath(); ctx.rect(0, b.clip[0], GAME_W, b.clip[1] - b.clip[0]); ctx.clip(); }
     let bg = 'rgba(255,255,255,.05)', fg = '#E8F0EE', bd = 'rgba(127,176,178,.20)';
     if (b.tone === 'on') { bg = 'rgba(127,176,178,.18)'; bd = '#7FB0B2'; }
     else if (b.tone === 'off') { fg = '#6F8180'; }
@@ -960,6 +1006,7 @@ function drawButtons() {
       ctx.font = '600 14px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
       ctx.fillText(fmt(b.cost), b.x + b.w - 14, b.y + b.h / 2 + 5);
     }
+    if (b.clip) ctx.restore();
   }
 }
 
@@ -1041,10 +1088,24 @@ function frame(now) {
 
 /* ========================= 입력 ========================= */
 
+/* 목록 줄은 **누르는 순간 사지 않는다.** 끌면 스크롤이고, 안 끌고 떼면 구매다.
+   누르는 순간 사면 스크롤하려다 매번 하나씩 사게 된다.
+   길게 눌러 연속 구매하는 것(3.4)은 그대로다 — holdBtn 을 여기서 잡아두고
+   0.3초 뒤부터 frame() 의 반복이 산다. */
 canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   const p = toCanvas(e.clientX, e.clientY);
   const b = hitButton(p);
+  const inList = p.y >= listTopY() && p.y <= listBotY() && !offlineReport;
+
+  if (inList) {
+    drag = { y0: p.y, scroll0: listScroll, moved: false,
+             btn: (b && b.enabled !== false) ? b : null };
+    holdBtn = (drag.btn && drag.btn.tone === 'buy') ? drag.btn : null;
+    holdTime = 0; holdRepeat = 0;
+    return;
+  }
+
   if (!b || b.enabled === false) return;
   b.onTap();
   buildButtons();
@@ -1053,8 +1114,28 @@ canvas.addEventListener('pointerdown', (e) => {
   holdTime = 0; holdRepeat = 0;
   save();
 });
+
+canvas.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  e.preventDefault();
+  const p = toCanvas(e.clientX, e.clientY);
+  const dy = p.y - drag.y0;
+  if (!drag.moved && Math.abs(dy) > 6) { drag.moved = true; holdBtn = null; }
+  if (drag.moved) {
+    listScroll = Math.max(0, Math.min(listMax, drag.scroll0 - dy));
+    buildButtons();
+  }
+});
+
+canvas.addEventListener('pointerup', (e) => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (d.moved || !d.btn) return;
+  // 끌지 않고 뗐다 = 구매
+  if (holdTime <= 0.3) { d.btn.onTap(); buildButtons(); save(); }
+});
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev =>
-  canvas.addEventListener(ev, () => { holdBtn = null; }));
+  canvas.addEventListener(ev, () => { holdBtn = null; drag = null; }));
 
 window.addEventListener('resize', fitGame);
 window.addEventListener('orientationchange', () => setTimeout(fitGame, 80));
