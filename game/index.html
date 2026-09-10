@@ -118,12 +118,13 @@ const WEAPON_TYPES = [
   { id: 'crossbow', name: '석궁',       mult: 3.40, cost: 95000,  tint: '#7E9B72', shape: 'cross' },
   { id: 'mine',     name: '지뢰',       mult: 4.50, cost: 620000, tint: '#9A6B8E', shape: 'disc' },
   /* M2 — 5구역마다 새 무기 (지시 #60). `unlock` 구역에 닿기 전엔 목록에 안 나오고 못 산다.
+     해금은 13·18·23·28 — 벽(10·15·20·25·30)과 겹치지 않게 2 앞당겼다 (지시 #64: 20 에서 유탄발사기를 사자마자 21 을 지나쳐 골짜기 0.37).
      배수는 앞 무기 x1.32 (M1 의 간격을 잇는다). 값은 그 구역 도달 시점 누적 수입 x1.5 —
      measurements/income-by-zone-2026-09-11.json (구역15 491K · 20 8.5M · 25 133M · 30 2.8B). */
-  { id: 'mg',       name: '기관총',     mult: 6.00,  cost: 740000,     tint: '#5F7F9A', shape: 'twin',     unlock: 15 },
-  { id: 'launcher', name: '유탄발사기', mult: 8.00,  cost: 12700000,   tint: '#8C7A4E', shape: 'launcher', unlock: 20 },
-  { id: 'saw',      name: '전기톱',     mult: 10.50, cost: 200000000,  tint: '#B0553F', shape: 'saw',      unlock: 25 },
-  { id: 'rail',     name: '레일건',     mult: 14.00, cost: 4200000000, tint: '#6A9AB8', shape: 'rail',     unlock: 30 }
+  { id: 'mg',       name: '기관총',     mult: 6.00,  cost: 740000,     tint: '#5F7F9A', shape: 'twin',     unlock: 13 },
+  { id: 'launcher', name: '유탄발사기', mult: 8.00,  cost: 12700000,   tint: '#8C7A4E', shape: 'launcher', unlock: 18 },
+  { id: 'saw',      name: '전기톱',     mult: 10.50, cost: 200000000,  tint: '#B0553F', shape: 'saw',      unlock: 23 },
+  { id: 'rail',     name: '레일건',     mult: 14.00, cost: 4200000000, tint: '#6A9AB8', shape: 'rail',     unlock: 28 }
 ];
 
 // 구역 곡선 — plans/GAMEDESIGN.md 3장. 전부 설계값이며 실측으로 교체 대상.

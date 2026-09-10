@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-11T02:30:30",
+  "ran_at": "2026-09-11T02:43:51",
   "blocking": 1,
   "warn": 2,
   "skip": 0,
@@ -80,6 +80,7 @@
     {
       "status": "warn",
       "detail": [
+        "balance-M2-curve-c-noweapons-2026-09-11.json 가 게임 파일보다 낡았다 — 게임을 고치고 곡선을 다시 안 쟀다",
         "balance-M2-curve-c-noweapons-2026-09-11.json: 도달 시각이 목표의 ±20% 밖인 구역 5개 [11, 12, 26, 29, 30] (선: 3개 이하)",
         "balance-M2-curve-c-noweapons-2026-09-11.json: 벽 비가 1.5~3 밖 {'15': 4.61, '25': 3.69}",
         "balance-M2-curve-c-noweapons-2026-09-11.json: 벽 다음 구역 골짜기 {'25': 0.42} (선: 0.5 이상)"
@@ -163,6 +164,7 @@
     {
       "status": "warn",
       "detail": [
+        "index.html 가 밸런스 기록(balance-M2-curve-c-noweapons-2026-09-11.json)보다 새롭다 — 다시 재라",
         "index.html 가 저장·오프라인 기록(storage-2026-09-11.json)보다 새롭다 — 다시 재라"
       ],
       "check": "c9_measurement_freshness.py",
