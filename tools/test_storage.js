@@ -4,8 +4,9 @@
  *   이 경로는 브라우저 안에서만 돌아간다. 파이썬으로는 실행할 수 없다.
  *   미리보기(data: URL)에서는 localStorage 가 막히므로 가짜 저장소를 끼워 넣는다.
  *
- * 쓰는 법: game/index.html 을 브라우저에서 열고 콘솔에 이 파일 내용을 붙여 넣는다.
- *          결과를 measurements/storage-YYYY-MM-DD.json 에 남긴다 (R002).
+ * 쓰는 법: game/index.html 을 브라우저에서 열고 콘솔에 이 파일 내용을 **그대로** 붙여 넣는다 — 고쳐서 넣지 않는다.
+ *          결과를 measurements/storage-YYYY-MM-DD.json 에 남긴다 (R002). 기록의 항목 목록은 이 스크립트의 결과 배열 그대로다.
+ *          (24차 감사: 기록의 v1 값이 4칸인데 스크립트는 3칸이었다 — 국소 수정본을 돌렸던 것. 스크립트를 실행본에 맞췄다.)
  *          게임을 고쳤는데 이 기록이 낡으면 checks/c9_measurement_freshness.py 가 잡는다.
  */
 (function () {
@@ -44,8 +45,9 @@
 
   // M2: v1(M1) 저장본은 초기화하지 않고 v2 로 끌어올린다 — 사람의 15분이 날아가면 안 된다
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 1, bestZone: undefined }));
+  loadError = null;                       // 앞 항목의 실패 문구가 남지 않게 (24차 부수 지적 3: load() 는 loadError 를 스스로 비우지 않는다)
   load();
-  chk('v1 저장본은 v2 로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.owned.rifle === 2, G.v + '/' + G.zone + '/' + G.bestZone);
+  chk('v1 저장본은 v2 로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.owned.rifle === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.bestZone + '/' + loadError);
 
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();
