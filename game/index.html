@@ -796,7 +796,9 @@ function buildButtons() {
                sub: maxed ? '최대 등급 · 위력 ×' + (w.mult * (1 + TIER_POWER * (TIER_MAX - 1))).toFixed(2)
                     : (tier ? '강화' : '해금'),
                cost: maxed ? null : cost,
-               enabled: !maxed && G.parts >= cost,
+               /* 가진 무기는 언제나 눌린다 — 장착 전환. 지시 #70 실기: 다음 등급을 못 사면 줄이 죽어서
+                  실수로 약한 무기를 고르면 돈이 모일 때까지 되돌릴 수 없었다. */
+               enabled: tier > 0 || (!maxed && G.parts >= cost),
                tone: G.weapon === w.id ? 'equipped' : 'buy',
                tint: tierTint(w.tint, tier || 1), wid: w.id,
                onTap: () => { if (!maxed && G.parts >= cost) return buyWeapon(w.id); return equip(w.id); } });

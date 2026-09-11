@@ -152,7 +152,7 @@ MIRRORED = {
     "applyOffline": "b7cab65995bd9534",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "5177d83c83d173b2",
+    "buildButtons": "b4b09317f02b1b37",
     "buyStat": "2b0b94e9a15bcaaa",
     "buyWeapon": "0c1bb6b5a33eb755",
     "damageZombie": "9dfa910d5cf6855b",
@@ -483,7 +483,7 @@ class Sim(object):
                 cost = self.weaponUpgradeCost(w["id"])
                 maxed = tier >= TIER_MAX
                 put_row("weapon", "equipped" if self.G["weapon"] == w["id"] else "buy",
-                        (not maxed) and cost is not None and self.G["parts"] >= cost, w["id"])
+                        tier > 0 or ((not maxed) and cost is not None and self.G["parts"] >= cost), w["id"])   # 가진 무기는 언제나 눌린다 (지시 #70)
 
         self.listMax = max(0.0, cy[0] - (bot - top))
         self.listScroll = min(max(0.0, self.listScroll), self.listMax)
