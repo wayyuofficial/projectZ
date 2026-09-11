@@ -1,7 +1,7 @@
 <title>좀비 RPG M2 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M2.md
-     source-sha256: 3467d0152038b3d777d1b3d0e08b10b6dc2504e543268fe1295fede607a4194e
+     source-sha256: 1627ef8e35117eaa6b6e6e090e3cc0600910e8d996885e29c1ad8e99e7ececef
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -249,8 +249,8 @@
         <tr><td>7.1</td><td><span class="verdict ok">통과 (24차)</span></td><td class="judge">python checks/run.py -&gt; &#x27;차단 0 / 경고 0 / 건너뜀 0 / 전체 18&#x27; (c18_curve 는 balance-M2-curve-e 가 들어온 뒤 OK: &#x27;도달 밖 2개 (선 3)&#x27;). python tools/selftest_checks.py -&gt; 18줄 전부 &#x27;기대 == 실제&#x27;, …</td><td class="judge">됨 &mdash; c18 곡선 검사 신설, 자가진단 18/18</td></tr>
         <tr><td>8.1</td><td><span class="verdict ok">통과 (24차)</span></td><td class="judge">실기 기록 measurements/device-2026-09-11-M2.json (잰 사람: 사람 wayyu, LG V30). 도장을 내가 실행으로 대조: git show 60629d7:game/index.html 을 CRLF 로 되돌려 sha256 -&gt; e0e1352419d8ae87, 65,519 바이…</td><td class="judge">됨 · <strong>24차 통과</strong> &mdash; 사람 여섯 절 관측 + 도장 e0e1352 대조. 벽 15 체류 15분, 석궁 구매로 넘음</td></tr>
         <tr><td>8.2</td><td><span class="verdict ok">통과 (24차)</span></td><td class="judge">measurements/device-2026-09-11-M2.json 의 값.시간대 = &#x27;부스트 ON 열 (3회) &mdash; balance-M2-boost-rw1.30-2026-09-11.json 의 ON 열과 비교&#x27;, 값.부스트_횟수 = 3. 판정 문구 &#x27;device-*.json 에 어느 시간대인지 적혀 있다…</td><td class="judge">됨 · 24차 통과 &mdash; 부스트 3회 → ON 열</td></tr>
-        <tr><td>9.1</td><td><span class="verdict ng">실패 (24차)</span></td><td class="judge">판정 문구 &#x27;27+N 개 전부 실행 판정, 회귀 0&#x27;. 이번 회차는 지시에 따른 빠른 회차로 47개 중 22개만 실행 판정했다(범위밖 25). 전수 미이행 &mdash; 통과 조건이 성립할 수 없다.</td><td class="judge">대기 &mdash; 마감 전 25차</td></tr>
-        <tr><td>9.2</td><td><span class="verdict ng">실패 (24차)</span></td><td class="judge">ls exemplars/good/ -&gt; 2026-09-10-M1-first-playable.html / .md 둘뿐. M2 빌드(ab7c4ecf) 등록 없음. c17_exemplar_regression [ OK ] 는 M1 본보기에 대한 것. 사람의 &#x27;좋다&#x27; 판정 기록도 없다.</td><td class="judge">대기 &mdash; 사람 &quot;좋다&quot; 판정 &mdash; 마감 실기와 묶음</td></tr>
+        <tr><td>9.1</td><td><span class="verdict ng">실패 (24차)</span></td><td class="judge">판정 문구 &#x27;27+N 개 전부 실행 판정, 회귀 0&#x27;. 이번 회차는 지시에 따른 빠른 회차로 47개 중 22개만 실행 판정했다(범위밖 25). 전수 미이행 &mdash; 통과 조건이 성립할 수 없다.</td><td class="judge">진행 &mdash; 마감 전 25차 &mdash; 검증자</td></tr>
+        <tr><td>9.2</td><td><span class="verdict ng">실패 (24차)</span></td><td class="judge">ls exemplars/good/ -&gt; 2026-09-10-M1-first-playable.html / .md 둘뿐. M2 빌드(ab7c4ecf) 등록 없음. c17_exemplar_regression [ OK ] 는 M1 본보기에 대한 것. 사람의 &#x27;좋다&#x27; 판정 기록도 없다.</td><td class="judge">됨 &mdash; 사람 &quot;좋다&quot; (2026-09-11, <span class="mono">device-2026-09-11b-M2.json</span> ④)</td></tr>
         <tr><td>결함수정(무기 장착 전환)</td><td><span class="verdict ok">통과 (24차)</span></td><td class="judge">브라우저 360x720, 도장 ab7c4ecf. 부품 0 · owned{pipe:1, rifle:1, shotgun:3} · 장착 rifle 에서 실제 트러스티드 포인터 클릭(각 클릭의 hit 를 canvas pointerdown 리스너로 기록): &#x27;452.6-&gt;쇠파이프 ★1&#x27; -&gt; weapon pipe…</td><td class="judge">&mdash;</td></tr>
     </tbody></table></div></section>
   <section><h2><span class="n">A</span>단계별 공수</h2>
@@ -334,5 +334,5 @@
     <li>구역 31 이상</li>
     <li>곡선을 결과에 맞춰 고치기 &mdash; 곡선은 정본, 상수를 맞춘다</li>
   </ul></section>
-  <footer><div>원본: <code>plans/wbs-M2.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div><div>원본 sha256 <code>3467d0152038…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div><div>근거: <code>plans/plan-M2.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #59·#60·#61</div></footer>
+  <footer><div>원본: <code>plans/wbs-M2.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div><div>원본 sha256 <code>1627ef8e3511…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div><div>근거: <code>plans/plan-M2.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #59·#60·#61</div></footer>
 </div>
