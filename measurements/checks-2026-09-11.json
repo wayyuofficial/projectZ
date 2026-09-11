@@ -1,7 +1,7 @@
 {
-  "ran_at": "2026-09-11T15:13:17",
+  "ran_at": "2026-09-11T15:19:56",
   "blocking": 0,
-  "warn": 2,
+  "warn": 0,
   "skip": 0,
   "results": [
     {
@@ -77,9 +77,9 @@
       "priority": 1
     },
     {
-      "status": "warn",
+      "status": "ok",
       "detail": [
-        "balance-M2-curve-e-2026-09-11.json 가 게임 파일보다 낡았다 — 게임을 고치고 곡선을 다시 안 쟀다",
+        "balance-M2-curve-f-2026-09-11.json — 도달 밖 2개 (선 3)",
         "벽 비 {'10': 1.68, '15': 4.61, '20': 2.04, '25': 1.77} · 골짜기 {'10': 1.11, '15': 0.76, '20': 0.37, '25': 2.62} (정보 — 지시 #65 (a) 로 벽은 그대로)"
       ],
       "check": "c18_curve.py",
@@ -159,10 +159,9 @@
       "priority": 2
     },
     {
-      "status": "warn",
+      "status": "ok",
       "detail": [
-        "index.html 가 밸런스 기록(balance-M2-curve-e-2026-09-11.json)보다 새롭다 — 다시 재라",
-        "index.html 가 저장·오프라인 기록(storage-2026-09-11b.json)보다 새롭다 — 다시 재라"
+        "측정 기록 최신: balance-M2-curve-f-2026-09-11.json, storage-2026-09-11c.json"
       ],
       "check": "c9_measurement_freshness.py",
       "name": "게임을 고치고 측정을 다시 안 했는지",
