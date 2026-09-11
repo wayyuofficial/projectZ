@@ -152,7 +152,7 @@ MIRRORED = {
     "applyOffline": "b7cab65995bd9534",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "b4b09317f02b1b37",
+    "buildButtons": "7b0dd60f1af0db25",
     "buyStat": "2b0b94e9a15bcaaa",
     "buyWeapon": "0c1bb6b5a33eb755",
     "damageZombie": "9dfa910d5cf6855b",
