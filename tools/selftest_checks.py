@@ -56,7 +56,29 @@ BAD_RULE = """# R999 - 일부러 망가뜨린 규칙
 """
 
 
+# ----- 겹쳐 돌리기 금지 -----
+# 25차 감사: 이 자가진단은 game/index.html·canon·plans 를 **제자리에서** 고쳤다 되돌린다.
+# 다른 측정이나 빌드와 겹쳐 돌면 그쪽이 망가진 파일을 읽는다 (검증자가 APK 도장 DIFF 로 겪었다).
+LOCKFILE = os.path.join(ROOT, ".selftest-running")
+
+
+def _acquire():
+    if os.path.exists(LOCKFILE):
+        print("자가진단이 이미 돌고 있다 (%s). 겹쳐 돌리면 저장소 파일이 망가진다." % LOCKFILE)
+        print("정말 아무도 안 돌고 있으면 그 파일을 지우고 다시 해라.")
+        sys.exit(2)
+    io.open(LOCKFILE, "w", encoding="utf-8").write("selftest %d\n" % os.getpid())
+
+
+def _release():
+    try:
+        os.remove(LOCKFILE)
+    except OSError:
+        pass
+
+
 def main():
+    _acquire()
     made = []
     try:
         p = os.path.join(ROOT, "game", "_selftest.html"); w(p, BAD_GAME); made.append(p)
@@ -130,6 +152,13 @@ def main():
         w(p, '{"벽": true, "도달_밖": [10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30], "벽비": {"5": 9.0}, "골짜기": {"5": 0.1}}')
         os.utime(p, (_future, _future)); made.append(p)
 
+        # c19: 판정 근거로 **인용된** 기록의 도장이 옛 빌드면 warn 이 나야 한다.
+        # 실제 기록은 안 건드린다 — 인용하는 쪽(wbs)과 인용되는 쪽(기록) 을 둘 다 새로 심는다.
+        p = os.path.join(ROOT, "measurements", "balance-M2-_selftest-stale.json")
+        w(p, '{"측정일": "2026-09-11", "빌드도장": "0000000000000000"}'); made.append(p)
+        p = os.path.join(ROOT, "plans", "wbs-_selftest.md")
+        w(p, "# 자가진단용\n\n근거: `balance-M2-_selftest-stale.json`\n"); made.append(p)
+
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
         shutil.copy2(canon, backup); made.append(backup)
@@ -155,6 +184,7 @@ def main():
             ("c16_port_sync.py", ("fail",)),
             ("c17_exemplar_regression.py", ("fail",)),
             ("c18_curve.py", ("warn",)),
+            ("c19_evidence_stamp.py", ("warn",)),
         ]
 
         bad = []
@@ -228,6 +258,7 @@ def main():
             glob.glob(os.path.join(ROOT, "rules", "R999-*"))
         if left:
             print("정리 실패로 남은 파일: %s" % left)
+        _release()
 
 
 if __name__ == "__main__":

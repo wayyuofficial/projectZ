@@ -1,7 +1,7 @@
 {
-  "ran_at": "2026-09-11T18:48:46",
+  "ran_at": "2026-09-11T19:27:47",
   "blocking": 0,
-  "warn": 0,
+  "warn": 1,
   "skip": 0,
   "results": [
     {
@@ -70,7 +70,7 @@
     {
       "status": "ok",
       "detail": [
-        "본보기 1개 × 검사 6회 전부 통과 — 기준이 좋은 산출물을 떨어뜨리지 않는다"
+        "본보기 2개 × 검사 12회 전부 통과 — 기준이 좋은 산출물을 떨어뜨리지 않는다"
       ],
       "check": "c17_exemplar_regression.py",
       "name": "검사가 좋다고 판정된 산출물을 떨어뜨리는지",
@@ -87,9 +87,19 @@
       "priority": 2
     },
     {
+      "status": "warn",
+      "detail": [
+        "balance-M2-boost-rw1.30-2026-09-11.json — 예측 M2-B4 판정근거 의 근거인데 도장이 193e4c8545ebd159 다. 현재 빌드는 f1e9c828ab31b7ba. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "balance-M2-curve-c-2026-09-11.json — 예측 M2-B1‴ 판정근거 의 근거인데 도장이 e286f0c4da4d1e74 다. 현재 빌드는 f1e9c828ab31b7ba. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)"
+      ],
+      "check": "c19_evidence_stamp.py",
+      "name": "판정 근거 기록이 현재 빌드의 것인지",
+      "priority": 1
+    },
+    {
       "status": "ok",
       "detail": [
-        "규칙 5개 통과"
+        "규칙 6개 통과"
       ],
       "check": "c1_rule_hygiene.py",
       "name": "규칙 머리 4줄 · 유효기한 · 대상 중복",
@@ -143,7 +153,7 @@
     {
       "status": "ok",
       "detail": [
-        "파일 35개 통과"
+        "파일 36개 통과"
       ],
       "check": "c7_python_cmd.py",
       "name": "이 환경에 없는 파이썬 명령을 쓰는지",
@@ -161,7 +171,7 @@
     {
       "status": "ok",
       "detail": [
-        "측정 기록 최신: balance-M2-curve-f-2026-09-11.json, storage-2026-09-11c.json"
+        "측정 기록 최신: balance-M2-boost-2026-09-11b.json, storage-2026-09-11c.json"
       ],
       "check": "c9_measurement_freshness.py",
       "name": "게임을 고치고 측정을 다시 안 했는지",
