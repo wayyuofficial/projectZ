@@ -1,7 +1,7 @@
 <title>좀비 RPG M2 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M2.md
-     source-sha256: a7871b0d21ff200dda0d3e2928306a01ccd5395248b9c9d7a59f65f4c1f6fbe8
+     source-sha256: 648f394ced2dd84f43022b052340d852404dfd4db114ec5aba38b8d47133ed39
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -247,7 +247,7 @@
         <tr><td>5.1</td><td><span class="verdict ok">통과 (27차)</span></td><td class="judge">measurements/balance-M2-boost-2026-09-14.json(빌드도장 336f62a9 = 현재 빌드)에 부스트_OFF_도달_분 · 부스트_ON_도달_분 두 열과 사람_실측_시간대 칸, 그리고 &#x27;판정하지_않는다: M2-B4 판정은 사람 몫&#x27; 이 있다. 숫자를 내가 재현: python …</td><td class="judge">됨 · <strong>26차 통과</strong> &mdash; 현재 빌드 재측정 <span class="mono">balance-M2-boost-2026-09-14.json</span>: <strong>5/6, 구역 20 = 0.499</strong>(선 0.5 밖). 성립 판정의 근거가 4빌드 전 기록이었다 &mdash; 사례 18 · c19 신설. <strong>B4 재판정은 사람 몫</strong></td></tr>
         <tr><td>6.1</td><td><span class="verdict ok">통과 (27차)</span></td><td class="judge">내가 직접 돌렸다: 로컬 서버로 연 게임 안에서 fetch 로 tools/test_storage.js 를 <strong>고치지 않고 그대로</strong> 받아 eval &mdash; 전체 17 / 실패 0. 그 안에 &#x27;v1 저장본은 v2 로 이어진다&#x27; 항목이 있고 값 &#x27;2/4/4/null&#x27;(v→2, zone 4, parts 4, loa…</td><td class="judge">됨 &mdash; 17/17. 거짓 경고(v1 인데 &quot;처음부터&quot;) 잡음</td></tr>
         <tr><td>7.1</td><td><span class="verdict ok">통과 (27차)</span></td><td class="judge">python checks/run.py → &#x27;차단 0 / 경고 0 / 건너뜀 0 / 전체 19&#x27;, 종료코드 0. python tools/selftest_checks.py → 20줄 전부 [ OK ], &#x27;자가진단 통과: 검사 19개 전부 위반을 잡아낸다&#x27;, 종료코드 0. c2(정본 상한)·c13(30행)·c…</td><td class="judge">됨 &mdash; c18 곡선 검사 신설, 자가진단 18/18</td></tr>
-        <tr><td>8.1</td><td><span class="verdict un">미검증 (27차)</span></td><td class="judge">판정 문구: &#x27;사람이 구역 15 까지 1런 · <strong>15 에서 새 무기 해금</strong> · 벽(10·15)에서 체류 체감 · 오프라인 팝업 · v1 저장 이어짐 을 관측. 빌드 도장 기록&#x27;. 두 가지가 걸린다. (1) <strong>문구가 낡아 성립 불가</strong>: 해금 구역은 13·18·23·28 이다(내가 브라우저로 확인).…</td><td class="judge"><strong>27차 미검증</strong> &mdash; 사람 여섯 절 관측 + 도장 e0e1352 대조. 벽 15 체류 15분, 석궁 구매로 넘음</td></tr>
+        <tr><td>8.1</td><td><span class="verdict un">미검증 (27차)</span></td><td class="judge">판정 문구: &#x27;사람이 구역 15 까지 1런 · <strong>15 에서 새 무기 해금</strong> · 벽(10·15)에서 체류 체감 · 오프라인 팝업 · v1 저장 이어짐 을 관측. 빌드 도장 기록&#x27;. 두 가지가 걸린다. (1) <strong>문구가 낡아 성립 불가</strong>: 해금 구역은 13·18·23·28 이다(내가 브라우저로 확인).…</td><td class="judge"><strong>문구 고침(9/14) · 재판정 대기</strong> &mdash; 사람 여섯 절 관측 + 도장 e0e1352 대조. 벽 15 체류 15분, 석궁 구매로 넘음</td></tr>
         <tr><td>8.2</td><td><span class="verdict ok">통과 (27차)</span></td><td class="judge">measurements/device-2026-09-11-M2.json 의 값.시간대 = &#x27;부스트 ON 열 (3회) &mdash; measurements/balance-M2-boost-rw1.30-2026-09-11.json 의 ON 열과 비교&#x27;, 원문에도 &#x27;부스트는 3번정도 누른듯&#x27; 이 있다. 판정 문구가 요구하는…</td><td class="judge">됨 · 25차 통과 &mdash; 부스트 3회 → ON 열</td></tr>
         <tr><td>9.1</td><td><span class="verdict ng">실패 (27차)</span></td><td class="judge">문구: &#x27;검증자 전수 회차(마감 전) &mdash; 27+N 개 전부 실행 판정, <strong>회귀 0</strong>&#x27;. 전수는 됐다(49개 전부 이번 회차에 실행 판정, 범위밖 0). 그러나 직전 전수인 25차(measurements/verify/verify-2026-09-11-25.json) 대비 <strong>통과→미검증 이동이 1건</strong>(…</td><td class="judge"><strong>실패 &mdash; 열림</strong> &mdash; 판정 문구를 5개 바꾼 뒤 전수를 돌린 적이 없다. <strong>마감 직전 27차 전수 필요</strong> (26차는 빠른 회차)</td></tr>
         <tr><td>9.2</td><td><span class="verdict ok">통과 (27차)</span></td><td class="judge">판정 문구는 &#x27;exemplars/good/ 에 M2 빌드 등록, c17 OK&#x27;. exemplars/good/2026-09-11-M2-zone30.html 을 내가 해시 → 66,226바이트 sha256 f1e9c828ab31b7ba…, c17_exemplar_regression [ OK ] &#x27;본보기 2개…</td><td class="judge"><strong>됨</strong> &mdash; <span class="mono">exemplars/good/2026-09-11-M2-zone30.html</span> 등록, c17 통과. 사람 &quot;좋다&quot; (<span class="mono">device-2026-09-11b-M2.json</span> ④)</td></tr>
@@ -315,7 +315,7 @@
       </tbody></table></div></div>
     <div class="stage"><div class="stage-head"><span class="idx">08</span><span class="title">실기</span><span class="days" style="color:var(--signal)">1.0일 · 1/2 통과</span></div>
       <div class="tablewrap"><table><thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead><tbody>
-        <tr><td>8.1</td><td>APK + 요청서(절차 60 &mdash; <strong>판정 문구 절 하나씩 대응</strong>)</td><td class="judge">사람이 <strong>구역 15 까지</strong> 1런 · 15 에서 새 무기 해금 · 벽(10·15)에서 체류 체감 · 오프라인 팝업 · v1 저장 이어짐 을 관측. 빌드 도장 기록</td><td class="dep">6.1, 7.1</td></tr>
+        <tr><td>8.1</td><td>APK + 요청서(절차 60 &mdash; <strong>판정 문구 절 하나씩 대응</strong>)</td><td class="judge">사람이 <strong>구역 15 까지</strong> 1런 · <strong>13 에서 새 무기 해금</strong>(<span class="mono">???</span> → 기관총) · 벽(10·15)에서 체류 체감 · 오프라인 팝업 · v1 저장 이어짐 을 관측. 빌드 도장 기록</td><td class="dep">6.1, 7.1</td></tr>
         <tr><td>8.2</td><td>사람 실측을 부스트 ON/OFF 열에 넣는다</td><td class="judge"><span class="mono">device-*.json</span> 에 어느 시간대인지 적혀 있다</td><td class="dep">8.1, 5.1</td></tr>
       </tbody></table></div></div>
     <div class="stage"><div class="stage-head"><span class="idx">09</span><span class="title">마무리</span><span class="days" style="color:var(--signal)">0.5일 · 1/2 통과</span></div>
@@ -336,5 +336,5 @@
     <li>구역 31 이상</li>
     <li>곡선을 결과에 맞춰 고치기 &mdash; 곡선은 정본, 상수를 맞춘다</li>
   </ul></section>
-  <footer><div>원본: <code>plans/wbs-M2.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div><div>원본 sha256 <code>a7871b0d21ff…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div><div>근거: <code>plans/plan-M2.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #59·#60·#61</div></footer>
+  <footer><div>원본: <code>plans/wbs-M2.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div><div>원본 sha256 <code>648f394ced2d…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div><div>근거: <code>plans/plan-M2.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #59·#60·#61</div></footer>
 </div>
