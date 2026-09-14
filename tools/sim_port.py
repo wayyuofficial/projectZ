@@ -683,11 +683,13 @@ class Sim(object):
 
 # ── 자동구매 1런 — 감사가 매번 다시 짜던 절차를 여기 고정한다 ────────
 def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
-             offline_every_min=None, offline_hours=8):
+             offline_every_min=None, offline_hours=8, on_buy=None):
     """가장 싼 것부터 계속 사면서 구역 10 까지 간다.
 
     `offline_every_min` 을 주면 그만큼 놀고 나서 `offline_hours` 시간 자리를 비운다.
     예측 B4(오프라인 계수를 2배로 바꿔도 진행이 20% 넘게 흔들리지 않는다)를 재는 데 쓴다.
+
+    `on_buy(t초, 구역, 산것, 값)` 을 주면 살 때마다 부른다 — 업그레이드 간격을 재는 데 쓴다.
 
     돌아오는 값: 구역별 도달 시각(분) · 벽(10분 넘게 정체한 구역) · 사망 수 · 총 분."""
     s = Sim(seed=seed)
@@ -726,6 +728,10 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
                         cheap, bid = c, "W:" + w["id"]
                 if bid:
                     bought = s.buyWeapon(bid[2:]) if bid.startswith("W:") else s.buyStat(bid)
+                    # on_buy 를 주면 산 것을 하나씩 알려준다 (tools/upgrade_cadence.py).
+                    # 기본은 None 이라 curve_check 등 기존 호출은 그대로다.
+                    if bought and on_buy:
+                        on_buy(s.t, s.G["zone"], bid, cheap)
         if s.G["zone"] != last_zone:
             if s.t - stuck_from > 600:
                 wall[last_zone] = round((s.t - stuck_from) / 60)
