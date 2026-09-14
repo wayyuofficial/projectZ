@@ -1,0 +1,13 @@
+#!/bin/sh
+# R007 — 차단이 하나라도 있으면 커밋을 거절한다.
+# 켜는 법: python tools/install_hooks.py  (git config core.hooksPath .githooks)
+# 넘기는 법: git commit --no-verify  — 쓴 이유를 instructions-log.md 에 적는다 (R007-4).
+python checks/run.py
+code=$?
+if [ $code -ne 0 ]; then
+  echo ""
+  echo "커밋을 막았다 — checks/run.py 가 차단을 냈다 (R007)."
+  echo "차단을 고치고 다시 커밋한다. 정말 넘겨야 하면 git commit --no-verify 를 쓰고 이유를 남긴다."
+  exit 1
+fi
+exit 0
