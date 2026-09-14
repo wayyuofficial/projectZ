@@ -1,7 +1,7 @@
 {
-  "ran_at": "2026-09-14T13:19:16",
+  "ran_at": "2026-09-14T13:25:08",
   "blocking": 0,
-  "warn": 1,
+  "warn": 0,
   "skip": 0,
   "results": [
     {
@@ -87,9 +87,9 @@
       "priority": 2
     },
     {
-      "status": "warn",
+      "status": "ok",
       "detail": [
-        "balance-M2-curve-c-2026-09-11.json — 예측 M2-B1‴ 판정근거 의 근거인데 도장이 e286f0c4da4d1e74 다. 현재 빌드는 f1e9c828ab31b7ba. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)"
+        "근거 기록 3개 전부 현재 빌드: balance-M2-boost-2026-09-11b.json, balance-M2-curve-f-2026-09-11.json, device-2026-09-11b-M2.json"
       ],
       "check": "c19_evidence_stamp.py",
       "name": "판정 근거 기록이 현재 빌드의 것인지",
