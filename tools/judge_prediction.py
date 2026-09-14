@@ -121,15 +121,19 @@ def main(argv):
     if not who or not why:
         print("이름이나 근거가 비었다. 중단했다. 아무것도 바꾸지 않았다.")
         return 2
-    # 사람 이름 자리에 **다음 명령줄**이 들어온 적이 있다 (2026-09-11 M2-B4, 사례 19).
-    # 여러 줄을 한 번에 붙여 넣으면 이 프롬프트가 다음 줄을 입력으로 먹는다.
-    looks_like_cmd = ("judge_prediction" in who or "--" in who
-                      or who.lower().startswith("python") or len(who) > 30)
-    if looks_like_cmd:
-        print("이름 자리에 명령줄처럼 보이는 것이 들어왔다: %s" % who[:60])
-        print("여러 줄을 한 번에 붙여 넣으면 이 프롬프트가 다음 줄을 삼킨다. **한 줄씩** 실행해라.")
-        print("중단했다. 아무것도 바꾸지 않았다.")
-        return 2
+    # 사람이 치는 자리에 **다음 명령줄**이 들어온 적이 있다 (2026-09-11 M2-B4, 사례 19).
+    # 여러 줄을 한 번에 붙여 넣으면 프롬프트가 다음 줄을 입력으로 먹는다.
+    # 26차 감사: 처음엔 이름 칸만 막아서 **근거 칸으로 같은 사고가 그대로 재현**됐다. 둘 다 막는다.
+    def _cmdish(v):
+        return ("judge_prediction" in v or v.lower().startswith("python ")
+                or v.lower().startswith("python tools"))
+    for 칸, v, extra in (("이름", who, len(who) > 30 or "--" in who),
+                         ("근거", why, False)):
+        if _cmdish(v) or extra:
+            print("%s 자리에 명령줄처럼 보이는 것이 들어왔다: %s" % (칸, v[:70]))
+            print("여러 줄을 한 번에 붙여 넣으면 프롬프트가 다음 줄을 삼킨다. **한 줄씩** 실행해라.")
+            print("중단했다. 아무것도 바꾸지 않았다.")
+            return 2
 
     # 1) 문서의 결과 칸을 먼저 고친다 — 못 찾으면 잠금도 안 건드린다
     doc = io.open(DOC, encoding="utf-8").read()
