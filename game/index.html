@@ -146,9 +146,12 @@ const ZONE_RW0 = 12,  ZONE_RW_G = 1.26;   /* M3: 정본이 목표 곡선을 0.6�
    구속하는 것은 벽이 아니라 무기 값이라는 게 드러났다. 벽 비는 이제 판정선이 아니라 기록이다 (c18 이 정보로 남긴다).
    measurements/balance-M2-curve-wall-2026-09-11.json, -curve-f- */
 const WALL_EVERY = 5, WALL_KILL_MULT = 2, WALL_START = 10;   // 지시 #63: 구역 10 부터, x2/÷2. 1~9 는 M1 그대로
-const ZOMBIE_DPS_RATIO = 0.14;   /* 2026-09-08 지시 #23 재보정.
-     접촉 판정을 위치 기준으로 고치면서 때리는 좀비가 최대 8마리에서 3마리로 줄었다.
-     실제 전투 루프로 배수를 훑어 0.07 -> 0.14 를 골랐다 (구역5 10.2분 / 구역10 69.4분). */
+const ZOMBIE_DPS0 = 2.0, ZOMBIE_DPS_G = 1.13;   /* M3 3.1 — 접촉 피해를 **좀비 체력이 아니라 제 곡선**으로 키운다.
+     전에는 zoneDPS = zoneHP x 0.14 였다. zoneHP 는 구역당 1.55배로 크는데 최대체력 축은 레벨당 1.10배라
+     자릿수가 갈라져 **체력·회복 두 축이 죽었다** — 실기에서 사람이 지적했고(2026-09-11),
+     tools/axis_value.py 로 재니 최대체력을 잠그면 오히려 **20% 빨라졌다**(도장 4b811373, 4시드).
+     쓸모없는 게 아니라 **해로운** 축이었다. 그래서 피해 성장률을 체력 축이 따라갈 수 있는 값으로 내린다.
+     (옛 값: ZOMBIE_DPS_RATIO = 0.14 — 2026-09-08 지시 #23 에서 0.07 -> 0.14 로 고른 것) */
 const KILLS_PER_ZONE = 10;
 const BOSS_EVERY = 5;
 const BOSS_HP_MULT = 3;
@@ -311,7 +314,7 @@ function maxHP() { return statOf('hp'); }
 function regenPerSec() { return statOf('reg'); }
 
 function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1); }
-function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO; }
+function zoneDPS(z) { return ZOMBIE_DPS0 * Math.pow(ZOMBIE_DPS_G, z - 1); }   // M3 3.1: 체력 축이 따라갈 수 있는 성장률
 function zoneKills(z) { return KILLS_PER_ZONE * ((z >= WALL_START && z % WALL_EVERY === 0) ? WALL_KILL_MULT : 1); }   // M2 벽: 처치 수만 늘어난다
 function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z); }   // M2 벽: 처치당 보상 ÷2 — 벽의 총수입은 보통 구역과 같다 (M2-B2‴, 지시 #63)
 function isBossKill(z, idx) { return (z % BOSS_EVERY === 0) && idx === zoneKills(z) - 1; }

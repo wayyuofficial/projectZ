@@ -77,7 +77,8 @@ MAX_ONSCREEN_ZOMBIES = int(num("MAX_ONSCREEN_ZOMBIES"))
 ZONE_HP0, ZONE_HP_G = num("ZONE_HP0"), num("ZONE_HP_G")
 ZONE_RW0, ZONE_RW_G = num("ZONE_RW0"), num("ZONE_RW_G")
 WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_KILL_MULT")), int(num("WALL_START"))   # M2 벽 (처치 수, 구역 10 부터)
-ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
+ZOMBIE_DPS0 = num("ZOMBIE_DPS0")
+ZOMBIE_DPS_G = num("ZOMBIE_DPS_G")
 KILLS_PER_ZONE = int(num("KILLS_PER_ZONE"))
 BOSS_EVERY = int(num("BOSS_EVERY"))
 BOSS_HP_MULT = num("BOSS_HP_MULT")
@@ -182,7 +183,7 @@ MIRRORED = {
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "0a8ae8face6a1394",
     "weaponUpgradeCost": "57e23cd55b81ff51",
-    "zoneDPS": "9abab3ae0b004352",
+    "zoneDPS": "eb9cf5cae3106d61",
     "zoneHP": "eafea50cbb2f5af6",
     "zoneReward": "1a11949b7141abd1",
 }
@@ -362,7 +363,7 @@ class Sim(object):
 
     @staticmethod
     def zoneDPS(z):
-        return Sim.zoneHP(z) * ZOMBIE_DPS_RATIO
+        return ZOMBIE_DPS0 * math.pow(ZOMBIE_DPS_G, z - 1)
 
     @staticmethod
     def zoneKills(z):
@@ -763,8 +764,8 @@ def _selfcheck():
     print("원본 대조: %s" % ("어긋난 함수 %d개" % len(d) if d else "옮긴 함수 %d개 전부 일치" % len(MIRRORED)))
     for n, want, got in d:
         print("  - %s  잠금 %s  현재 %s" % (n, want, got))
-    print("상수: 구역 %d / 무기 %d / 능력치 %d / 좀비상한 %d / ZOMBIE_DPS_RATIO %s"
-          % (ZONE_COUNT, len(WEAPON_TYPES), len(STATS), MAX_ONSCREEN_ZOMBIES, ZOMBIE_DPS_RATIO))
+    print("상수: 구역 %d / 무기 %d / 능력치 %d / 좀비상한 %d / 접촉피해 %s x %s^(z-1)"
+          % (ZONE_COUNT, len(WEAPON_TYPES), len(STATS), MAX_ONSCREEN_ZOMBIES, ZOMBIE_DPS0, ZOMBIE_DPS_G))
     s = Sim(seed=1)
     s.G["hp"] = s.maxHP()
     for _ in range(60 * 60):

@@ -20,19 +20,22 @@ def measure(seeds, max_min=900):
     per_zone = {}          # 구역 -> [간격(초), ...]
     counts = {}            # 구역 -> [시드별 매수 횟수]
     kinds = {"능력치": 0, "무기": 0}
+    spend = {}             # 축 -> 쓴 부품 합 (M3 3.2 / M3-B3)
     for sd in seeds:
         buys = []
-        S.auto_run(seed=sd, max_min=max_min, on_buy=lambda t, z, bid, c: buys.append((t, z, bid)))
+        S.auto_run(seed=sd, max_min=max_min, on_buy=lambda t, z, bid, c: buys.append((t, z, bid, c)))
         by_zone = {}
-        for t, z, bid in buys:
+        for t, z, bid, cost in buys:
             by_zone.setdefault(z, []).append(t)
             kinds["무기" if bid.startswith("W:") else "능력치"] += 1
+            key = "무기" if bid.startswith("W:") else bid
+            spend[key] = spend.get(key, 0.0) + cost
         for z, ts in by_zone.items():
             counts.setdefault(z, []).append(len(ts))
             ts = sorted(ts)
             for i in range(1, len(ts)):
                 per_zone.setdefault(z, []).append(ts[i] - ts[i - 1])
-    return per_zone, counts, kinds
+    return per_zone, counts, kinds, spend
 
 
 def main(argv):
@@ -42,7 +45,7 @@ def main(argv):
     a = ap.parse_args(argv[1:])
     seeds = list(range(1, a.seeds + 1))
 
-    per_zone, counts, kinds = measure(seeds)
+    per_zone, counts, kinds, spend = measure(seeds)
     zones = sorted(counts.keys())
     rows, thin = [], []
     for z in zones:
@@ -61,6 +64,11 @@ def main(argv):
     print()
     print("매수가 3회 미만인 구역: %d개 %s" % (len(thin), thin))
     print("산 것: 능력치 %d · 무기 %d" % (kinds["능력치"], kinds["무기"]))
+    tot = sum(spend.values()) or 1.0
+    share = {k: round(v / tot * 100, 1) for k, v in sorted(spend.items(), key=lambda x: -x[1])}
+    print("부품 배분(%%): %s" % share)
+    thin_axis = [k for k, v in share.items() if k != "무기" and v < 10.0]
+    print("10%% 미만인 능력치 축: %d개 %s (M3-B3: 0개여야 한다)" % (len(thin_axis), thin_axis))
 
     if a.out:
         stamp = hashlib.sha256(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -68,6 +76,7 @@ def main(argv):
         rec = {"측정일": datetime.date.today().isoformat(), "도구": "tools/upgrade_cadence.py",
                "시드": seeds, "빌드도장": stamp, "구역별": rows,
                "매수_3회_미만_구역": thin, "산것": kinds,
+               "부품_배분_퍼센트": share, "열퍼센트_미만_축": thin_axis,
                "판정하지_않는다": "여기는 만든 쪽의 측정이다. 판정은 검증자·사람 몫이다."}
         io.open(a.out, "w", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=2))
         print("기록: %s" % a.out)

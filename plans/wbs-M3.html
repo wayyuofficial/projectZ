@@ -1,7 +1,7 @@
 <title>좀비 RPG M3 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M3.md
-     source-sha256: 37ca2ea1d29fd06d8f01e708d83352e8f90803396e9ba73f4d452e6b21958973
+     source-sha256: 3b24d58d24d45de83fa80206a52ff4dfd9b74d2ea9575955a0a52f1c97dc4b37
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -301,6 +301,11 @@
       <tr><td>2.2 간격 조정</td><td><strong>됨</strong></td><td class="judge"><span class="mono">ZONE_RW0</span> 14→<strong>12</strong>, 능력치 <span class="mono">costG</span> 전부 <strong>-0.015</strong>. 20시드 간격 <strong>3~89초, 120초 초과 0개</strong> (<span class="mono">upgrade-cadence-2026-09-14c.json</span>). c21 [ OK ]</td></tr>
       <tr><td><strong>M3-B2</strong></td><td><strong>성립 방향 — 사람이 판정한다</strong></td><td class="judge">비용·수입 조정만으로 상한을 넘었다. 구조는 안 건드렸다</td></tr>
       <tr><td><strong>정본 두 줄의 긴장</strong></td><td><strong>사람 판단 필요</strong></td><td class="judge">목표 곡선(총 ~180분)과 간격 상한(120초)이 <strong>서로 당긴다.</strong> 총 시간을 180분에 붙이면 후반 간격이 140~180초로 벌어지고, 간격을 누르면 총 시간이 130분으로 준다. <strong>간격 상한을 먼저 지켰다</strong> — 정본의 하한선이라서다. 단계 4·5(단계 분할·재화 분리)가 이 긴장을 풀 수 있다</td></tr>
+      <tr><td>3.1 접촉 피해</td><td>고침 · <strong>판정 미달</strong></td><td class="judge"><span class="mono">zoneDPS</span> 를 좀비 체력에서 떼어 제 곡선으로: <span class="mono">2.0 × 1.13^(z-1)</span>. 사망 126→56회. <strong>그래도 완료 판정(체력 0 이면 5회 이상 죽고 권장 레벨이면 0회)은 못 넘는다</strong></td></tr>
+      <tr><td>3.2 축 재설계</td><td><strong>막힘 — 설계 결정 필요</strong></td><td class="judge"><span class="mono">tools/axis_value.py</span> 신설. 8시드: <strong>최대체력 잠그면 27.6% 빨라지고, 체력회복 잠그면 17.0% 빨라진다.</strong> 쓸모없는 게 아니라 <strong>해로운</strong> 축이다. 격자 셋(피해 곡선·성장률·비용)을 훑어도 안 뒤집힌다</td></tr>
+      <tr><td>3.3 포트</td><td>됨</td><td class="judge"><span class="mono">zoneDPS</span> 재봉인, 어긋남 0</td></tr>
+      <tr><td><strong>M3-B3</strong></td><td><strong>반증 방향 — 사람이 판정한다</strong></td><td class="judge">반증 조건이 이미 답을 적어 뒀다: *"10% 미만인 축이 하나라도 남으면 실패. 그 축은 <strong>합치거나 없앤다</strong>."* 없애려면 <strong>정본</strong>(<span class="mono">SCOPE_MAX_STATS = 5</span>)을 고쳐야 한다</td></tr>
+      <tr><td><strong>부품 배분 지표의 함정</strong></td><td>기록함</td><td class="judge">처음엔 "축별 부품 배분 10% 이상" 으로 재려 했는데 다섯 축이 전부 18~19% 로 나왔다 — <strong>매수 정책이 "가장 싼 것부터" 라 골고루 사서</strong>다. 정책이 쓸모를 안 보므로 배분은 쓸모를 못 잰다 (R004)</td></tr>
       <tr><td><strong>M3-B1</strong></td><td><strong>반증 방향 — 사람이 판정한다</strong></td><td class="judge">체류 밖 22개. <strong>도달(누적) 기준으로는 밖 6개</strong>. M2 에서 이미 겪은 톱니 문제다 — 구역별 체류는 무기 사는 순간마다 튄다</td></tr>
     </tbody></table></div></section>
 </div>
