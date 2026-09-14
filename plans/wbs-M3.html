@@ -1,7 +1,7 @@
 <title>좀비 RPG M3 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M3.md
-     source-sha256: 4a5df94a6f9058a47fbd44641edfc25876940a4be522ca6e948104fc99e7ebfb
+     source-sha256: 5b8098782e0cf7b1f7e7a553e8254d233ac5648a9356b7cec0e31ac31fb1801e
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -293,6 +293,10 @@
   <section><h2><span class="n">V</span>진행 현황 — 만든 쪽 자기보고</h2>
     <p class="note">검증자 판정이 <strong>아니다.</strong> 감사 회차가 돌면 이 자리에 검증자 판정이 함께 선다.</p>
     <div class="tablewrap"><table><thead><tr><th>작업</th><th>상태</th><th>근거</th></tr></thead><tbody>
-      <tr><td>전체</td><td><strong>착수 전</strong></td><td class="judge">정본 개정 승인 완료(2026-09-14T19:07:51, 황창식). 예측 잠금이 첫 일이다</td></tr>
+      <tr><td>1.1 curve_check</td><td>됨</td><td class="judge">목표를 <strong>정본에서 읽는다</strong>(<span class="mono">SCOPE_STAY_*</span>). 숫자를 도구에 안 적었다 — c2 의 교훈. <span class="mono">--selftest</span> 통과(밖 27개)</td></tr>
+      <tr><td>1.2 c18</td><td>됨</td><td class="judge">M3 기준으로: <span class="mono">balance-M3-*</span> 만 보고 <strong>체류</strong> 밖 4개 미만을 선으로. 자가진단 20/20</td></tr>
+      <tr><td>1.3 상수 재조정</td><td><strong>판정 미달 — 사람 판단 필요</strong></td><td class="judge"><span class="mono">ZONE_RW0</span> 4→<strong>14</strong>, <span class="mono">ZONE_RW_G</span> 1.30→<strong>1.26</strong> (격자 4시드 18칸 → 6시드 정밀). 20시드: 구역 30 도달 <strong>166.6분</strong>(목표 ~180), 구역 1~10 비율 0.92 · 20~29 1.09. <strong>그런데 체류 ±20% 밖이 22개</strong> — 완료 판정(4개 미만)을 못 넘는다</td></tr>
+      <tr><td>1.4 포트·표</td><td>됨</td><td class="judge"><span class="mono">c16</span> 어긋남 0, <span class="mono">c13</span> 30행 일치. 저장 재측정 17/17 (<span class="mono">storage-2026-09-14b.json</span>)</td></tr>
+      <tr><td><strong>M3-B1</strong></td><td><strong>반증 방향 — 사람이 판정한다</strong></td><td class="judge">체류 밖 22개. <strong>도달(누적) 기준으로는 밖 6개</strong>. M2 에서 이미 겪은 톱니 문제다 — 구역별 체류는 무기 사는 순간마다 튄다</td></tr>
     </tbody></table></div></section>
 </div>

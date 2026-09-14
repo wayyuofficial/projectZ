@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
-"""목표 체류 곡선 대 실제 체류 — WBS-M2 1.2.
+"""목표 체류 곡선 대 실제 체류 — WBS-M3 1.1.
 
-곡선(정본, plans/GAMEDESIGN.md M2 절): 체류(z) = 4분 x 1.05^z. 5의 배수 구역은 벽 x3.
+곡선은 **정본에서 읽는다** (`canon/10-scope.md` 의 기계가 읽는 값):
+체류(z) = `SCOPE_STAY_T0_MIN` x `SCOPE_STAY_G`^(z-1), 적용 시작은 `SCOPE_STAY_FROM_ZONE`. 벽 구역은 x2.
+**숫자를 이 파일에 적지 않는다.** c2 의 교훈이다 — "숫자를 여기 적지 않는다. 18차·M2 에서 두 번 낡았다".
+2026-09-14 정본 개정: 0.6분 x 1.12^(z-1), 구역 1~30 전 구간 (지시 #84).
 이 도구는 `tools/sim_port.py` 로 여러 시드를 돌려 구역별 체류(다음 구역 도달 시각 - 이 구역 도달 시각)의 중앙값을 내고
 목표와의 비율을 표로 찍는다. **종료 코드 = ±30% 밖인 구역 수** (구역 5~29). 0 이면 곡선 안이다.
 
@@ -19,24 +22,36 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 import sim_port as SP
 
-TARGET_BASE, TARGET_G = 4.0, 1.05
-TOL = 0.30
-ARRIVE_TOL = 0.20      # M2-B1‴: 구역 10 도달 시각을 기준점으로, 11~30 의 상대 도달 시각 ±20%
+def _canon(name, cast=float):
+    """정본의 `기계가 읽는 값` 에서 하나 읽는다. 없으면 죽는다 — 조용히 기본값을 쓰지 않는다."""
+    import re
+    txt = io.open(os.path.join(ROOT, "canon", "10-scope.md"), encoding="utf-8").read()
+    m = re.search(r"^\s*%s\s*=\s*([0-9.]+)\s*$" % re.escape(name), txt, re.M)
+    if not m:
+        raise SystemExit("canon/10-scope.md 에 %s 가 없다 — 정본을 먼저 고쳐라" % name)
+    return cast(m.group(1))
+
+
+TARGET_BASE = _canon("SCOPE_STAY_T0_MIN")          # 0.6분 (정본)
+TARGET_G    = _canon("SCOPE_STAY_G")               # 1.12  (정본)
+CURVE_FROM  = _canon("SCOPE_STAY_FROM_ZONE", int)  # 1     (정본)
+TOL = 0.20             # M3-B1 의 반증선 (±20%). 예측이 바뀌면 여기를 바꾼다
+ARRIVE_TOL = 0.20      # 도달 시각은 정보로 같이 찍는다
 WALL_MULT_TARGET = 2.0   # 지시 #63: 벽 ×2
-WALL_START_TARGET = 10   # 곡선은 구역 10 부터 (1~9 는 M1 실측 그대로)
-CURVE_FROM = 10
-Z_FROM, Z_TO = 5, 29          # 1~4 는 튜토리얼 구간. 30 은 다음 구역이 없어 체류를 못 잰다
+WALL_START_TARGET = 10   # 벽은 구역 10 부터 (정본 표)
+Z_FROM, Z_TO = CURVE_FROM, 29   # 30 은 다음 구역이 없어 체류를 못 잰다
 
 
 WALL_ON = True     # --no-wall 이면 False. 벽을 끄고 재면 목표에서도 벽을 뺀다 (22차 감사 지적)
 
 
 def target(z):
-    return TARGET_BASE * TARGET_G ** z * (WALL_MULT_TARGET if (WALL_ON and z >= WALL_START_TARGET and z % 5 == 0) else 1)
+    """정본: 0.6분 × 1.12^(z-1). 벽 구역은 ×2."""
+    return TARGET_BASE * TARGET_G ** (z - 1) * (WALL_MULT_TARGET if (WALL_ON and z >= WALL_START_TARGET and z % 5 == 0) else 1)
 
 
 def target_arrive(z):
-    """구역 10 도달을 0 으로 놓은 목표 누적 (지시 #63: 곡선은 10~30 만)."""
+    """곡선 시작 구역 도달을 0 으로 놓은 목표 누적."""
     return sum(target(k) for k in range(CURVE_FROM, z))
 
 
@@ -109,7 +124,8 @@ def main(argv):
     WALL_ON = not a.no_wall
     stay, reach = measure(seeds, wall=not a.no_wall, max_min=a.max_min)
     rows, outside, walls = report(stay, reach, seeds, not a.no_wall)
-    print("목표 체류(z) = %.1f x %.2f^z 분 · 허용 ±%d%% · 구역 %d~%d · %d시드 · 벽 %s" % (TARGET_BASE, TARGET_G, TOL * 100, Z_FROM, Z_TO, len(seeds), "켬" if not a.no_wall else "끔"))
+    print("목표 체류(z) = %.2f x %.2f^(z-1) 분 [정본] · 허용 ±%d%% · 구역 %d~%d · %d시드 · 벽 %s"
+          % (TARGET_BASE, TARGET_G, TOL * 100, Z_FROM, Z_TO, len(seeds), "켬" if not a.no_wall else "끔"))
     print("구역 | 체류(중앙) | 목표 | 비율 | 시드")
     for z, m, t, r, n in rows:
         flag = "" if (r is not None and abs(math.log(r)) <= math.log(1 + TOL)) else "  ← 밖"
@@ -119,18 +135,18 @@ def main(argv):
         print("벽 구역 체류 / 이웃 평균:", {z: round(v, 2) for z, v in walls.items()}, "(M2-B2‴: 1.7~2.5)")
         trough = {z: round(stay[z + 1][0] / stay[z - 1][0], 2) for z in walls if z + 1 in stay and z - 1 in stay and stay[z - 1][0] > 0}
         print("벽 다음 구역 / 벽 앞 구역 (골짜기):", trough, "(M2-B2‴: 0.5 이상)")
-    arr = {z: ((reach[z] - reach[CURVE_FROM]) / target_arrive(z)) for z in range(CURVE_FROM + 1, SP.ZONE_COUNT + 1) if z in reach and CURVE_FROM in reach}
+    arr = {z: ((reach[z] - reach[CURVE_FROM]) / target_arrive(z)) for z in range(CURVE_FROM + 1, SP.ZONE_COUNT + 1) if z in reach and CURVE_FROM in reach and target_arrive(z) > 0}
     arr_out = [z for z, r in arr.items() if abs(math.log(r)) > math.log(1 + ARRIVE_TOL)]
-    print("도달 시각 / 목표 누적 (구역 10~30):", {z: round(r, 2) for z, r in arr.items()}, "· ±%d%% 밖 %d개 %s (M2-B1‴: 3개 이하, 구역 10 기준 상대)" % (ARRIVE_TOL * 100, len(arr_out), arr_out))
+    print("도달 시각 / 목표 누적 (정보):", {z: round(r, 2) for z, r in arr.items()}, "· ±%d%% 밖 %d개 %s (M2-B1‴: 3개 이하, 구역 10 기준 상대)" % (ARRIVE_TOL * 100, len(arr_out), arr_out))
     print("곡선 밖: %d개 %s · 30 도달(중앙) %s분" % (len(outside), outside, ("%.1f" % reach[30]) if 30 in reach else "-"))
     if a.out:
         json.dump({"측정일": datetime.date.today().isoformat(), "도구": "tools/curve_check.py", "시드": seeds, "벽": not a.no_wall, "새무기": not a.no_new_weapons,
-                   "목표": "%.1f x %.2f^z" % (TARGET_BASE, TARGET_G), "허용": TOL, "구간": [Z_FROM, Z_TO],
+                   "목표": "%.2f x %.2f^(z-1)" % (TARGET_BASE, TARGET_G), "목표_출처": "canon/10-scope.md", "허용": TOL, "구간": [Z_FROM, Z_TO],
                    "구역별": {str(z): {"체류": round(m, 3) if m is not None else None, "목표": round(t, 3), "비율": round(r, 4) if r is not None else None} for z, m, t, r, n in rows},
                    "곡선밖": outside, "벽비": {str(z): round(v, 4) for z, v in walls.items()}, "골짜기": {str(z): v for z, v in trough.items()},
                    "도달비": {str(z): round(r, 4) for z, r in arr.items()}, "도달_밖": arr_out, "보상성장_사용": SP.ZONE_RW_G, "빌드도장": __import__("hashlib").sha256(open(SP.GAME, "rb").read()).hexdigest()[:16],
                    "도달_중앙_분": {str(z): round(v, 2) for z, v in reach.items()},
-                   "판정하지_않는다": "M2-B1/B2 판정은 검증자·사람 몫이다. 여기는 만든 쪽의 측정이다."},
+                   "판정하지_않는다": "M3-B1 판정은 검증자·사람 몫이다. 여기는 만든 쪽의 측정이다."},
                   io.open(a.out, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
         print("기록:", a.out)
     return min(len(outside), 200)

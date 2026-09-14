@@ -148,8 +148,8 @@ def main():
             w(scope, _sc.replace("SCOPE_MAX_STATS = 5", "SCOPE_MAX_STATS = 4"))
 
         # c18: 곡선 밖 기록을 가장 새 것으로 심는다 — 도달 밖 21개, 벽 비 9, 골짜기 0.1 이면 warn 이 나야 한다
-        p = os.path.join(ROOT, "measurements", "balance-M2-_selftest.json")
-        w(p, '{"벽": true, "도달_밖": [10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30], "벽비": {"5": 9.0}, "골짜기": {"5": 0.1}}')
+        p = os.path.join(ROOT, "measurements", "balance-M3-_selftest.json")
+        w(p, '{"벽": true, "곡선밖": [10,11,12,13,14,15,16,17,18,19,20,21], "도달_밖": [10,11], "벽비": {"5": 9.0}, "골짜기": {"5": 0.1}}')
         os.utime(p, (_future, _future)); made.append(p)
 
         # c19: 판정 근거로 **인용된** 기록의 도장이 옛 빌드면 warn 이 나야 한다.
@@ -161,8 +161,8 @@ def main():
 
         # c18 이 **바탕 기록(새무기 false)** 을 출하 곡선으로 착각하지 않는지.
         # 이 파일이 더 새롭고 숫자는 깨끗하다 — c18 이 이걸 보면 ok 가 되어 위 픽스처의 warn 이 사라진다.
-        p = os.path.join(ROOT, "measurements", "balance-M2-_selftest-noweapons.json")
-        w(p, '{"벽": true, "새무기": false, "도달_밖": [], "벽비": {"5": 3.0}, "골짜기": {"5": 1.0}}')
+        p = os.path.join(ROOT, "measurements", "balance-M3-_selftest-noweapons.json")
+        w(p, '{"벽": true, "새무기": false, "곡선밖": [], "도달_밖": [], "벽비": {"5": 3.0}, "골짜기": {"5": 1.0}}')
         os.utime(p, (_future + 60, _future + 60)); made.append(p)
 
         # c20: 요청 항목은 있는데 판정 문구 원문이 없는 실기 기록 — fail 이 나야 한다 (R006, 사례 15·20)
