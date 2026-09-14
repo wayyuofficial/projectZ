@@ -8,7 +8,8 @@
 이 검사는 **시각이 아니라 빌드도장**을, **파일 하나가 아니라 인용된 것 전부**를 본다.
 
 ## 무엇을 근거로 보는가
-- `plans/predictions-lock.json` 의 `판정이력[*].근거` — 지금 서 있는 예측 판정의 근거
+- `plans/predictions-lock.json` 의 `판정이력[-1].근거` — **마지막** 판정의 근거.
+  지난 이력은 역사지 지금 서 있는 판정이 아니다 (처음엔 전부 훑어 거짓 경고를 냈다).
 - `plans/wbs-*.md` 의 본문에 백틱으로 적힌 `*.json` — 작업 완료 판정의 근거
 
 ## 빠져나가는 길 (막지 않고 적게 한다)
@@ -41,8 +42,9 @@ def _cited(root):
         try:
             d = json.load(io.open(lock, encoding="utf-8"))
             for p in d.get("예측", []):
-                for h in p.get("판정이력", []) or []:
-                    for m in JSON_RE.findall(str(h.get("근거", ""))):
+                hist = p.get("판정이력", []) or []
+                if hist:                       # 지금 서 있는 판정 = 마지막 이력 하나.
+                    for m in JSON_RE.findall(str(hist[-1].get("근거", ""))):
                         out.append((m, "예측 %s 판정근거" % p.get("id")))
         except Exception:
             pass
