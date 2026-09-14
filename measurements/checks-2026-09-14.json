@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-14T19:08:15",
+  "ran_at": "2026-09-14T19:10:31",
   "blocking": 0,
   "warn": 0,
   "skip": 0,
@@ -52,7 +52,7 @@
     {
       "status": "ok",
       "detail": [
-        "예측 14개 문구가 잠근 그대로"
+        "예측 19개 문구가 잠근 그대로"
       ],
       "check": "c15_prediction_lock.py",
       "name": "예측 문구를 결과 보고 고쳤는지",
@@ -134,7 +134,7 @@
     {
       "status": "ok",
       "detail": [
-        "계획서 12개 통과"
+        "계획서 13개 통과"
       ],
       "check": "c4_plan_hygiene.py",
       "name": "계획서에 예측·반증 조건이 있는지",
@@ -170,7 +170,7 @@
     {
       "status": "ok",
       "detail": [
-        "뷰 2개가 원본과 일치"
+        "뷰 3개가 원본과 일치"
       ],
       "check": "c8_view_freshness.py",
       "name": "뷰(HTML)가 원본 문서와 어긋났는지",
