@@ -165,6 +165,10 @@ def main():
         w(p, '{"벽": true, "새무기": false, "도달_밖": [], "벽비": {"5": 3.0}, "골짜기": {"5": 1.0}}')
         os.utime(p, (_future + 60, _future + 60)); made.append(p)
 
+        # c20: 요청 항목은 있는데 판정 문구 원문이 없는 실기 기록 — fail 이 나야 한다 (R006, 사례 15·20)
+        p = os.path.join(ROOT, "measurements", "device-_selftest.json")
+        w(p, '{"측정일": "2026-09-14", "요청 절": ["아무거나"]}'); made.append(p)
+
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
         shutil.copy2(canon, backup); made.append(backup)
@@ -191,6 +195,7 @@ def main():
             ("c17_exemplar_regression.py", ("fail",)),
             ("c18_curve.py", ("warn",)),
             ("c19_evidence_stamp.py", ("warn",)),
+            ("c20_request_matches_criterion.py", ("fail",)),
         ]
 
         bad = []
