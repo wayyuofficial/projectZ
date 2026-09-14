@@ -1,7 +1,7 @@
 <title>좀비 RPG M2 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M2.md
-     source-sha256: 1565afd993597f61923fd105abe2a70c657cc449761a1d73f204b65fef046a45
+     source-sha256: b5b5b3218353919f7ce75d306479310071d8f2ab500769c8d2bb631cf46e72fd
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -244,7 +244,7 @@
         <tr><td>4.2</td><td><span class="verdict ok">통과 (26차)</span></td><td class="judge">브라우저 창에서 직접. bestZone 1/12/13/17/18/22/23/27/28/30 × 스크롤 0~2000(40 간격) 으로 buildButtons() 전체를 훑음 &mdash; 실물 무기가 나타나는 지점이 정확히 13(mg)·18(launcher)·23(saw)·28(rail). 해금 전에는 잠긴 줄이 항…</td><td class="judge">&mdash;</td></tr>
         <tr><td>4.3</td><td><span class="verdict ok">통과 (26차)</span></td><td class="judge">첫 절: 브라우저에서 무기 10종×등급 3 = 30조합을 draw() 하고 생존자 구역(device px 133,628,81×54)을 getImageData 로 떠 435쌍 전수 비교 &mdash; 완전 동일 0쌍, 최소 차 243픽셀(pipe★1 vs pipe★2). 둘째 절: `curve_check --seed…</td><td class="judge">&mdash;</td></tr>
         <tr><td>4.4</td><td><span class="verdict ok">통과 (25차)</span></td><td class="judge">checks/run.py -&gt; c16_port_sync [ OK ] &#x27;옮긴 함수 39개가 게임과 일치&#x27;. 더해 해금 규칙이 실제로 같은지 직접 대조: 같은 LCG·같은 정책으로 브라우저와 포트를 시드 1~5 구역 30 까지 돌려 체류 차 최대 2.94% (무기 해금 13/18/23/28 을 지나는 구간 …</td><td class="judge">&mdash;</td></tr>
-        <tr><td>5.1</td><td><span class="verdict ok">통과 (26차)</span></td><td class="judge">새 문구 &#x27;두 열 + 사람 실측 표시, 비의 판정은 B4 에서&#x27;. measurements/balance-M2-boost-2026-09-11b.json(빌드도장 f1e9c828 = 현재 빌드)에 부스트_OFF_도달_분 · 부스트_ON_도달_분 두 열과 사람_실측_시간대 칸이 있다. device-2026-0…</td><td class="judge">됨 · <strong>26차 통과</strong> &mdash; 현재 빌드 재측정 <span class="mono">balance-M2-boost-2026-09-11b.json</span>: <strong>5/6, 구역 20 = 0.499</strong>(선 0.5 밖). 성립 판정의 근거가 4빌드 전 기록이었다 &mdash; 사례 18 · c19 신설. <strong>B4 재판정은 사람 몫</strong></td></tr>
+        <tr><td>5.1</td><td><span class="verdict ok">통과 (26차)</span></td><td class="judge">새 문구 &#x27;두 열 + 사람 실측 표시, 비의 판정은 B4 에서&#x27;. measurements/balance-M2-boost-2026-09-11b.json(빌드도장 f1e9c828 = 현재 빌드)에 부스트_OFF_도달_분 · 부스트_ON_도달_분 두 열과 사람_실측_시간대 칸이 있다. device-2026-0…</td><td class="judge">됨 · <strong>26차 통과</strong> &mdash; 현재 빌드 재측정 <span class="mono">balance-M2-boost-2026-09-14.json</span>: <strong>5/6, 구역 20 = 0.499</strong>(선 0.5 밖). 성립 판정의 근거가 4빌드 전 기록이었다 &mdash; 사례 18 · c19 신설. <strong>B4 재판정은 사람 몫</strong></td></tr>
         <tr><td>6.1</td><td><span class="verdict ok">통과 (25차)</span></td><td class="judge">tools/test_storage.js 를 저장소 파일 그대로 브라우저에서 실행(fetch(&#x27;/tools/test_storage.js&#x27;) 5,117바이트 sha256 fe654608e5a3c36f4132a95a0a3ee64cbd65e1b5e87d42b5046ffa88b0a7c301 을 (0,eval)) …</td><td class="judge">됨 &mdash; 17/17. 거짓 경고(v1 인데 &quot;처음부터&quot;) 잡음</td></tr>
         <tr><td>7.1</td><td><span class="verdict ok">통과 (26차)</span></td><td class="judge"><span class="mono">python checks/run.py</span> → 차단 0 / 경고 0 / 건너뜀 0 / 전체 19. <span class="mono">python tools/selftest_checks.py</span> → 검사 19개 전부 기대한 fail/warn 을 냄, curve_check --selftest 0. 실행 뒤 `git status --porcel…</td><td class="judge">됨 &mdash; c18 곡선 검사 신설, 자가진단 18/18</td></tr>
         <tr><td>8.1</td><td><span class="verdict ok">통과 (25차)</span></td><td class="judge">measurements/device-2026-09-11-M2.json &mdash; 사람(wayyu, LG V30)이 여섯 절 전부 관측(v1 저장 이어짐 · 구역 15 1런 · 벽 10 체류 5분/15 체류 15분 · 해금 13 &#x27;???-&gt;기관총&#x27; · 오프라인 팝업 · /30 표시). 빌드 도장을 내가 실행으로 …</td><td class="judge">됨 · <strong>25차 통과</strong> &mdash; 사람 여섯 절 관측 + 도장 e0e1352 대조. 벽 15 체류 15분, 석궁 구매로 넘음</td></tr>
@@ -335,5 +335,5 @@
     <li>구역 31 이상</li>
     <li>곡선을 결과에 맞춰 고치기 &mdash; 곡선은 정본, 상수를 맞춘다</li>
   </ul></section>
-  <footer><div>원본: <code>plans/wbs-M2.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div><div>원본 sha256 <code>1565afd99359…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div><div>근거: <code>plans/plan-M2.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #59·#60·#61</div></footer>
+  <footer><div>원본: <code>plans/wbs-M2.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div><div>원본 sha256 <code>b5b5b3218353…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div><div>근거: <code>plans/plan-M2.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #59·#60·#61</div></footer>
 </div>
