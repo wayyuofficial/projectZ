@@ -3703,4 +3703,10 @@ M2 에서 규칙이 셋 늘었다 — R004·R005·R006. **셋 다 사람의 실�
 **M2 는 되돌리지 않는다** — M2 는 그 시점의 정본으로 닫혔고 새 곡선은 M3 의 것이다.
 
 **`canon/` 은 아직 손대지 않았다.** 사람이 안을 고르면 그때 문구를 넣고, 승인은 `python tools/approve_canon.py`.
+### 정본 승인 (사람, 2026-09-14T19:07:51)
+
+`measurements/canon-hashes.json` — `approved_by: 황창식`, tty. 바뀐 파일 `10-scope.md`.
+**안 B 확정**: 목표 체류 곡선 `0.6분 × 1.12^(z-1)`, **구역 1~30 전 구간**, 벽 ×2. 그리고 **업그레이드 간격 상한 120초**.
+기계가 읽는 값 넷 추가: `SCOPE_STAY_T0_MIN` `SCOPE_STAY_G` `SCOPE_STAY_FROM_ZONE` `SCOPE_UPGRADE_GAP_MAX_SEC`.
+문서 제목·실패 판정 문구를 M2 → M3 으로.
 
