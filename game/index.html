@@ -160,6 +160,12 @@ const ZOMBIE_DPS_RATIO = 0.14;   /* 2026-09-08 지시 #23 재보정.
      진짜 원인은 따로 있다: **죽는 값이 싸다.** 죽으면 구역 하나 내려가고 금방 올라온다 —
        생존이 진행을 막지 않으니 생존 능력에 값을 매길 수 없다. 사람이 정할 일이다 (지시 #88). */
 const KILLS_PER_ZONE = 10;
+/* M3 4 — 구역을 5단계로 쪼갠다 (사람이 버섯커에서 눈여겨본 4번, 2026-09-14).
+   **보상 지점을 옮기는 것이지 늘리는 게 아니다.** 구역 총수입은 그대로 두고
+   그중 STAGE_BONUS_RATIO 만큼을 처치당 보상에서 떼어 단계 클리어 때 일시금으로 준다.
+   그래서 체류 곡선이 흔들리지 않아야 한다 (M3-B4: 분할 전 대비 ±10%).
+   단계는 **저장하지 않는다** — killIndex 에서 계산한다. 저장 구조가 안 바뀌므로 v1·v2 가 그대로 이어진다. */
+const STAGES_PER_ZONE = 5, STAGE_BONUS_RATIO = 0.20;
 const BOSS_EVERY = 5;
 const BOSS_HP_MULT = 3;
 const BOSS_CHARGE_EVERY = 4.0;   // 보스는 4초마다 돌진한다 (패턴 1개)
@@ -324,6 +330,10 @@ function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1); }
 function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO; }
 function zoneKills(z) { return KILLS_PER_ZONE * ((z >= WALL_START && z % WALL_EVERY === 0) ? WALL_KILL_MULT : 1); }   // M2 벽: 처치 수만 늘어난다
 function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z); }   // M2 벽: 처치당 보상 ÷2 — 벽의 총수입은 보통 구역과 같다 (M2-B2‴, 지시 #63)
+function stageKills(z) { return Math.max(1, Math.round(zoneKills(z) / STAGES_PER_ZONE)); }
+function killReward(z) { return zoneReward(z) * (1 - STAGE_BONUS_RATIO); }   // M3 4.2: 20% 는 단계 보상으로 뗀다
+function stageBonus(z) { return zoneReward(z) * zoneKills(z) * STAGE_BONUS_RATIO / (STAGES_PER_ZONE - 1); }
+function currentStage() { return Math.min(STAGES_PER_ZONE, Math.floor(killIndex / stageKills(G.zone)) + 1); }
 function isBossKill(z, idx) { return (z % BOSS_EVERY === 0) && idx === zoneKills(z) - 1; }
 function weaponUnlocked(w) { return (w.unlock || 1) <= (G.bestZone || 1); }   // M2: 해금 구역은 최고 도달 구역 기준
 function weaponUpgradeCost(id) {
@@ -501,11 +511,18 @@ function killZombie(z) {
       vy: (Math.random() - .5) * 120 - 30, life: .5 + Math.random() * .3,
       t: 0, c: z.boss ? '#D9A24B' : '#7E9B72' });
   }
-  const gain = zoneReward(G.zone) * (z.boss ? BOSS_EVERY : 1) * rewardMult() * statOf('inc');
+  const gain = killReward(G.zone) * (z.boss ? BOSS_EVERY : 1) * rewardMult() * statOf('inc');
   G.parts += gain;
   G.totalKills++;
   addFloat(z.x, z.y - 30, '+' + fmt(gain), '#7FB0B2', 15);
   killIndex++;
+  // M3 4.2 — 단계 클리어 일시금. 구역을 넘는 마지막 칸에서는 안 준다(그건 구역 클리어다).
+  if (killIndex % stageKills(G.zone) === 0 && killIndex < zoneKills(G.zone)) {
+    const bonus = stageBonus(G.zone) * rewardMult() * statOf('inc');
+    G.parts += bonus;
+    addFloat(GAME_W / 2, ARENA_TOP + 100, '단계 ' + currentStage() + ' / ' + STAGES_PER_ZONE
+      + '   +' + fmt(bonus), '#D9A24B', 18);
+  }
   if (killIndex >= zoneKills(G.zone)) {   // M2: 벽 구역은 3배
     killIndex = 0;
     if (G.zone < ZONE_COUNT) {
@@ -1036,12 +1053,24 @@ function drawHUD() {
   ctx.fillStyle = '#E8F0EE';
   ctx.font = '600 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText(G.zone + ' / ' + ZONE_COUNT, GAME_W - 24, 54);
+  ctx.fillStyle = '#7FB0B2';
+  ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText(currentStage() + ' / ' + STAGES_PER_ZONE + ' 단계', GAME_W - 24, 70);
 
   const px = 24, pw = GAME_W - 48;
-  ctx.fillStyle = 'rgba(255,255,255,.06)';
-  ctx.fillRect(px, 62, pw, 5);
-  ctx.fillStyle = '#7FB0B2';
-  ctx.fillRect(px, 62, pw * (killIndex / zoneKills(G.zone)), 5);
+  // M3 4.1 — 진행 막대를 단계 수만큼 쪼갠다. 한 칸이 한 단계다.
+  const segW = (pw - (STAGES_PER_ZONE - 1) * 3) / STAGES_PER_ZONE;
+  const stKills = stageKills(G.zone);
+  for (let i = 0; i < STAGES_PER_ZONE; i++) {
+    const x = px + i * (segW + 3);
+    ctx.fillStyle = 'rgba(255,255,255,.06)';
+    ctx.fillRect(x, 62, segW, 5);
+    const doneInSeg = Math.max(0, Math.min(stKills, killIndex - i * stKills));
+    if (doneInSeg > 0) {
+      ctx.fillStyle = '#7FB0B2';
+      ctx.fillRect(x, 62, segW * (doneInSeg / stKills), 5);
+    }
+  }
 
   const hpPct = Math.max(0, G.hp / maxHP());
   ctx.fillStyle = 'rgba(255,255,255,.06)';

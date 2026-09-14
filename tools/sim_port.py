@@ -78,6 +78,8 @@ ZONE_HP0, ZONE_HP_G = num("ZONE_HP0"), num("ZONE_HP_G")
 ZONE_RW0, ZONE_RW_G = num("ZONE_RW0"), num("ZONE_RW_G")
 WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_KILL_MULT")), int(num("WALL_START"))   # M2 벽 (처치 수, 구역 10 부터)
 ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
+STAGES_PER_ZONE = int(num("STAGES_PER_ZONE"))
+STAGE_BONUS_RATIO = num("STAGE_BONUS_RATIO")
 KILLS_PER_ZONE = int(num("KILLS_PER_ZONE"))
 BOSS_EVERY = int(num("BOSS_EVERY"))
 BOSS_HP_MULT = num("BOSS_HP_MULT")
@@ -162,7 +164,8 @@ MIRRORED = {
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "78764110ba1a3fdd",
     "isBossKill": "e461a4a51bbb69c5",
-    "killZombie": "e55d18fdc4fe4b6c",
+    "killReward": "33b339571884beb7",
+    "killZombie": "afe7f034efdb18cb",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "46bb14aa20673823",
@@ -174,6 +177,8 @@ MIRRORED = {
     "regenPerSec": "73badd17c9fc2857",
     "rewardMult": "bff5bcb3e94a3395",
     "spawnZombie": "d4054c63f48a4d4a",
+    "stageBonus": "a104f365f6841f87",
+    "stageKills": "4cb2b09008d21635",
     "statCost": "3915c9b212b37571",
     "statDef": "e7ad6087978fd6ec",
     "statOf": "bd53f6155e340e8d",
@@ -363,6 +368,18 @@ class Sim(object):
     @staticmethod
     def zoneDPS(z):
         return Sim.zoneHP(z) * ZOMBIE_DPS_RATIO
+
+    @staticmethod
+    def stageKills(z):
+        return max(1, jsround(Sim.zoneKills(z) / STAGES_PER_ZONE))
+
+    @staticmethod
+    def killReward(z):
+        return Sim.zoneReward(z) * (1 - STAGE_BONUS_RATIO)
+
+    @staticmethod
+    def stageBonus(z):
+        return Sim.zoneReward(z) * Sim.zoneKills(z) * STAGE_BONUS_RATIO / (STAGES_PER_ZONE - 1)
 
     @staticmethod
     def zoneKills(z):
@@ -558,11 +575,16 @@ class Sim(object):
         # 안 뽑으면 그 뒤 수열이 통째로 어긋난다 — 12차 감사가 t=4.05초에 갈리는 것을 잡았다.
         for _ in range(3 * (16 if z["boss"] else 7)):
             self.rnd()
-        gain = (self.zoneReward(self.G["zone"]) * (BOSS_EVERY if z["boss"] else 1)
+        gain = (self.killReward(self.G["zone"]) * (BOSS_EVERY if z["boss"] else 1)
                 * self.rewardMult() * self.statOf("inc"))
         self.G["parts"] += gain
         self.G["totalKills"] += 1
         self.killIndex += 1
+        # M3 4.2 — 단계 클리어 일시금. 구역을 넘는 마지막 칸에서는 안 준다.
+        if (self.killIndex % self.stageKills(self.G["zone"]) == 0
+                and self.killIndex < self.zoneKills(self.G["zone"])):
+            self.G["parts"] += (self.stageBonus(self.G["zone"])
+                                * self.rewardMult() * self.statOf("inc"))
         if self.killIndex >= self.zoneKills(self.G["zone"]):
             self.killIndex = 0
             if self.G["zone"] < ZONE_COUNT:

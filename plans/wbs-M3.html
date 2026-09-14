@@ -1,7 +1,7 @@
 <title>좀비 RPG M3 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M3.md
-     source-sha256: a378944b591c68629a1146b0f450e217713eefc7e76734ca8e54dd5815dbf692
+     source-sha256: b5a9b9f62d73defaa55af4850f26bb34b47ef8e03501ff08b79e1b7d373222f2
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -307,6 +307,11 @@
       <tr><td>3.3 포트</td><td>됨</td><td class="judge">되돌린 뒤 재봉인, 어긋남 0. 되돌린 빌드로 전부 재측정 — 곡선·간격·저장이 되돌리기 전과 같다</td></tr>
       <tr><td><strong>M3-B3</strong></td><td><strong>반증 방향 — 사람이 판정한다</strong></td><td class="judge">반증 조건이 이미 답을 적어 뒀다: *"10% 미만인 축이 하나라도 남으면 실패. 그 축은 <strong>합치거나 없앤다</strong>."* 없애려면 <strong>정본</strong>(<span class="mono">SCOPE_MAX_STATS = 5</span>)을 고쳐야 한다</td></tr>
       <tr><td><strong>부품 배분 지표의 함정</strong></td><td>기록함</td><td class="judge">처음엔 "축별 부품 배분 10% 이상" 으로 재려 했는데 다섯 축이 전부 18~19% 로 나왔다 — <strong>매수 정책이 "가장 싼 것부터" 라 골고루 사서</strong>다. 정책이 쓸모를 안 보므로 배분은 쓸모를 못 잰다 (R004)</td></tr>
+      <tr><td>4.1 단계 개념</td><td>됨</td><td class="judge">구역당 5단계. <span class="mono">stageKills</span> = 구역 처치수/5 (보통 2, 벽 4). 화면에 <span class="mono">12 / 30</span> 밑에 <span class="mono">3 / 5 단계</span>, 진행 막대를 5칸으로. 브라우저 확인</td></tr>
+      <tr><td>4.2 단계 보상</td><td>됨</td><td class="judge"><strong>보상을 옮겼지 늘리지 않았다</strong> — 처치당 보상에서 20%를 떼어 단계 클리어 4번에 나눠 준다. 구역 1 검산: 처치 96.00 + 단계 24.00 = <strong>120.00 = 원래 120.00</strong></td></tr>
+      <tr><td>4.3 저장</td><td>됨 · <strong>작업 문구와 다르게 끝났다</strong></td><td class="judge">작업은 <span class="mono">SAVE_VERSION</span> 3 + 마이그레이션을 예상했는데 <strong>저장 구조가 안 바뀌었다</strong> — 단계를 <span class="mono">killIndex</span> 에서 계산하니 새 칸이 없다. v1·v2 그대로 이어지고 저장 17/17</td></tr>
+      <tr><td>4.4 분할 영향</td><td><strong>1개 초과 — 사람이 판정한다</strong></td><td class="judge">구역 30 도달 <strong>129.9 → 129.2분(0.5%)</strong>. 구역별 체류 ±10% 밖 <strong>1개</strong>(구역 16, +28.9%). 간격 상한도 유지(2~88초, 초과 0개)</td></tr>
+      <tr><td><strong>M3-B4</strong></td><td><strong>사람이 판정한다</strong></td><td class="judge">반증 조건은 "10% 넘게 흔들리면 실패". 총 시간은 0.5% 인데 구역 16 하나가 28.9% 다 — 톱니 폭인지 분할 탓인지는 사람이 본다</td></tr>
       <tr><td><strong>M3-B1</strong></td><td><strong>반증 방향 — 사람이 판정한다</strong></td><td class="judge">체류 밖 22개. <strong>도달(누적) 기준으로는 밖 6개</strong>. M2 에서 이미 겪은 톱니 문제다 — 구역별 체류는 무기 사는 순간마다 튄다</td></tr>
     </tbody></table></div></section>
 </div>
