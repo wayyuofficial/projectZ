@@ -94,7 +94,7 @@ setTimeout(function () {
    검사 c2_scope.py 가 이 선언들을 읽어 canon/10-scope.md 의 상한과 대조한다.
    ========================================================================= */
 
-const SAVE_VERSION = 2;   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
+const SAVE_VERSION = 3;   // M3 5: 설계도(plans) 추가. v1·v2 는 migrate() 가 끌어올린다   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
 const ZONE_COUNT   = 30;   // M2 (지시 #60·#61). M1 은 10
 const TIER_MAX     = 3;
 const MAX_ONSCREEN_ZOMBIES = 8;
@@ -166,6 +166,13 @@ const KILLS_PER_ZONE = 10;
    그래서 체류 곡선이 흔들리지 않아야 한다 (M3-B4: 분할 전 대비 ±10%).
    단계는 **저장하지 않는다** — killIndex 에서 계산한다. 저장 구조가 안 바뀌므로 v1·v2 가 그대로 이어진다. */
 const STAGES_PER_ZONE = 5, STAGE_BONUS_RATIO = 0.20;
+/* M3 5 — 재화를 둘로 나눈다 (사람이 버섯커에서 눈여겨본 5번, 2026-09-14).
+   **부품**은 능력치에만, **설계도**는 무기에만 쓴다. 무기를 사도 능력치 성장이 안 멈춘다.
+   설계도 발생량 = 그 구역 총 부품수입 x BP_RATIO. 경로는 셋으로 나눈다 —
+   단계 클리어 60% / 보스 처치 20% / 오프라인 20% (5.2: 한 경로가 80%를 넘지 않는다).
+   처치당 부품은 **분할 전 값으로 되돌렸다** — 단계 보상이 설계도로 옮겨갔으므로
+   부품 총수입은 M3 4단계 이전과 같다. 체류 곡선이 그 때문에 흔들리지 않는다. */
+const BP_RATIO = 0.18, BP_STAGE_SHARE = 0.6, BP_BOSS_SHARE = 0.2, BP_OFFLINE_SHARE = 0.2;   /* 3시드 격자: 0.08 -> 233분, 0.15 -> 142분, 목표는 분할 전 130분 */
 const BOSS_EVERY = 5;
 const BOSS_HP_MULT = 3;
 const BOSS_CHARGE_EVERY = 4.0;   // 보스는 4초마다 돌진한다 (패턴 1개)
@@ -249,7 +256,7 @@ let saveError = null;
 function freshState() {
   return {
     v: SAVE_VERSION,
-    parts: 0, zone: 1, kills: 0,
+    parts: 0, plans: 0, zone: 1, kills: 0,
     lv: { atk: 0, spd: 0, hp: 0, reg: 0, inc: 0 },
     weapon: 'pipe',
     owned: { pipe: 1 },
@@ -268,6 +275,8 @@ function migrate(raw) {
   /* v1 (M1) → v2 (M2): 구조는 같다. bestZone 이 없거나 zone 보다 작으면 채운다. 무기·구역이 늘어도 v1 진행을 잇는다.
      M1 실기 저장본이 여기로 들어온다 — 이걸 초기화하면 사람이 15분 플레이한 것이 날아간다. */
   if (raw.v === 1) { raw = Object.assign({}, raw, { v: 2, bestZone: Math.max(raw.bestZone || 1, raw.zone || 1) }); }
+  /* v2 (M2) → v3 (M3): 설계도가 생겼다. 옛 저장본은 0 으로 시작한다 — 무기는 이미 가진 것을 잃지 않는다. */
+  if (raw.v === 2) { raw = Object.assign({}, raw, { v: 3, plans: 0 }); }
   if (raw.v !== SAVE_VERSION) return freshState();
   const s = freshState();
   for (const k of Object.keys(s)) if (k in raw) s[k] = raw[k];
@@ -299,7 +308,7 @@ function load() {
        지금은 SAVE_VERSION 이 1뿐이라 안 터질 뿐이다. */
     /* M2: v1 은 migrate() 가 v2 로 끌어올린다 — 초기화가 아니므로 문구를 띄우지 않는다.
        (브라우저 시험에서 v1 저장본이 진행은 그대로인데 "처음부터 시작한다" 를 띄웠다 — 거짓 경고) */
-    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION && raw.v !== 1) {
+    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION && raw.v !== 1 && raw.v !== 2) {
       loadError = '저장 형식이 바뀌어 처음부터 시작한다';
     }
     G = migrate(raw);
@@ -331,8 +340,10 @@ function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO; }
 function zoneKills(z) { return KILLS_PER_ZONE * ((z >= WALL_START && z % WALL_EVERY === 0) ? WALL_KILL_MULT : 1); }   // M2 벽: 처치 수만 늘어난다
 function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z); }   // M2 벽: 처치당 보상 ÷2 — 벽의 총수입은 보통 구역과 같다 (M2-B2‴, 지시 #63)
 function stageKills(z) { return Math.max(1, Math.round(zoneKills(z) / STAGES_PER_ZONE)); }
-function killReward(z) { return zoneReward(z) * (1 - STAGE_BONUS_RATIO); }   // M3 4.2: 20% 는 단계 보상으로 뗀다
-function stageBonus(z) { return zoneReward(z) * zoneKills(z) * STAGE_BONUS_RATIO / (STAGES_PER_ZONE - 1); }
+function killReward(z) { return zoneReward(z); }   // M3 5: 단계 보상이 설계도로 옮겨가 부품은 분할 전 그대로
+function zoneIncome(z) { return zoneReward(z) * zoneKills(z); }
+function stageBlueprint(z) { return zoneIncome(z) * BP_RATIO * BP_STAGE_SHARE / (STAGES_PER_ZONE - 1); }
+function bossBlueprint(z) { return zoneIncome(z) * BP_RATIO * BP_BOSS_SHARE; }
 function currentStage() { return Math.min(STAGES_PER_ZONE, Math.floor(killIndex / stageKills(G.zone)) + 1); }
 function isBossKill(z, idx) { return (z % BOSS_EVERY === 0) && idx === zoneKills(z) - 1; }
 function weaponUnlocked(w) { return (w.unlock || 1) <= (G.bestZone || 1); }   // M2: 해금 구역은 최고 도달 구역 기준
@@ -518,10 +529,19 @@ function killZombie(z) {
   killIndex++;
   // M3 4.2 — 단계 클리어 일시금. 구역을 넘는 마지막 칸에서는 안 준다(그건 구역 클리어다).
   if (killIndex % stageKills(G.zone) === 0 && killIndex < zoneKills(G.zone)) {
-    const bonus = stageBonus(G.zone) * rewardMult() * statOf('inc');
-    G.parts += bonus;
+    /* M3 5 — 설계도에도 **수입 능력치를 곱한다.** 안 곱했다가 후반에 진행이 막혔다:
+       부품 경제는 수입 능력치(레벨당 1.12배, 30레벨이면 30배)로 커지는데 무기 값도 그 경제에 맞춰 커진다.
+       설계도만 안 커지면 무기가 영영 안 잡힌다 — 3시드 격자에서 BP_RATIO 를 0.08→1.5 로 올려도
+       구역 30 을 못 깼다(최고 구역 18→27). 양의 문제가 아니라 **성장률**의 문제였다. */
+    const bp = stageBlueprint(G.zone) * rewardMult() * statOf('inc');
+    G.plans += bp;
     addFloat(GAME_W / 2, ARENA_TOP + 100, '단계 ' + currentStage() + ' / ' + STAGES_PER_ZONE
-      + '   +' + fmt(bonus), '#D9A24B', 18);
+      + '   설계도 +' + fmt(bp), '#B8A15E', 18);
+  }
+  if (z.boss) {
+    const bp = bossBlueprint(G.zone) * rewardMult() * statOf('inc');
+    G.plans += bp;
+    addFloat(GAME_W / 2, ARENA_TOP + 130, '보스 · 설계도 +' + fmt(bp), '#B8A15E', 18);
   }
   if (killIndex >= zoneKills(G.zone)) {   // M2: 벽 구역은 3배
     killIndex = 0;
@@ -678,7 +698,11 @@ function applyOffline() {
   if (capped < 60) return null;
   const gain = partsPerSecondEstimate() * capped * OFFLINE_RATE;
   G.parts += gain;
-  return { elapsed: elapsed, capped: capped, gain: gain, cappedHit: elapsed > capped + 1, doubled: false };
+  /* M3 5 — 설계도도 같이 쌓인다. 안 주면 자리를 비운 사이 무기만 멈춘다.
+     비율은 부품 수입 대비 BP_RATIO 중 오프라인 몫(BP_OFFLINE_SHARE). */
+  const bp = gain * BP_RATIO * BP_OFFLINE_SHARE;
+  G.plans += bp;
+  return { elapsed: elapsed, capped: capped, gain: gain, plans: bp, cappedHit: elapsed > capped + 1, doubled: false };
 }
 
 /* =========================================================================
@@ -757,8 +781,8 @@ function buyStat(id) {
 
 function buyWeapon(id) {
   const cost = weaponUpgradeCost(id);
-  if (cost === null || G.parts < cost) return false;
-  G.parts -= cost;
+  if (cost === null || G.plans < cost) return false;   // M3 5: 무기는 **설계도**로만 산다
+  G.plans -= cost;
   G.owned[id] = (G.owned[id] || 0) + 1;
   G.weapon = id;
   return true;
@@ -789,7 +813,7 @@ function buildButtons() {
   btn({ x: 24, y: tabRowY(), w: 240, h: ROW_H, label: '능력치', enabled: true,
         tone: tab === 'stat' ? 'on' : 'off',
         onTap: () => { if (tab !== 'stat') { tab = 'stat'; listScroll = 0; listVel = 0; } return true; } });
-  btn({ x: 276, y: tabRowY(), w: 240, h: ROW_H, label: '무기', enabled: true,
+  btn({ x: 276, y: tabRowY(), w: 240, h: ROW_H, label: '무기 · 설계도', enabled: true,
         tone: tab === 'weapon' ? 'on' : 'off',
         onTap: () => { if (tab !== 'weapon') { tab = 'weapon'; listScroll = 0; listVel = 0; } return true; } });
 
@@ -831,14 +855,14 @@ function buildButtons() {
                cost: maxed ? null : cost,
                /* 가진 무기는 언제나 눌린다 — 장착 전환. 지시 #70 실기: 다음 등급을 못 사면 줄이 죽어서
                   실수로 약한 무기를 고르면 돈이 모일 때까지 되돌릴 수 없었다. */
-               enabled: tier > 0 || (!maxed && G.parts >= cost),
+               enabled: tier > 0 || (!maxed && G.plans >= cost),
                tone: G.weapon === w.id ? 'equipped' : 'buy',
                tint: tierTint(w.tint, tier || 1), wid: w.id,
                /* 장착 규칙 (지시 #72): 장착 중이 아닌 소유 무기 탭 = **장착만**. 장착 중인 무기(또는 미소유) 탭 = 강화·해금.
                   24차 지적: 예전엔 돈이 있으면 되돌리려는 탭이 2,400 을 쓰고 강화해 버렸다. */
                onTap: () => {
                  if (tier > 0 && G.weapon !== w.id) return equip(w.id);
-                 if (!maxed && G.parts >= cost) return buyWeapon(w.id);
+                 if (!maxed && G.plans >= cost) return buyWeapon(w.id);
                  return equip(w.id);
                } });
     });
@@ -1045,6 +1069,9 @@ function drawHUD() {
   ctx.fillStyle = '#E8F0EE';
   ctx.font = '600 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText(fmt(G.parts), 24, 54);
+  ctx.fillStyle = '#B8A15E';   // M3 5: 설계도 — 무기 전용 재화
+  ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('설계도 ' + fmt(G.plans), 24, 70);
 
   ctx.textAlign = 'right';
   ctx.fillStyle = '#7FB0B2';

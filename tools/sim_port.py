@@ -80,6 +80,10 @@ WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_K
 ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
 STAGES_PER_ZONE = int(num("STAGES_PER_ZONE"))
 STAGE_BONUS_RATIO = num("STAGE_BONUS_RATIO")
+BP_RATIO = num("BP_RATIO")
+BP_STAGE_SHARE = num("BP_STAGE_SHARE")
+BP_BOSS_SHARE = num("BP_BOSS_SHARE")
+BP_OFFLINE_SHARE = num("BP_OFFLINE_SHARE")
 KILLS_PER_ZONE = int(num("KILLS_PER_ZONE"))
 BOSS_EVERY = int(num("BOSS_EVERY"))
 BOSS_HP_MULT = num("BOSS_HP_MULT")
@@ -151,33 +155,32 @@ MIRRORED = {
     "acceptRevive": "76080cff2a1316f8",
     "adRowY": "5ed5d78e1b23b919",
     "applyDamage": "44f3fc0acd0ea484",
-    "applyOffline": "b7cab65995bd9534",
+    "applyOffline": "22e6b2208ac61edc",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "7b0dd60f1af0db25",
+    "buildButtons": "14c3027182b7a272",
     "buyStat": "2b0b94e9a15bcaaa",
-    "buyWeapon": "0c1bb6b5a33eb755",
+    "buyWeapon": "28317c9bcd6b4d81",
     "damageZombie": "9dfa910d5cf6855b",
     "equip": "c815c6819c3b6edb",
     "fitGame": "d526a00619b69c86",
-    "freshState": "34dde8559f5a60a9",
+    "freshState": "07c46ca179a99a83",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "78764110ba1a3fdd",
     "isBossKill": "e461a4a51bbb69c5",
-    "killReward": "33b339571884beb7",
-    "killZombie": "afe7f034efdb18cb",
+    "killReward": "0ef3ffe5d2eb73ba",
+    "killZombie": "d3eef0884efdbd51",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "46bb14aa20673823",
     "maxHP": "85e54826f897f7c7",
-    "migrate": "a04d77f10e8a6d88",
+    "migrate": "915d4397a5568145",
     "onDeath": "589239f3a352fe82",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "playerDPS": "6e388f9e36329ce1",
     "regenPerSec": "73badd17c9fc2857",
     "rewardMult": "bff5bcb3e94a3395",
     "spawnZombie": "d4054c63f48a4d4a",
-    "stageBonus": "a104f365f6841f87",
     "stageKills": "4cb2b09008d21635",
     "statCost": "3915c9b212b37571",
     "statDef": "e7ad6087978fd6ec",
@@ -303,7 +306,7 @@ class Sim(object):
 
     # ---- 저장 ----
     def freshState(self):
-        return dict(v=SAVE_VERSION, parts=0.0, zone=1, kills=0,
+        return dict(v=SAVE_VERSION, parts=0.0, plans=0.0, zone=1, kills=0,
                     lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0), weapon="pipe",
                     owned=dict(pipe=1), hp=100.0, bestZone=1, totalKills=0,
                     lastSeen=self.now_ms, boostUntil=0)
@@ -311,6 +314,10 @@ class Sim(object):
     def migrate(self, raw):
         if not isinstance(raw, dict):
             return self.freshState()
+        if raw.get("v") == 1:
+            raw = dict(raw, v=2, bestZone=max(raw.get("bestZone") or 1, raw.get("zone") or 1))
+        if raw.get("v") == 2:
+            raw = dict(raw, v=3, plans=0.0)   # M3 5: 설계도가 생겼다
         if raw.get("v") != SAVE_VERSION:
             return self.freshState()
         s = self.freshState()
@@ -375,11 +382,19 @@ class Sim(object):
 
     @staticmethod
     def killReward(z):
-        return Sim.zoneReward(z) * (1 - STAGE_BONUS_RATIO)
+        return Sim.zoneReward(z)
 
     @staticmethod
-    def stageBonus(z):
-        return Sim.zoneReward(z) * Sim.zoneKills(z) * STAGE_BONUS_RATIO / (STAGES_PER_ZONE - 1)
+    def zoneIncome(z):
+        return Sim.zoneReward(z) * Sim.zoneKills(z)
+
+    @staticmethod
+    def stageBlueprint(z):
+        return Sim.zoneIncome(z) * BP_RATIO * BP_STAGE_SHARE / (STAGES_PER_ZONE - 1)
+
+    @staticmethod
+    def bossBlueprint(z):
+        return Sim.zoneIncome(z) * BP_RATIO * BP_BOSS_SHARE
 
     @staticmethod
     def zoneKills(z):
@@ -424,9 +439,9 @@ class Sim(object):
 
     def buyWeapon(self, wid):
         cost = self.weaponUpgradeCost(wid)
-        if cost is None or self.G["parts"] < cost:
+        if cost is None or self.G.get("plans", 0.0) < cost:   # M3 5: 무기는 설계도로만
             return False
-        self.G["parts"] -= cost
+        self.G["plans"] = self.G.get("plans", 0.0) - cost
         self.G["owned"][wid] = self.G["owned"].get(wid, 0) + 1
         self.G["weapon"] = wid
         return True
@@ -500,7 +515,7 @@ class Sim(object):
                 cost = self.weaponUpgradeCost(w["id"])
                 maxed = tier >= TIER_MAX
                 put_row("weapon", "equipped" if self.G["weapon"] == w["id"] else "buy",
-                        tier > 0 or ((not maxed) and cost is not None and self.G["parts"] >= cost), w["id"])   # 가진 무기는 언제나 눌린다 (지시 #70)
+                        tier > 0 or ((not maxed) and cost is not None and self.G.get("plans", 0.0) >= cost), w["id"])   # 가진 무기는 언제나 눌린다 (지시 #70). M3 5: 설계도로 판정
 
         self.listMax = max(0.0, cy[0] - (bot - top))
         self.listScroll = min(max(0.0, self.listScroll), self.listMax)
@@ -583,8 +598,11 @@ class Sim(object):
         # M3 4.2 — 단계 클리어 일시금. 구역을 넘는 마지막 칸에서는 안 준다.
         if (self.killIndex % self.stageKills(self.G["zone"]) == 0
                 and self.killIndex < self.zoneKills(self.G["zone"])):
-            self.G["parts"] += (self.stageBonus(self.G["zone"])
-                                * self.rewardMult() * self.statOf("inc"))
+            self.G["plans"] = self.G.get("plans", 0.0) + (
+                self.stageBlueprint(self.G["zone"]) * self.rewardMult() * self.statOf("inc"))
+        if z["boss"]:
+            self.G["plans"] = self.G.get("plans", 0.0) + (
+                self.bossBlueprint(self.G["zone"]) * self.rewardMult() * self.statOf("inc"))
         if self.killIndex >= self.zoneKills(self.G["zone"]):
             self.killIndex = 0
             if self.G["zone"] < ZONE_COUNT:
@@ -699,7 +717,10 @@ class Sim(object):
             return None
         gain = self.partsPerSecondEstimate() * capped * OFFLINE_RATE
         self.G["parts"] += gain
-        return dict(elapsed=elapsed, capped=capped, gain=gain,
+        # M3 5 — 설계도도 같이 쌓인다 (원본과 같다)
+        bp = gain * BP_RATIO * BP_OFFLINE_SHARE
+        self.G["plans"] = self.G.get("plans", 0.0) + bp
+        return dict(elapsed=elapsed, capped=capped, gain=gain, plans=bp,
                     cappedHit=elapsed > capped + 1, doubled=False)
 
 

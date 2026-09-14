@@ -47,7 +47,13 @@
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 1, bestZone: undefined }));
   loadError = null;                       // 앞 항목의 실패 문구가 남지 않게 (24차 부수 지적 3: load() 는 loadError 를 스스로 비우지 않는다)
   load();
-  chk('v1 저장본은 v2 로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.owned.rifle === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.bestZone + '/' + loadError);
+  chk('v1 저장본이 최신으로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.owned.rifle === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.bestZone + '/' + loadError);
+
+  // M3 5 — v2 (M2 저장본) 도 설계도 0 으로 이어져야 한다. 무기는 이미 가진 것을 잃지 않는다.
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 2, plans: undefined }));
+  loadError = null;
+  load();
+  chk('v2 저장본이 최신으로 이어진다 (설계도 0)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 0 && G.owned.rifle === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + loadError);
 
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();
