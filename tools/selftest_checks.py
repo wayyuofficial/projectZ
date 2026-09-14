@@ -169,6 +169,11 @@ def main():
         p = os.path.join(ROOT, "measurements", "device-_selftest.json")
         w(p, '{"측정일": "2026-09-14", "요청 절": ["아무거나"]}'); made.append(p)
 
+        # c21: 정본 상한(120초)을 넘는 간격 기록을 가장 새 것으로 심는다 — warn 이 나야 한다
+        p = os.path.join(ROOT, "measurements", "upgrade-cadence-_selftest.json")
+        w(p, '{"구역별": [{"구역": 1, "매수_횟수_중앙": 5, "간격_초_중앙": 30.0}, {"구역": 2, "매수_횟수_중앙": 5, "간격_초_중앙": 999.0}], "매수_3회_미만_구역": []}')
+        os.utime(p, (_future, _future)); made.append(p)
+
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
         shutil.copy2(canon, backup); made.append(backup)
@@ -196,6 +201,7 @@ def main():
             ("c18_curve.py", ("warn",)),
             ("c19_evidence_stamp.py", ("warn",)),
             ("c20_request_matches_criterion.py", ("fail",)),
+            ("c21_upgrade_cadence.py", ("warn",)),
         ]
 
         bad = []
