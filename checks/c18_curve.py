@@ -27,6 +27,10 @@ def run(root):
             d = json.load(io.open(p, encoding="utf-8"))
         except Exception:
             continue
+        # `--no-new-weapons` 로 잰 것은 **비교용 바탕**이지 출하 곡선이 아니다.
+        # 2026-09-14: 4.3 새 문구 때문에 바탕을 재다가 그게 가장 새 기록이 되어 c18 이 그걸 보고 경고했다.
+        if d.get("새무기") is False:
+            continue
         if isinstance(d, dict) and "도달_밖" in d and "벽" in d and d.get("벽"):
             recs.append((os.path.getmtime(p), p, d))
     if not recs:

@@ -134,11 +134,14 @@ const ZONE_HP0 = 15,  ZONE_HP_G = 1.55;
 const ZONE_RW0 = 4,   ZONE_RW_G = 1.30;   /* M2: 1.35 로 올렸다가 1.30 으로 되돌렸다. 3시드 격자(balance-fit)는 1.35 를 골랐지만
    20시드·벽 포함 도달 시각(balance-M2-grid2-*)에서는 1.30 이 구역 30 도달을 목표 누적의 1.00 배로 맞춘다(1.32 는 0.76, 1.28 은 1.33).
    다만 어느 값도 앞 구역(10~23)은 목표보다 빠르다 — 곡선 모양 자체의 문제. 사람이 정할 일이다 (지시 #62). */
-/* 벽 — 5의 배수 구역은 **처치 수가 x3** 이다 (정본 00-identity 38행: 막히는 게 정상이고 그 지점이 광고 지점).
+/* 벽 — **구역 10 부터** 5의 배수 구역은 **처치 수가 x2, 처치당 보상이 ÷2** 다 (지시 #63, M2-B2‴).
+   (정본 00-identity 38행: 막히는 게 정상이고 그 지점이 광고 지점.) 여기까지 온 길:
    처음엔 HP x3 으로 세웠는데(M2 예측 B2) 20시드에서 벽이 이웃의 8~15배가 되고 벽 다음 구역은 0.2분에 지나갔다 —
    벽에서 과성장해 골짜기가 생긴다. HP 는 기본 곡선 그대로 두고 같은 좀비를 3배 오래 잡게 한다 (M2-B2′).
    그것만으로는 벽에서 3배 번 돈이 다음 구역을 0.1~0.7분에 지나가게 했다 — 처치당 보상도 ÷3 (M2-B2″). 벽은 순수한 시간 비용이고, 광고가 그 시간을 사는 것이다.
-   measurements/balance-M2-curve-wall-2026-09-11.json */
+   x3/÷3 도 벽 비가 4.1~6.1 이라 반증됐다. 사람이 **x2/÷2 로 내리고(지시 #63) 그대로 두기로((a), 지시 #65)** 정했다 — B2‴ 도 반증이지만
+   구속하는 것은 벽이 아니라 무기 값이라는 게 드러났다. 벽 비는 이제 판정선이 아니라 기록이다 (c18 이 정보로 남긴다).
+   measurements/balance-M2-curve-wall-2026-09-11.json, -curve-f- */
 const WALL_EVERY = 5, WALL_KILL_MULT = 2, WALL_START = 10;   // 지시 #63: 구역 10 부터, x2/÷2. 1~9 는 M1 그대로
 const ZOMBIE_DPS_RATIO = 0.14;   /* 2026-09-08 지시 #23 재보정.
      접촉 판정을 위치 기준으로 고치면서 때리는 좀비가 최대 8마리에서 3마리로 줄었다.
@@ -307,7 +310,7 @@ function regenPerSec() { return statOf('reg'); }
 function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1); }
 function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO; }
 function zoneKills(z) { return KILLS_PER_ZONE * ((z >= WALL_START && z % WALL_EVERY === 0) ? WALL_KILL_MULT : 1); }   // M2 벽: 처치 수만 늘어난다
-function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z); }   // M2 벽: 처치당 보상 ÷3 — 벽의 총수입은 보통 구역과 같다 (M2-B2″)
+function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z); }   // M2 벽: 처치당 보상 ÷2 — 벽의 총수입은 보통 구역과 같다 (M2-B2‴, 지시 #63)
 function isBossKill(z, idx) { return (z % BOSS_EVERY === 0) && idx === zoneKills(z) - 1; }
 function weaponUnlocked(w) { return (w.unlock || 1) <= (G.bestZone || 1); }   // M2: 해금 구역은 최고 도달 구역 기준
 function weaponUpgradeCost(id) {

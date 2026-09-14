@@ -124,7 +124,7 @@ def main(argv):
     print("도달 시각 / 목표 누적 (구역 10~30):", {z: round(r, 2) for z, r in arr.items()}, "· ±%d%% 밖 %d개 %s (M2-B1‴: 3개 이하, 구역 10 기준 상대)" % (ARRIVE_TOL * 100, len(arr_out), arr_out))
     print("곡선 밖: %d개 %s · 30 도달(중앙) %s분" % (len(outside), outside, ("%.1f" % reach[30]) if 30 in reach else "-"))
     if a.out:
-        json.dump({"측정일": datetime.date.today().isoformat(), "도구": "tools/curve_check.py", "시드": seeds, "벽": not a.no_wall,
+        json.dump({"측정일": datetime.date.today().isoformat(), "도구": "tools/curve_check.py", "시드": seeds, "벽": not a.no_wall, "새무기": not a.no_new_weapons,
                    "목표": "%.1f x %.2f^z" % (TARGET_BASE, TARGET_G), "허용": TOL, "구간": [Z_FROM, Z_TO],
                    "구역별": {str(z): {"체류": round(m, 3) if m is not None else None, "목표": round(t, 3), "비율": round(r, 4) if r is not None else None} for z, m, t, r, n in rows},
                    "곡선밖": outside, "벽비": {str(z): round(v, 4) for z, v in walls.items()}, "골짜기": {str(z): v for z, v in trough.items()},

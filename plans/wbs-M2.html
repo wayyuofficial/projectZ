@@ -1,7 +1,7 @@
 <title>좀비 RPG M2 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M2.md
-     source-sha256: 7f05b18746708aaadf1f10e244790fe6f01f4895b7e50294bf08f606c4c9c419
+     source-sha256: 1565afd993597f61923fd105abe2a70c657cc449761a1d73f204b65fef046a45
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -285,19 +285,19 @@
     <div class="stage"><div class="stage-head"><span class="idx">02</span><span class="title">구역 30</span><span class="days" style="color:var(--ok)">1.5일 · 3/3 통과</span></div>
       <div class="tablewrap"><table><thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead><tbody>
         <tr><td>2.1</td><td><span class="mono">ZONE_COUNT</span> 10 → 30, 구역별 배경 색·실루엣 테이블 확장 (11~30 은 색 변형만, 그리기 코드 추가 없음)</td><td class="judge">인접 구역 45쌍 → 435쌍 중 완전 동일 0 (M1 4.2 방식)</td><td class="dep">정본 승인</td></tr>
-        <tr><td>2.2</td><td>보상 성장 <span class="mono">ZONE_RW_G</span> 1.30 → 1.35 (격자 최적)</td><td class="judge"><span class="mono">curve_check</span> 구역 10 기준 상대 도달 <strong>±20% 밖 4개 미만</strong> (M2-B1‴ 판정, 20시드)</td><td class="dep">1.2, 2.1</td></tr>
+        <tr><td>2.2</td><td>보상 성장 <span class="mono">ZONE_RW_G</span> <strong>1.30 유지</strong> (1.35 는 격자 최적이었으나 곡선이 안 맞아 되돌림)</td><td class="judge"><span class="mono">curve_check</span> 구역 10 기준 상대 도달 <strong>±20% 밖 4개 미만</strong> (M2-B1‴ 판정, 20시드)</td><td class="dep">1.2, 2.1</td></tr>
         <tr><td>2.3</td><td>밸런스 표 <span class="mono">plans/balance-zones.csv</span> 30행 · <span class="mono">c13</span> 갱신</td><td class="judge"><span class="mono">c13</span> OK, 30행 전부 게임 상수와 일치</td><td class="dep">2.2</td></tr>
       </tbody></table></div></div>
     <div class="stage"><div class="stage-head"><span class="idx">03</span><span class="title">벽</span><span class="days" style="color:var(--ok)">1.0일 · 2/2 통과</span></div>
       <div class="tablewrap"><table><thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead><tbody>
-        <tr><td>3.1</td><td>5의 배수 구역 HP 벽 ×3 (보스 구역과 겹친다 &mdash; 보스 HP ×3 과 별개로 <strong>구역 전체</strong> HP 배수)</td><td class="judge"><span class="mono">zoneKills</span>/<span class="mono">zoneReward</span> 가 정의(구역 10 부터 5의 배수, 처치 수 ×2 · 처치당 보상 ÷2)와 일치하고 <span class="mono">c13</span> 밸런스 표 30행이 맞는다. <strong>벽 비는 판정선이 아니라 기록</strong>이다 (<span class="mono">c18</span> 이 정보로 남긴다)</td><td class="dep">2.2</td></tr>
+        <tr><td>3.1</td><td>벽 &mdash; <strong>구역 10 부터</strong> 5의 배수 구역에 <strong>처치 수 ×2 · 처치당 보상 ÷2</strong> (HP 는 안 건드린다. HP ×3 → 처치 ×3 → ×2/÷2 로 내려온 결과, 지시 #63·#65)</td><td class="judge"><span class="mono">zoneKills</span>/<span class="mono">zoneReward</span> 가 정의(구역 10 부터 5의 배수, 처치 수 ×2 · 처치당 보상 ÷2)와 일치하고 <span class="mono">c13</span> 밸런스 표 30행이 맞는다. <strong>벽 비는 판정선이 아니라 기록</strong>이다 (<span class="mono">c18</span> 이 정보로 남긴다)</td><td class="dep">2.2</td></tr>
         <tr><td>3.2</td><td>벽을 포트에 옮긴다</td><td class="judge"><span class="mono">c16</span> OK, 포트 체류 곡선이 브라우저 5시드와 ±5%</td><td class="dep">3.1</td></tr>
       </tbody></table></div></div>
     <div class="stage"><div class="stage-head"><span class="idx">04</span><span class="title">새 무기 4종</span><span class="days" style="color:var(--ok)">2.5일 · 4/4 통과</span></div>
       <div class="tablewrap"><table><thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>의존</th></tr></thead><tbody>
         <tr><td>4.1</td><td>무기 배수·비용을 <strong>곡선에서 도출</strong> (해금 구역의 좀비 HP 에 비례) &mdash; 데이터 표만</td><td class="judge">표에 10종, 배수가 해금 구역 순으로 단조 증가</td><td class="dep">3.1</td></tr>
         <tr><td>4.2</td><td>해금 규칙: 구역 <strong>13·18·23·28</strong> 도달 시 해금</td><td class="judge">해금 전에는 <strong>다음 한 줄만</strong> <span class="mono">???</span> · <span class="mono">구역 N 도달 시 해금</span> 으로 보이고 <strong>눌리지 않는다</strong>(이름·가격·등급 없음). 해금 후 실물. 7.1(탭 ≥29) · 7.2(탭 2회) 유지</td><td class="dep">4.1</td></tr>
-        <tr><td>4.3</td><td>4종 그리기 &mdash; 모양 4개 추가(색은 등급 tint 그대로)</td><td class="judge">10종×3등급 30조합 픽셀 비교 완전 동일 0 (M1 3.3 방식). 새 무기가 <strong>도달</strong> 곡선을 깨지 않는다 &mdash; 2.2 와 같은 선(밖 4개 미만). <strong>체류 곡선은 M3 과제</strong></td><td class="dep">4.1</td></tr>
+        <tr><td>4.3</td><td>4종 그리기 &mdash; 모양 4개 추가(색은 등급 tint 그대로)</td><td class="judge">10종×3등급 30조합 픽셀 비교 완전 동일 0 (M1 3.3 방식). 새 무기를 <strong>뺀</strong> 곡선(<span class="mono">curve_check --no-new-weapons</span>)보다 도달 밖 개수가 <strong>줄어든다</strong> &mdash; 안 줄면 무기 배수를 다시 정한다. <strong>체류 곡선은 M3 과제</strong></td><td class="dep">4.1</td></tr>
         <tr><td>4.4</td><td>포트에 해금 규칙 옮김</td><td class="judge"><span class="mono">c16</span> OK</td><td class="dep">4.2</td></tr>
       </tbody></table></div></div>
     <div class="stage"><div class="stage-head"><span class="idx">05</span><span class="title">시간대 분리</span><span class="days" style="color:var(--ok)">0.5일 · 1/1 통과</span></div>
@@ -335,5 +335,5 @@
     <li>구역 31 이상</li>
     <li>곡선을 결과에 맞춰 고치기 &mdash; 곡선은 정본, 상수를 맞춘다</li>
   </ul></section>
-  <footer><div>원본: <code>plans/wbs-M2.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div><div>원본 sha256 <code>7f05b1874670…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div><div>근거: <code>plans/plan-M2.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #59·#60·#61</div></footer>
+  <footer><div>원본: <code>plans/wbs-M2.md</code> · 이 페이지는 뷰다. 고칠 곳은 원본을 고치고 다시 만든다.</div><div>원본 sha256 <code>1565afd99359…</code> · 어긋나면 <code>checks/c8_view_freshness.py</code> 가 잡는다</div><div>근거: <code>plans/plan-M2.md</code> · <code>canon/10-scope.md</code> · <code>plans/GAMEDESIGN.md</code> · <code>instructions-log.md</code> 지시 #59·#60·#61</div></footer>
 </div>

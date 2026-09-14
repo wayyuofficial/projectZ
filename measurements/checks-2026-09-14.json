@@ -1,7 +1,7 @@
 {
-  "ran_at": "2026-09-14T13:46:51",
+  "ran_at": "2026-09-14T14:10:54",
   "blocking": 0,
-  "warn": 0,
+  "warn": 1,
   "skip": 0,
   "results": [
     {
@@ -79,7 +79,7 @@
     {
       "status": "ok",
       "detail": [
-        "balance-M2-curve-f-2026-09-11.json — 도달 밖 2개 (선 3)",
+        "balance-M2-curve-g-2026-09-14.json — 도달 밖 2개 (선 3)",
         "벽 비 {'10': 1.68, '15': 4.61, '20': 2.04, '25': 1.77} · 골짜기 {'10': 1.11, '15': 0.76, '20': 0.37, '25': 2.62} (정보 — 지시 #65 (a) 로 벽은 그대로)"
       ],
       "check": "c18_curve.py",
@@ -87,9 +87,10 @@
       "priority": 2
     },
     {
-      "status": "ok",
+      "status": "warn",
       "detail": [
-        "근거 기록 3개 전부 현재 빌드: balance-M2-boost-2026-09-11b.json, balance-M2-curve-f-2026-09-11.json, device-2026-09-11b-M2.json"
+        "balance-M2-boost-2026-09-11b.json — 예측 M2-B4 판정근거 의 근거인데 도장이 f1e9c828ab31b7ba 다. 현재 빌드는 336f62a9e171c993. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "balance-M2-curve-f-2026-09-11.json — 예측 M2-B1‴ 판정근거 의 근거인데 도장이 f1e9c828ab31b7ba 다. 현재 빌드는 336f62a9e171c993. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)"
       ],
       "check": "c19_evidence_stamp.py",
       "name": "판정 근거 기록이 현재 빌드의 것인지",
@@ -125,7 +126,7 @@
     {
       "status": "ok",
       "detail": [
-        "계획서 8개 통과"
+        "계획서 9개 통과"
       ],
       "check": "c4_plan_hygiene.py",
       "name": "계획서에 예측·반증 조건이 있는지",
@@ -170,7 +171,7 @@
     {
       "status": "ok",
       "detail": [
-        "측정 기록 최신: balance-M2-boost-2026-09-11b.json, storage-2026-09-11c.json"
+        "측정 기록 최신: balance-M2-curve-g-noweapons-2026-09-14.json, storage-2026-09-14.json"
       ],
       "check": "c9_measurement_freshness.py",
       "name": "게임을 고치고 측정을 다시 안 했는지",

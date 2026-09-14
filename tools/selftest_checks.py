@@ -159,6 +159,12 @@ def main():
         p = os.path.join(ROOT, "plans", "wbs-_selftest.md")
         w(p, "# 자가진단용\n\n근거: `balance-M2-_selftest-stale.json`\n"); made.append(p)
 
+        # c18 이 **바탕 기록(새무기 false)** 을 출하 곡선으로 착각하지 않는지.
+        # 이 파일이 더 새롭고 숫자는 깨끗하다 — c18 이 이걸 보면 ok 가 되어 위 픽스처의 warn 이 사라진다.
+        p = os.path.join(ROOT, "measurements", "balance-M2-_selftest-noweapons.json")
+        w(p, '{"벽": true, "새무기": false, "도달_밖": [], "벽비": {"5": 3.0}, "골짜기": {"5": 1.0}}')
+        os.utime(p, (_future + 60, _future + 60)); made.append(p)
+
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
         shutil.copy2(canon, backup); made.append(backup)
