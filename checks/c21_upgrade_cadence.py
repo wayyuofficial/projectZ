@@ -3,7 +3,11 @@
 
 사람이 실기에서 말한 것: *"초반 30구역 업그레이드가 너무 오래 걸린다."* (2026-09-11)
 목표 **체류** 곡선은 그 느낌을 못 잰다 — 체류가 짧아도 그 안에서 아무것도 안 올라가면 느리다.
-그래서 정본이 **업그레이드 간격 상한**을 따로 들고 있다 (`canon/10-scope.md`: `SCOPE_UPGRADE_GAP_MAX_SEC`).
+그래서 정본이 템포를 따로 들고 있다 — 2026-09-16(지시 #102)부터 **구역당 매수 횟수 하한**이다 (`SCOPE_MIN_UPGRADES_PER_ZONE`).
+
+**왜 간격(초)에서 횟수로 바꿨나**: M4 에서 판매가 부품 수입의 85% 가 되자 수입이 뭉텅이로 들어와
+**중앙 간격이 0 인 구역이 16/28** 이 됐다. 반대로 매수가 2~3회뿐인 구역은 한 번의 긴 간격이 그대로 중앙값이 된다.
+**선을 맞추는 일이 게임을 고치는 일과 갈라졌다.** 횟수는 그 둘이 안 갈라진다.
 
 **숫자를 이 파일에 적지 않는다.** 정본에서 읽는다 — c2 의 교훈("숫자를 여기 적지 않는다. 18차·M2 에서 두 번 낡았다").
 
@@ -17,7 +21,7 @@
 - 매수 정책은 `auto_run` 의 "가장 싼 것부터" 다. 사람은 그렇게 안 살 수 있다 — 사람의 간격은 이보다 길 수 있다.
 - **판정이 아니다.** `M3-B2` 의 판정은 사람이 `judge_prediction.py` 로 한다. 이 검사는 선 안인지 셀 뿐이다.
 """
-NAME = "업그레이드 간격이 정본 상한을 넘는지 (M3)"
+NAME = "구역당 업그레이드 횟수가 정본 하한 아래인지"
 PRIORITY = 2
 
 import io, os, re, glob, json
@@ -25,7 +29,7 @@ import io, os, re, glob, json
 
 def _limit(root):
     txt = io.open(os.path.join(root, "canon", "10-scope.md"), encoding="utf-8").read()
-    m = re.search(r"^\s*SCOPE_UPGRADE_GAP_MAX_SEC\s*=\s*([0-9.]+)\s*$", txt, re.M)
+    m = re.search(r"^\s*SCOPE_MIN_UPGRADES_PER_ZONE\s*=\s*([0-9.]+)\s*$", txt, re.M)
     return float(m.group(1)) if m else None
 
 
@@ -35,7 +39,7 @@ def run(root):
         return {"status": "skip", "detail": ["game/index.html 이 없다"]}
     lim = _limit(root)
     if lim is None:
-        return {"status": "error", "detail": ["canon/10-scope.md 에 SCOPE_UPGRADE_GAP_MAX_SEC 가 없다"]}
+        return {"status": "error", "detail": ["canon/10-scope.md 에 SCOPE_MIN_UPGRADES_PER_ZONE 가 없다"]}
 
     recs = []
     for p in glob.glob(os.path.join(root, "measurements", "upgrade-cadence-*.json")):
@@ -55,17 +59,18 @@ def run(root):
     bad = []
     if os.path.getmtime(game) > mt + 1:
         bad.append("%s 가 게임 파일보다 낡았다 — 게임을 고치고 간격을 다시 안 쟀다" % base)
-    over = [(r["구역"], r["간격_초_중앙"]) for r in d["구역별"]
-            if r.get("간격_초_중앙") is not None and r["간격_초_중앙"] > lim]
-    if over:
-        bad.append("%s: 중앙 간격이 상한 %.0f초를 넘는 구역 %d개 — %s (정본 SCOPE_UPGRADE_GAP_MAX_SEC)"
-                   % (base, lim, len(over), ["%d:%.0f초" % (z, g) for z, g in over[:8]]))
-    thin = d.get("매수_3회_미만_구역") or []
-    if thin:
-        bad.append("%s: 업그레이드가 3회 미만인 구역 %s — 올릴 게 없는 구역이다" % (base, thin))
+    # M4 5.2 (지시 #102) — 선은 **구역당 매수 횟수**다. 간격(초)은 정보로만 찍는다.
+    under = [(r["구역"], r["매수_횟수_중앙"]) for r in d["구역별"]
+             if r.get("매수_횟수_중앙") is not None and r["매수_횟수_중앙"] < lim]
+    if under:
+        bad.append("%s: 구역당 매수가 하한 %.0f회보다 적은 구역 %d개 — %s (정본 SCOPE_MIN_UPGRADES_PER_ZONE). 올릴 게 없는 구역이다"
+                   % (base, lim, len(under), ["%d:%.1f회" % (z, n) for z, n in under[:8]]))
 
+    ns = [r["매수_횟수_중앙"] for r in d["구역별"] if r.get("매수_횟수_중앙") is not None]
     gaps = [r["간격_초_중앙"] for r in d["구역별"] if r.get("간격_초_중앙") is not None]
-    info = "구역 %d개 · 간격 중앙 %.0f~%.0f초 (상한 %.0f)" % (len(gaps), min(gaps), max(gaps), lim) if gaps else "-"
+    zero = sum(1 for g in gaps if g == 0)
+    info = ("구역 %d개 · 매수 %.0f~%.0f회 (하한 %.0f) · 간격 %.0f~%.0f초 [정보 — 중앙이 0 인 구역 %d개]"
+            % (len(ns), min(ns), max(ns), lim, min(gaps), max(gaps), zero)) if ns and gaps else "-"
     if bad:
         return {"status": "warn", "detail": bad + [info]}
     return {"status": "ok", "detail": ["%s — 상한 %.0f초 안" % (base, lim), info]}

@@ -71,7 +71,7 @@ def main(argv):
         print("%4d | %13.1f | %s" % (r["구역"], r["매수_횟수_중앙"],
                                      ("%8.1f" % r["간격_초_중앙"]) if r["간격_초_중앙"] else "       -"))
     print()
-    print("매수가 3회 미만인 구역: %d개 %s" % (len(thin), thin))
+    print("매수가 3회 미만인 구역: %d개 %s   ← 정본 하한 (지시 #102)" % (len(thin), thin))
     print("산 것: 능력치 %d · 무기 %d" % (kinds["능력치"], kinds["무기"]))
     # M3 5 — 재화가 둘이다. 능력치는 부품, 무기는 설계도. 섞어서 비율을 내면 뜻이 없다.
     parts_spend = {k: v for k, v in spend.items() if k != "무기"}

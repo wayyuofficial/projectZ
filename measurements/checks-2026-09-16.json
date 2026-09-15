@@ -1,7 +1,7 @@
 {
-  "ran_at": "2026-09-16T00:10:05",
+  "ran_at": "2026-09-16T00:15:31",
   "blocking": 0,
-  "warn": 3,
+  "warn": 4,
   "skip": 0,
   "results": [
     {
@@ -119,12 +119,11 @@
     {
       "status": "warn",
       "detail": [
-        "upgrade-cadence-m4-c-2026-09-16.json: 중앙 간격이 상한 120초를 넘는 구역 1개 — ['23:362초'] (정본 SCOPE_UPGRADE_GAP_MAX_SEC)",
-        "upgrade-cadence-m4-c-2026-09-16.json: 업그레이드가 3회 미만인 구역 [16, 20, 23] — 올릴 게 없는 구역이다",
-        "구역 28개 · 간격 중앙 0~362초 (상한 120)"
+        "upgrade-cadence-m4-c-2026-09-16.json: 구역당 매수가 하한 3회보다 적은 구역 3개 — ['16:2.0회', '20:2.0회', '23:2.0회'] (정본 SCOPE_MIN_UPGRADES_PER_ZONE). 올릴 게 없는 구역이다",
+        "구역 28개 · 매수 2~32회 (하한 3) · 간격 0~362초 [정보 — 중앙이 0 인 구역 16개]"
       ],
       "check": "c21_upgrade_cadence.py",
-      "name": "업그레이드 간격이 정본 상한을 넘는지 (M3)",
+      "name": "구역당 업그레이드 횟수가 정본 하한 아래인지",
       "priority": 2
     },
     {
@@ -148,7 +147,7 @@
     {
       "status": "ok",
       "detail": [
-        "계획서 18개 통과"
+        "계획서 19개 통과"
       ],
       "check": "c4_plan_hygiene.py",
       "name": "계획서에 예측·반증 조건이 있는지",
@@ -182,9 +181,9 @@
       "priority": 1
     },
     {
-      "status": "ok",
+      "status": "warn",
       "detail": [
-        "뷰 4개가 원본과 일치"
+        "wbs-M4.html : 원본 wbs-M4.md 이 바뀌었다. 뷰를 다시 만들고 sha256 을 갱신하라"
       ],
       "check": "c8_view_freshness.py",
       "name": "뷰(HTML)가 원본 문서와 어긋났는지",
