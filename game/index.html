@@ -94,7 +94,7 @@ setTimeout(function () {
    검사 c2_scope.py 가 이 선언들을 읽어 canon/10-scope.md 의 상한과 대조한다.
    ========================================================================= */
 
-const SAVE_VERSION = 3;   // M3 5: 설계도(plans) 추가. v1·v2 는 migrate() 가 끌어올린다   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
+const SAVE_VERSION = 4;   // M4 1: 일일 리듬(day·quest·login·keys). v1~v3 은 migrate() 가 끌어올린다   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
 const ZONE_COUNT   = 30;   // M2 (지시 #60·#61). M1 은 10
 const TIER_MAX     = 3;
 const MAX_ONSCREEN_ZOMBIES = 8;
@@ -172,6 +172,25 @@ const STAGES_PER_ZONE = 5, STAGE_BONUS_RATIO = 0.20;
    단계 클리어 60% / 보스 처치 20% / 오프라인 20% (5.2: 한 경로가 80%를 넘지 않는다).
    처치당 부품은 **분할 전 값으로 되돌렸다** — 단계 보상이 설계도로 옮겨갔으므로
    부품 총수입은 M3 4단계 이전과 같다. 체류 곡선이 그 때문에 흔들리지 않는다. */
+/* M4 1 — 일일 리듬 (조사 ⑤ "방치형인데 방치를 못 한다" [3], 2026-09-15).
+   서버가 없어도 된다 — 날짜는 기기 시계로 충분하다. 다만 **시계를 뒤로 돌리면 안 준다**:
+   본 적 있는 가장 큰 날(maxDay)보다 작은 날짜는 무시한다. */
+const DAY_MS = 86400000;
+/* 몫은 **합이 1.0 을 안 넘게** 나눈다 — 과제 0.55 + 상자 0.20 + 접속 최대 0.25 = 1.00.
+   그래야 하루 일일 보상 총량이 dailyBudget() 안에 들어간다 (WBS 1.4).
+   처음엔 과제만 1.00 이라 합이 1.72 까지 갔다 — 재보고 고쳤다. */
+const QUEST_DEFS = [
+  { id: 'zone',  name: '구역 3개 올리기',  need: 3,  share: 0.20 },
+  { id: 'up',    name: '업그레이드 20번',  need: 20, share: 0.18 },
+  { id: 'stage', name: '단계 30번 클리어', need: 30, share: 0.17 }
+];
+const LOGIN_SHARES  = [0.015, 0.018, 0.020, 0.025, 0.030, 0.037, 0.105];  // 합 0.25. 7일째가 가장 크다
+const SUPPLY_SHARE  = 0.20;   // 상자 몫. KEY_MAX 회로 나눈다
+const LOGIN_DAYS = 7;                       // 접속 보상 7일. 끊기면 처음으로
+const KEY_MAX = 3;                          // 보급 상자 열쇠. 하루에 KEY_MAX 로 채워진다
+/* 일일 보상 총량은 **그날 수입의 이만큼 안**으로 묶는다 (WBS 1.4).
+   4·5단계에서 쓴 "보상을 옮기지 늘리지 않는다" 와 같은 수법 — 곡선을 흔들지 않으려고. */
+const DAILY_BUDGET = 0.20;
 const BP_RATIO = 0.18, BP_STAGE_SHARE = 0.6, BP_BOSS_SHARE = 0.2, BP_OFFLINE_SHARE = 0.2;   /* 3시드 격자: 0.08 -> 233분, 0.15 -> 142분, 목표는 분할 전 130분 */
 const BOSS_EVERY = 5;
 const BOSS_HP_MULT = 3;
@@ -263,7 +282,12 @@ function freshState() {
     hp: 100,
     bestZone: 1, totalKills: 0,
     lastSeen: Date.now(),
-    boostUntil: 0
+    boostUntil: 0,
+    /* M4 1 — 일일. day 는 "오늘" 의 날짜 번호, maxDay 는 본 적 있는 가장 큰 날짜(시계 되돌리기 방지) */
+    day: 0, maxDay: 0,
+    quest: { zone: 0, up: 0, stage: 0 }, questTaken: {},
+    login: { streak: 0, lastDay: -1 },
+    keys: KEY_MAX
   };
 }
 
@@ -277,6 +301,12 @@ function migrate(raw) {
   if (raw.v === 1) { raw = Object.assign({}, raw, { v: 2, bestZone: Math.max(raw.bestZone || 1, raw.zone || 1) }); }
   /* v2 (M2) → v3 (M3): 설계도가 생겼다. 옛 저장본은 0 으로 시작한다 — 무기는 이미 가진 것을 잃지 않는다. */
   if (raw.v === 2) { raw = Object.assign({}, raw, { v: 3, plans: 0 }); }
+  /* v3 (M3) → v4 (M4): 일일 리듬이 생겼다. 옛 저장본은 오늘부터 시작한다 — 진행은 하나도 안 잃는다. */
+  if (raw.v === 3) {
+    raw = Object.assign({}, raw, { v: 4, day: 0, maxDay: 0,
+      quest: { zone: 0, up: 0, stage: 0 }, questTaken: {},
+      login: { streak: 0, lastDay: -1 }, keys: KEY_MAX });
+  }
   if (raw.v !== SAVE_VERSION) return freshState();
   const s = freshState();
   for (const k of Object.keys(s)) if (k in raw) s[k] = raw[k];
@@ -308,7 +338,7 @@ function load() {
        지금은 SAVE_VERSION 이 1뿐이라 안 터질 뿐이다. */
     /* M2: v1 은 migrate() 가 v2 로 끌어올린다 — 초기화가 아니므로 문구를 띄우지 않는다.
        (브라우저 시험에서 v1 저장본이 진행은 그대로인데 "처음부터 시작한다" 를 띄웠다 — 거짓 경고) */
-    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION && raw.v !== 1 && raw.v !== 2) {
+    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION && raw.v !== 1 && raw.v !== 2 && raw.v !== 3) {
       loadError = '저장 형식이 바뀌어 처음부터 시작한다';
     }
     G = migrate(raw);
@@ -533,6 +563,7 @@ function killZombie(z) {
        부품 경제는 수입 능력치(레벨당 1.12배, 30레벨이면 30배)로 커지는데 무기 값도 그 경제에 맞춰 커진다.
        설계도만 안 커지면 무기가 영영 안 잡힌다 — 3시드 격자에서 BP_RATIO 를 0.08→1.5 로 올려도
        구역 30 을 못 깼다(최고 구역 18→27). 양의 문제가 아니라 **성장률**의 문제였다. */
+    questProgress('stage', 1);             // M4 1.2
     const bp = stageBlueprint(G.zone) * rewardMult() * statOf('inc');
     G.plans += bp;
     addFloat(GAME_W / 2, ARENA_TOP + 100, '단계 ' + currentStage() + ' / ' + STAGES_PER_ZONE
@@ -547,6 +578,7 @@ function killZombie(z) {
     killIndex = 0;
     if (G.zone < ZONE_COUNT) {
       G.zone++;
+      questProgress('zone', 1);            // M4 1.2
       G.bestZone = Math.max(G.bestZone, G.zone);
       addFloat(GAME_W / 2, ARENA_TOP + 60, '구역 ' + G.zone, '#D9A24B', 26);
       zombies.length = 0; shots.length = 0;
@@ -706,6 +738,79 @@ function applyOffline() {
 }
 
 /* =========================================================================
+   7.5 일일 리듬 — M4 1
+   서버 없이 돈다. 날짜 번호는 **기기 시계의 로컬 자정** 기준이다.
+   시계를 뒤로 돌리면 아무것도 안 준다 — maxDay 보다 작은 날은 무시한다.
+   ========================================================================= */
+
+function dayIndex(ts) {
+  const d = new Date(ts);
+  return Math.floor((ts - d.getTimezoneOffset() * 60000) / DAY_MS);
+}
+
+/* 그날 벌 수 있는 부품의 어림값. 일일 보상 총량을 여기에 묶는다 (WBS 1.4).
+   현재 구역의 1분 수입 x 60 — 정확할 필요는 없고 **구역에 따라 같이 커지기만** 하면 된다. */
+function dailyBudget() {
+  return partsPerSecondEstimate() * 3600 * DAILY_BUDGET;
+}
+
+/* 하루가 바뀌었으면 일일 상태를 리셋한다. 돌아온 값은 화면에 띄울 것들. */
+function rolloverDay() {
+  const today = dayIndex(Date.now());
+  if (today <= (G.maxDay || 0)) {          // 같은 날이거나 시계를 되돌렸다
+    if (today > (G.day || 0)) G.day = today;
+    return null;
+  }
+  const prev = G.login || { streak: 0, lastDay: -1 };
+  const cont = prev.lastDay === today - 1;
+  G.login = { streak: cont ? Math.min(LOGIN_DAYS, prev.streak + 1) : 1, lastDay: today };
+  G.quest = { zone: 0, up: 0, stage: 0 };
+  G.questTaken = {};
+  G.keys = KEY_MAX;
+  G.day = today;
+  G.maxDay = today;
+  /* 접속 보상 — 7일째가 가장 크다. 총량은 하루 예산 안에서 준다. */
+  const w = LOGIN_SHARES[G.login.streak - 1] || LOGIN_SHARES[0];
+  const gain = dailyBudget() * w;
+  G.parts += gain;
+  G.plans += gain * BP_RATIO;
+  save();
+  return { kind: 'login', day: G.login.streak, gain: gain };
+}
+
+function questProgress(id, n) {
+  if (!G.quest) return;
+  G.quest[id] = (G.quest[id] || 0) + n;
+}
+
+function questReady(q) { return (G.quest && (G.quest[q.id] || 0) >= q.need) && !(G.questTaken || {})[q.id]; }
+
+function takeQuest(id) {
+  const q = QUEST_DEFS.find((x) => x.id === id);
+  if (!q || !questReady(q)) return false;
+  G.questTaken[id] = 1;
+  const budget = dailyBudget();
+  G.parts += budget * q.share;
+  G.plans += budget * q.share * BP_RATIO;
+  addFloat(GAME_W / 2, ARENA_TOP + 120, q.name + ' 완료', '#D9A24B', 20);
+  save();
+  return true;
+}
+
+/* 보급 상자 — 하루 KEY_MAX 번. 열쇠가 없으면 안 열린다. */
+function openSupply() {
+  if ((G.keys || 0) <= 0) return false;
+  G.keys -= 1;
+  const budget = dailyBudget();
+  const gain = budget * SUPPLY_SHARE / KEY_MAX;
+  G.parts += gain;
+  G.plans += gain * BP_RATIO;
+  addFloat(GAME_W / 2, ARENA_TOP + 120, '보급 상자 +' + fmt(gain), '#D9A24B', 20);
+  save();
+  return true;
+}
+
+/* =========================================================================
    8. 광고 자리 (스텁) — WBS 6
    실제 SDK는 M2. 지금은 버튼과 보상 경로만 만든다.
    ========================================================================= */
@@ -772,10 +877,17 @@ function listBotY() { return adRowY() - 8; }
 
 function btn(o) { buttons.push(o); return o; }
 
+/* 일일 탭에 받을 것이 있으면 점을 찍는다 (M4 1). */
+function dailyDot() {
+  if ((G.keys || 0) > 0) return true;
+  return QUEST_DEFS.some((q) => questReady(q));
+}
+
 function buyStat(id) {
   const c = statCost(id);
   if (G.parts < c) return false;
   G.parts -= c; G.lv[id] = (G.lv[id] || 0) + 1;
+  questProgress('up', 1);                  // M4 1.2
   return true;
 }
 
@@ -785,6 +897,7 @@ function buyWeapon(id) {
   G.plans -= cost;
   G.owned[id] = (G.owned[id] || 0) + 1;
   G.weapon = id;
+  questProgress('up', 1);                  // M4 1.2
   return true;
 }
 
@@ -809,13 +922,15 @@ function buildButtons() {
     return;
   }
 
-  /* 탭 2개. 높이를 ROW_H 로 맞춰 탭 대상 크기(7.1)를 지킨다. */
-  btn({ x: 24, y: tabRowY(), w: 240, h: ROW_H, label: '능력치', enabled: true,
-        tone: tab === 'stat' ? 'on' : 'off',
-        onTap: () => { if (tab !== 'stat') { tab = 'stat'; listScroll = 0; listVel = 0; } return true; } });
-  btn({ x: 276, y: tabRowY(), w: 240, h: ROW_H, label: '무기 · 설계도', enabled: true,
-        tone: tab === 'weapon' ? 'on' : 'off',
-        onTap: () => { if (tab !== 'weapon') { tab = 'weapon'; listScroll = 0; listVel = 0; } return true; } });
+  /* 탭 3개 (M4 1: 일일 추가). 높이를 ROW_H 로 맞춰 탭 대상 크기(7.1)를 지킨다.
+     폭은 (540 - 24*2 - 간격 2칸) / 3 = 164. 29 CSS px 선과는 무관하다(높이가 기준) — 다만 브라우저로 확인한다. */
+  const TW = 164, TG = 8;
+  const mkTab = (i, id, label) => btn({ x: 24 + i * (TW + TG), y: tabRowY(), w: TW, h: ROW_H, label: label,
+        enabled: true, tone: tab === id ? 'on' : 'off',
+        onTap: () => { if (tab !== id) { tab = id; listScroll = 0; listVel = 0; } return true; } });
+  mkTab(0, 'stat', '능력치');
+  mkTab(1, 'weapon', '무기');
+  mkTab(2, 'daily', '일일' + (dailyDot() ? ' ●' : ''));
 
   const top = listTopY(), bot = listBotY(), clip = [top, bot];
   let cy = 0;                                   // 목록 안 좌표 (스크롤 전)
@@ -829,7 +944,24 @@ function buildButtons() {
     btn(o);
   };
 
-  if (tab === 'stat') {
+  if (tab === 'daily') {
+    // M4 1 — 접속 보상 상태 · 과제 3개 · 보급 상자
+    putRow({ label: '접속 ' + ((G.login && G.login.streak) || 0) + ' / ' + LOGIN_DAYS + '일',
+             sub: '자정에 하나씩. 하루 빠지면 처음부터', cost: null, enabled: false, tone: 'ghost',
+             onTap: () => false });
+    QUEST_DEFS.forEach((q) => {
+      const cur = Math.min(q.need, (G.quest && G.quest[q.id]) || 0);
+      const taken = !!(G.questTaken || {})[q.id];
+      putRow({ label: q.name,
+               sub: taken ? '받았다' : cur + ' / ' + q.need + (cur >= q.need ? '   눌러서 받기' : ''),
+               cost: null, enabled: !taken && cur >= q.need,
+               tone: taken ? 'ghost' : (cur >= q.need ? 'buy' : 'off'),
+               onTap: () => takeQuest(q.id) });
+    });
+    putRow({ label: '보급 상자', sub: '열쇠 ' + (G.keys || 0) + ' / ' + KEY_MAX + '   자정에 채워진다',
+             cost: null, enabled: (G.keys || 0) > 0, tone: (G.keys || 0) > 0 ? 'buy' : 'off',
+             onTap: () => openSupply() });
+  } else if (tab === 'stat') {
     STATS.forEach((s) => {
       const cost = statCost(s.id), val = statOf(s.id);
       putRow({ label: s.name + '  Lv.' + (G.lv[s.id] || 0),

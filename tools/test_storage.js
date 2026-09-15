@@ -55,6 +55,12 @@
   load();
   chk('v2 저장본이 최신으로 이어진다 (설계도 0)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 0 && G.owned.rifle === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + loadError);
 
+  // M4 1 — v3 (M3 저장본) 도 일일 상태가 붙어 이어져야 한다.
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 3, plans: 77, day: undefined, keys: undefined }));
+  loadError = null;
+  load();
+  chk('v3 저장본이 최신으로 이어진다 (일일 붙음)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 77 && G.keys === KEY_MAX && G.login.streak === 0 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + G.keys + '/' + loadError);
+
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();
   chk('항목이 빠진 저장 보정', G.zone === 1 && G.lv.reg === 0 && G.owned.pipe === 1, JSON.stringify(G.lv));

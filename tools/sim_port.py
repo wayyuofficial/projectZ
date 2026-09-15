@@ -80,6 +80,10 @@ WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_K
 ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
 STAGES_PER_ZONE = int(num("STAGES_PER_ZONE"))
 STAGE_BONUS_RATIO = num("STAGE_BONUS_RATIO")
+KEY_MAX = int(num("KEY_MAX"))
+QUEST_DEFS_IDS = ["zone", "up", "stage"]
+QUEST_NEEDS = {"zone": 3, "up": 20, "stage": 30}   # 원본 QUEST_DEFS 의 need. 바뀌면 여기도 바꾼다
+DAILY_BUDGET = num("DAILY_BUDGET")
 BP_RATIO = num("BP_RATIO")
 BP_STAGE_SHARE = num("BP_STAGE_SHARE")
 BP_BOSS_SHARE = num("BP_BOSS_SHARE")
@@ -158,23 +162,23 @@ MIRRORED = {
     "applyOffline": "22e6b2208ac61edc",
     "attacksPerSec": "50d4fd5785b29ace",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "14c3027182b7a272",
-    "buyStat": "2b0b94e9a15bcaaa",
-    "buyWeapon": "28317c9bcd6b4d81",
+    "buildButtons": "d540ef1d502cb53e",
+    "buyStat": "d3f8bb96c8695d01",
+    "buyWeapon": "e58bfe7e010aeddb",
     "damageZombie": "9dfa910d5cf6855b",
     "equip": "c815c6819c3b6edb",
     "fitGame": "d526a00619b69c86",
-    "freshState": "07c46ca179a99a83",
+    "freshState": "d163e40e504a14a6",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "78764110ba1a3fdd",
     "isBossKill": "e461a4a51bbb69c5",
     "killReward": "0ef3ffe5d2eb73ba",
-    "killZombie": "d3eef0884efdbd51",
+    "killZombie": "2b65ffa9fbd775f4",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "46bb14aa20673823",
     "maxHP": "85e54826f897f7c7",
-    "migrate": "915d4397a5568145",
+    "migrate": "edff5237d7500f64",
     "onDeath": "589239f3a352fe82",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "playerDPS": "6e388f9e36329ce1",
@@ -307,6 +311,8 @@ class Sim(object):
     # ---- 저장 ----
     def freshState(self):
         return dict(v=SAVE_VERSION, parts=0.0, plans=0.0, zone=1, kills=0,
+                    day=0, maxDay=0, quest=dict(zone=0, up=0, stage=0), questTaken={},
+                    login=dict(streak=0, lastDay=-1), keys=KEY_MAX,
                     lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0), weapon="pipe",
                     owned=dict(pipe=1), hp=100.0, bestZone=1, totalKills=0,
                     lastSeen=self.now_ms, boostUntil=0)
@@ -318,6 +324,10 @@ class Sim(object):
             raw = dict(raw, v=2, bestZone=max(raw.get("bestZone") or 1, raw.get("zone") or 1))
         if raw.get("v") == 2:
             raw = dict(raw, v=3, plans=0.0)   # M3 5: 설계도가 생겼다
+        if raw.get("v") == 3:                 # M4 1: 일일 리듬이 생겼다
+            raw = dict(raw, v=4, day=0, maxDay=0,
+                       quest=dict(zone=0, up=0, stage=0), questTaken={},
+                       login=dict(streak=0, lastDay=-1), keys=KEY_MAX)
         if raw.get("v") != SAVE_VERSION:
             return self.freshState()
         s = self.freshState()
@@ -429,12 +439,19 @@ class Sim(object):
         return 2 if self.boostActive() else 1
 
     # ---- 구매 ----
+    def questProgress(self, qid, n):
+        """M4 1 — 카운터만 센다. **시뮬은 일일 보상을 수령하지 않는다** (사람이 눌러야 받는다).
+           그래서 auto_run 의 진행에 일일 보상이 안 섞이고 곡선 측정이 흔들리지 않는다."""
+        q = self.G.setdefault("quest", {})
+        q[qid] = q.get(qid, 0) + n
+
     def buyStat(self, i):
         c = self.statCost(i)
         if self.G["parts"] < c:
             return False
         self.G["parts"] -= c
         self.G["lv"][i] = self.G["lv"].get(i, 0) + 1
+        self.questProgress("up", 1)
         return True
 
     def buyWeapon(self, wid):
@@ -444,6 +461,7 @@ class Sim(object):
         self.G["plans"] = self.G.get("plans", 0.0) - cost
         self.G["owned"][wid] = self.G["owned"].get(wid, 0) + 1
         self.G["weapon"] = wid
+        self.questProgress("up", 1)
         return True
 
     def equip(self, wid):
@@ -485,8 +503,11 @@ class Sim(object):
             b("offline_close", 150, L["GAME_H"] / 2 + 108, 240, ROW_H, "ghost")
             return bs
 
-        b("tab_stat", 24, self.tabRowY(), 240, ROW_H, "on" if self.tab == "stat" else "off")
-        b("tab_weapon", 276, self.tabRowY(), 240, ROW_H, "on" if self.tab == "weapon" else "off")
+        # M4 1 — 탭 3개. 폭 164, 간격 8 (원본과 같다)
+        TW, TG = 164, 8
+        for i, tid in enumerate(("stat", "weapon", "daily")):
+            b("tab_" + tid, 24 + i * (TW + TG), self.tabRowY(), TW, ROW_H,
+              "on" if self.tab == tid else "off")
 
         top, bot = self.listTopY(), self.listBotY()
         clip = (top, bot)
@@ -499,7 +520,18 @@ class Sim(object):
                 return
             b(kind, 24, y, GAME_W - 48, ROW_H, tone, enabled, wid, clip)
 
-        if self.tab == "stat":
+        if self.tab == "daily":
+            # M4 1 — 접속 1줄 + 과제 3줄 + 보급 상자 1줄
+            put_row("login", "ghost", False, None)
+            for q in QUEST_DEFS_IDS:
+                cur = (self.G.get("quest") or {}).get(q, 0)
+                need = QUEST_NEEDS[q]
+                taken = bool((self.G.get("questTaken") or {}).get(q))
+                put_row("quest", "ghost" if taken else ("buy" if cur >= need else "off"),
+                        (not taken) and cur >= need, q)
+            keys = self.G.get("keys", 0)
+            put_row("supply", "buy" if keys > 0 else "off", keys > 0, None)
+        elif self.tab == "stat":
             for s in STATS:
                 cost = self.statCost(s["id"])
                 put_row("stat", "buy", self.G["parts"] >= cost, s["id"])
@@ -598,6 +630,7 @@ class Sim(object):
         # M3 4.2 — 단계 클리어 일시금. 구역을 넘는 마지막 칸에서는 안 준다.
         if (self.killIndex % self.stageKills(self.G["zone"]) == 0
                 and self.killIndex < self.zoneKills(self.G["zone"])):
+            self.questProgress("stage", 1)
             self.G["plans"] = self.G.get("plans", 0.0) + (
                 self.stageBlueprint(self.G["zone"]) * self.rewardMult() * self.statOf("inc"))
         if z["boss"]:
@@ -607,6 +640,7 @@ class Sim(object):
             self.killIndex = 0
             if self.G["zone"] < ZONE_COUNT:
                 self.G["zone"] += 1
+                self.questProgress("zone", 1)
                 self.G["bestZone"] = max(self.G["bestZone"], self.G["zone"])
                 del self.zombies[:]
                 self.shots = 0
