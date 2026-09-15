@@ -7,13 +7,14 @@
   2. **체류**가 목표의 ±20% 밖인 구역이 4개 미만인가 (M3-B1 의 반증선)
   3. 도달 시각·벽 비·골짜기는 **정보로만** 적는다 — M3 의 판정선은 체류다. 벽은 지시 #65 (a) 로 그대로 둔다
 
-**M2 기록은 안 본다.** 목표 공식이 2026-09-14 에 바뀌었다 — 옛 기록을 새 선으로 재면 거짓이다.
+**가장 새 기록 하나만 본다.** 목표 공식이 바뀌면 옛 기록은 다른 선으로 잰 것이라 섞으면 거짓이다 —
+그래서 이름이 아니라 **시각**으로 고른다. 이름에 마일스톤을 박으면 다음 마일스톤 기록을 놓친다(2026-09-15 M4 에서 겪었다).
 
 근거: 가설(계획 M2 의 예측)이지 사례가 아니다 → 2순위. 막지 않고 경고만 한다.
 곡선을 어겨서 실제로 문제가 된 사례가 1건이라도 생기면 PRIORITY 를 1로 올린다.
 **판정이 아니다.** 예측의 판정은 사람이 judge_prediction.py 로 한다. 이 검사는 "지금 기록이 그 선 안에 있는가" 를 셀 뿐이다.
 """
-NAME = "목표 체류 곡선 기록이 낡았거나 곡선 밖인지 (M3 — 선은 정본이 정한다)"
+NAME = "목표 체류 곡선 기록이 낡았거나 곡선 밖인지 (선은 정본이 정한다)"
 PRIORITY = 2
 
 import io, os, glob, json
@@ -24,7 +25,9 @@ def run(root):
     if not os.path.exists(game):
         return {"status": "skip", "detail": ["game/index.html 이 없다"]}
     recs = []
-    for p in glob.glob(os.path.join(root, "measurements", "balance-M3-*.json")):
+    # M4 3 부터 기록 이름이 balance-M4-* 다. **마일스톤 이름을 검사에 박지 않는다** —
+    # M3 에서 balance-M2-* 만 보게 했다가 M4 기록을 놓쳤다(2026-09-15).
+    for p in glob.glob(os.path.join(root, "measurements", "balance-M[0-9]*-*.json")):
         try:
             d = json.load(io.open(p, encoding="utf-8"))
         except Exception:
@@ -36,7 +39,7 @@ def run(root):
         if isinstance(d, dict) and "곡선밖" in d and "벽" in d and d.get("벽"):
             recs.append((os.path.getmtime(p), p, d))
     if not recs:
-        return {"status": "skip", "detail": ["M3 curve_check 기록(벽 켠 것)이 없다 — python tools/curve_check.py --out measurements/balance-M3-curve-YYYY-MM-DD.json"]}
+        return {"status": "skip", "detail": ["curve_check 기록(벽 켠 것)이 없다 — python tools/curve_check.py --out measurements/balance-M4-curve-YYYY-MM-DD.json"]}
     recs.sort()
     mt, p, d = recs[-1]
     base = os.path.basename(p)

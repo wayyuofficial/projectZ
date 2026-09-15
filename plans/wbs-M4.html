@@ -1,7 +1,7 @@
 <title>좀비 RPG M4 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M4.md
-     source-sha256: 02b4913b7e51473b881279f45d545d31d96cb058cbdb03f12f45c154759680d6
+     source-sha256: 5cac9f5c2ca11bc5fa52f93839149e9430e3c2614fe20974f3e7e30bcecb80f4
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -287,18 +287,18 @@
     <div class="bar-row"><div class="name">2 수동 개입</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">2 / 2</div></div>
     <div class="bar-row"><div class="name">3 정본·장비 뼈대</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">4 / 4</div></div>
     <div class="bar-row"><div class="name">4 판매와 축 흡수</div><div class="track"><div class="fill" style="width:67%"></div></div><div class="num">2 / 3</div></div>
-    <div class="bar-row"><div class="name">5 밸런스 회복</div><div class="track"><div class="fill" style="width:0%"></div></div><div class="num">0 / 3</div></div>
+    <div class="bar-row"><div class="name">5 밸런스 회복</div><div class="track"><div class="fill" style="width:33%"></div></div><div class="num">1 / 3</div></div>
     <div class="bar-row"><div class="name">6 마무리</div><div class="track"><div class="fill" style="width:0%"></div></div><div class="num">0 / 3</div></div>
-    <div class="bar-row"><div class="name"><strong>합</strong></div><div class="track"><div class="fill" style="width:58%"></div></div><div class="num">11 / 19</div></div>
+    <div class="bar-row"><div class="name"><strong>합</strong></div><div class="track"><div class="fill" style="width:63%"></div></div><div class="num">12 / 19</div></div>
     </div>
     <div class="tablewrap"><table><thead><tr><th>단계</th><th>작업</th><th>됨</th><th>사람 판정 대기</th><th>사람 승인 대기</th><th>착수 전</th></tr></thead><tbody>
       <tr><td>1 일일 리듬</td><td>4</td><td>3</td><td>1</td><td>0</td><td>0</td></tr>
       <tr><td>2 수동 개입</td><td>2</td><td>2</td><td>0</td><td>0</td><td>0</td></tr>
       <tr><td>3 정본·장비 뼈대</td><td>4</td><td>4</td><td>0</td><td>0</td><td>0</td></tr>
       <tr><td>4 판매와 축 흡수</td><td>3</td><td>2</td><td>1</td><td>0</td><td>0</td></tr>
-      <tr><td>5 밸런스 회복</td><td>3</td><td>0</td><td>0</td><td>0</td><td>3</td></tr>
+      <tr><td>5 밸런스 회복</td><td>3</td><td>1</td><td>2</td><td>0</td><td>0</td></tr>
       <tr><td>6 마무리</td><td>3</td><td>0</td><td>0</td><td>0</td><td>3</td></tr>
-      <tr><td><strong>합</strong></td><td><strong>19</strong></td><td><strong>11</strong></td><td><strong>2</strong></td><td><strong>0</strong></td><td><strong>6</strong></td></tr>
+      <tr><td><strong>합</strong></td><td><strong>19</strong></td><td><strong>12</strong></td><td><strong>4</strong></td><td><strong>0</strong></td><td><strong>3</strong></td></tr>
     </tbody></table></div></section>
   <section><h2><span class="n">P</span>예측 — 결과를 보기 전에 잠갔다</h2>
     <p class="note">문구는 세울 때 그대로 둔다. <span class="mono">checks/c15_prediction_lock.py</span> 가 잠금 파일과 대조한다. 판정은 <strong>사람</strong>이 <span class="mono">tools/judge_prediction.py</span> 로 한다 — AI 는 판정하지 않는다.</p>
@@ -335,6 +335,11 @@
       <tr><td><strong>M4-B5</strong></td><td><strong>반증 방향 — 사람이 판정한다</strong></td><td class="judge">장비 옵션만으로는 두 축을 못 살린다</td></tr>
       <tr><td><strong>M4-B3</strong></td><td><strong>성립 방향 — 사람이 판정한다</strong></td><td class="judge">판매 비중 84.9% (선 30%)</td></tr>
       <tr><td><strong>5단계로 넘어가는 빚</strong></td><td>열림</td><td class="judge">장비가 들어오면서 <strong>도달 밖 3 → 20</strong>, <strong>간격 120초 초과 1개</strong>(구역 23, 362초)가 생겼다. 간격은 <strong>정본 상한 위반</strong>이라 5단계에서 반드시 잡는다</td></tr>
-      <tr><td>전체</td><td>4단계 끝</td><td class="judge">5단계(밸런스 회복)로 간다</td></tr>
+      <tr><td>전체</td><td>4단계 끝</td><td class="judge">5단계로 갔다</td></tr>
+      <tr><td>5.1 곡선 재조정</td><td><strong>한 번 시도, 안 수렴</strong></td><td class="judge">장비 옵션 폭을 절반으로 줄여 봤다. 체류 밖 25→24, 도달 밖 20→17 로 조금 나아졌지만 <strong>정본 하한선인 간격이 1개→2개로 나빠지고</strong> 총 시간이 181→197분으로 목표에서 멀어져 <strong>되돌렸다</strong>. <span class="mono">affix-halve-2026-09-16.json</span></td></tr>
+      <tr><td>5.2 간격 상한 회복</td><td><strong>미달 — 열림</strong></td><td class="judge">구역 23 이 <strong>362초</strong>(상한 120). 3회 미만 구역 [16, 20, 23]. <strong>정본 상한 위반이 남아 있다</strong></td></tr>
+      <tr><td><strong>지표가 무너졌다</strong></td><td><strong>사람이 정할 것</strong></td><td class="judge">중앙 간격이 <strong>0 인 구역이 16/28</strong>. 판매가 뭉텅이라 몰아 사고 한참 쉰다 — 한 번에 산 것들 사이 간격이 0 이라 중앙값이 0 이 된다. 반대로 매수 2~3회 구역은 한 번의 긴 간격이 그대로 중앙값이다. <strong>정본의 "중앙 간격" 기준이 두 방향으로 왜곡된다.</strong> <span class="mono">cadence-metric-degenerate-2026-09-16.json</span></td></tr>
+      <tr><td>5.3 포트·표·저장</td><td>됨</td><td class="judge"><span class="mono">c16</span> 어긋남 0 · 저장 <strong>19/19</strong> · 표 일치</td></tr>
+      <tr><td>전체</td><td><strong>5단계 미완</strong></td><td class="judge">6단계(전수·본보기)는 5.2 가 닫혀야 뜻이 있다</td></tr>
     </tbody></table></div></section>
 </div>
