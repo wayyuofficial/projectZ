@@ -1,7 +1,7 @@
 <title>좀비 RPG M4 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M4.md
-     source-sha256: 5cac9f5c2ca11bc5fa52f93839149e9430e3c2614fe20974f3e7e30bcecb80f4
+     source-sha256: 5e5a2eed67d8a0da4fff0c21e462952de0513c48723b579d294860ccc132c2f2
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -270,7 +270,7 @@
     <div class="stage-head"><span class="idx">5</span><span class="title">밸런스 회복</span><span class="days">2.0일</span></div>
     <div class="tablewrap"><table><thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>선행</th></tr></thead><tbody>
       <tr><td>5.1</td><td>곡선 재조정</td><td class="judge"><span class="mono">curve_check</span> 20시드에서 체류 밖이 <strong>M3 마지막(24개)보다 늘지 않는다</strong></td><td class="dep">4.3</td></tr>
-      <tr><td>5.2</td><td>간격 상한 회복</td><td class="judge">어느 구역이든 중앙 간격 <strong>120초 이하</strong> (M4-B4 판정)</td><td class="dep">5.1</td></tr>
+      <tr><td>5.2</td><td>템포 하한 회복</td><td class="judge">어느 구역이든 <strong>구역당 매수 3회 이상</strong> (정본 2026-09-16 개정, 지시 #102). <span class="mono">M4-B4</span> 는 옛 지표로 쓰여 있다 — <strong>사람이 판정하거나 문구를 정한다</strong></td><td class="dep">5.1</td></tr>
       <tr><td>5.3</td><td>포트·표·저장 동기화</td><td class="judge"><span class="mono">c16</span> 어긋남 0 · <span class="mono">c13</span> 30행 일치 · <span class="mono">test_storage.js</span> 전부 통과</td><td class="dep">5.2</td></tr>
     </tbody></table></div></section>
   <section class="stage">
@@ -336,10 +336,13 @@
       <tr><td><strong>M4-B3</strong></td><td><strong>성립 방향 — 사람이 판정한다</strong></td><td class="judge">판매 비중 84.9% (선 30%)</td></tr>
       <tr><td><strong>5단계로 넘어가는 빚</strong></td><td>열림</td><td class="judge">장비가 들어오면서 <strong>도달 밖 3 → 20</strong>, <strong>간격 120초 초과 1개</strong>(구역 23, 362초)가 생겼다. 간격은 <strong>정본 상한 위반</strong>이라 5단계에서 반드시 잡는다</td></tr>
       <tr><td>전체</td><td>4단계 끝</td><td class="judge">5단계로 갔다</td></tr>
-      <tr><td>5.1 곡선 재조정</td><td><strong>한 번 시도, 안 수렴</strong></td><td class="judge">장비 옵션 폭을 절반으로 줄여 봤다. 체류 밖 25→24, 도달 밖 20→17 로 조금 나아졌지만 <strong>정본 하한선인 간격이 1개→2개로 나빠지고</strong> 총 시간이 181→197분으로 목표에서 멀어져 <strong>되돌렸다</strong>. <span class="mono">affix-halve-2026-09-16.json</span></td></tr>
-      <tr><td>5.2 간격 상한 회복</td><td><strong>미달 — 열림</strong></td><td class="judge">구역 23 이 <strong>362초</strong>(상한 120). 3회 미만 구역 [16, 20, 23]. <strong>정본 상한 위반이 남아 있다</strong></td></tr>
-      <tr><td><strong>지표가 무너졌다</strong></td><td><strong>사람이 정할 것</strong></td><td class="judge">중앙 간격이 <strong>0 인 구역이 16/28</strong>. 판매가 뭉텅이라 몰아 사고 한참 쉰다 — 한 번에 산 것들 사이 간격이 0 이라 중앙값이 0 이 된다. 반대로 매수 2~3회 구역은 한 번의 긴 간격이 그대로 중앙값이다. <strong>정본의 "중앙 간격" 기준이 두 방향으로 왜곡된다.</strong> <span class="mono">cadence-metric-degenerate-2026-09-16.json</span></td></tr>
+      <tr><td>5.1 곡선 재조정</td><td><strong>됨</strong></td><td class="judge">상수 셋을 같이 움직였다 — 수입 <span class="mono">ZONE_RW_G</span> 1.26→<strong>1.16</strong>, 등급 값 <span class="mono">TIER_COST_MULT</span> 6→<strong>1.5</strong>, 체력 <span class="mono">ZONE_HP_G</span> 1.55→<strong>1.58</strong>. 20시드: <strong>체류 밖 28→16개</strong>(선: M3 마지막 24개보다 늘지 않기), 구역 30 도달 <strong>146.1분</strong>(정본 목표 약 145분), 도달 밖 20→7개, 누적 비율 구역 30 에서 <strong>0.99</strong>. <span class="mono">balance-M4-curve-f-2026-09-16.json</span></td></tr>
+      <tr><td><strong>자가 고장나 있었다</strong></td><td><strong>찾음 · 고침 · 검사로 내림</strong></td><td class="judge"><span class="mono">sim_port.auto_run</span> 이 무기 값을 <strong>부품</strong>과 견주고 결제는 <strong>설계도</strong>로 했다. 못 살 무기가 "가장 싼 것"으로 뽑히면 그 틱이 멈춰 <strong>살 수 있는 능력치까지 건너뛰었다.</strong> 구역 29 에서 <strong>부품 98억을 안 쓰고 쌓아 둔 채 3,180틱을 헛돌았다.</strong> 8일 동안 차단도 경고도 안 떴다 — 나온 숫자가 그럴듯했다. <span class="mono">cases/2026-09-16-22</span> · <span class="mono">checks/c22</span></td></tr>
+      <tr><td><strong>등급 값 배수가 낡아 있었다</strong></td><td>곁가지</td><td class="judge"><span class="mono">TIER_COST_MULT = 6</span> 은 <strong>등급이 3개이던 시절 값</strong>이다. M4 3 에서 <span class="mono">TIER_MAX</span> 를 3→8 로 올리며 아무도 다시 안 봤다 — 6⁷ = <strong>28만 배</strong>라 한참 모으다 한 번에 튀었다. 1.5 로 낮추니 최대 이탈 1.85→0.87. <strong>대가</strong>: 무기 5종이 8등급 천장에 닿는다. 안 쓴 설계도는 8.8%→<strong>3.9%</strong> 로 오히려 줄었다</td></tr>
+      <tr><td><strong>다시 잰 판단</strong></td><td><strong>하나가 뒤집혔다</strong></td><td class="judge">집중 사격이 고장 난 자에서 −4.5% 였는데 <strong>다시 재니 −9.4%</strong> 로 선(±5%)을 넘었다. M4-B2 의 반증 조건대로 ×1.3·쿨 45초로 줄여 <strong>−1.4%</strong>. 일일 예산·장비 뽑기·탭·저장은 다시 재도 같았다</td></tr>
+      <tr><td>5.2 구역당 매수 하한</td><td><strong>됨</strong></td><td class="judge">하한 미달 구역 <strong>0개</strong>(전: 3개 — 16·20·23). 구역당 매수 <strong>5~23회</strong>(선 3회), 간격 3~118초. 능력치 축 다섯 개 전부 18% 위. <strong>게임을 고쳐서 맞춘 게 아니다 — 자를 고쳤다.</strong> <span class="mono">upgrade-cadence-m4-f-2026-09-16.json</span></td></tr>
+      <tr><td><strong>지표가 무너졌다</strong></td><td><strong>닫힘</strong></td><td class="judge">중앙 간격이 0 인 구역이 16/28 이던 것도 같은 고장의 그림자였다. 사람이 2026-09-16 에 지표를 <strong>구역당 매수 횟수 하한</strong>으로 바꾸고 승인했다 (지시 #102)</td></tr>
       <tr><td>5.3 포트·표·저장</td><td>됨</td><td class="judge"><span class="mono">c16</span> 어긋남 0 · 저장 <strong>19/19</strong> · 표 일치</td></tr>
-      <tr><td>전체</td><td><strong>5단계 미완</strong></td><td class="judge">6단계(전수·본보기)는 5.2 가 닫혀야 뜻이 있다</td></tr>
+      <tr><td>전체</td><td><strong>5단계 끝</strong></td><td class="judge">6단계(전수 감사·본보기)로 간다. 남은 경고는 <span class="mono">c18</span> 하나 — 체류 밖 16개(M3-B1 선 4개 미만)</td></tr>
     </tbody></table></div></section>
 </div>

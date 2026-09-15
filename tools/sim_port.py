@@ -91,6 +91,13 @@ AFFIX_IDS = ["hp", "reg", "atk", "spd", "inc"]
 AFFIX_PER = {"hp": 0.18, "reg": 0.15, "atk": 0.10, "spd": 0.08, "inc": 0.09}
 GEAR_ONLY_STATS = set()   # M4 4.3 을 되돌렸다 — 원본과 같이 비어 있다 (게임 주석에 이유를 적었다)
 KEY_MAX = int(num("KEY_MAX"))
+SUPPLY_SHARE = num("SUPPLY_SHARE")
+LOGIN_DAYS = int(num("LOGIN_DAYS"))
+DAY_MS = int(num("DAY_MS"))
+LOGIN_SHARES = [float(x) for x in re.search(
+    r"const\s+LOGIN_SHARES\s*=\s*\[([^\]]*)\]", SRC).group(1).replace(" ", "").split(",") if x]
+QUEST_SHARES = {m.group(1): float(m.group(2)) for m in re.finditer(
+    r"id:\s*'(\w+)'[^}]*?share:\s*([\d.]+)", SRC)}
 QUEST_DEFS_IDS = ["zone", "up", "stage"]
 QUEST_NEEDS = {"zone": 3, "up": 20, "stage": 30}   # 원본 QUEST_DEFS 의 need. 바뀌면 여기도 바꾼다
 DAILY_BUDGET = num("DAILY_BUDGET")
@@ -175,7 +182,9 @@ MIRRORED = {
     "buildButtons": "1a8cc75732aa03dd",
     "buyStat": "d3f8bb96c8695d01",
     "buyWeapon": "e58bfe7e010aeddb",
+    "dailyBudget": "51f1b98162132ed0",
     "damageZombie": "9dfa910d5cf6855b",
+    "dayIndex": "e395fb011be7dfbc",
     "dropGear": "990bf216887801f8",
     "equip": "c815c6819c3b6edb",
     "fitGame": "d526a00619b69c86",
@@ -194,12 +203,15 @@ MIRRORED = {
     "maxHP": "85e54826f897f7c7",
     "migrate": "edff5237d7500f64",
     "onDeath": "589239f3a352fe82",
+    "openSupply": "39e13a85803de479",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "playerDPS": "6e388f9e36329ce1",
+    "questReady": "d56a30909b205279",
     "regenPerSec": "73badd17c9fc2857",
     "rewardMult": "bff5bcb3e94a3395",
     "rollGear": "c082d7808bc48c0e",
     "rollTier": "802162caae06b933",
+    "rolloverDay": "6fc592cf03b69d34",
     "spawnZombie": "d4054c63f48a4d4a",
     "stageKills": "4cb2b09008d21635",
     "statCost": "3915c9b212b37571",
@@ -207,6 +219,7 @@ MIRRORED = {
     "statOf": "ce944d01f686e148",
     "stepCombat": "477e00f37b335b3e",
     "tabRowY": "d001ac81a8afa161",
+    "takeQuest": "a0118e0f6668c7ca",
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "0a8ae8face6a1394",
     "weaponUpgradeCost": "57e23cd55b81ff51",
@@ -538,6 +551,60 @@ class Sim(object):
         q = self.G.setdefault("quest", {})
         q[qid] = q.get(qid, 0) + n
 
+    # ---- 일일 보상 (M4 1) ----
+    # **2026-09-16 에 옮겼다.** 전에는 이 넷이 포트에 없어서 `auto_run` 이 일일 보상을
+    # 한 번도 안 받았다. 그래서 WBS 1.4 의 판정 문구("20시드 구역 30 도달이 ±5% 안")가
+    # **실패할 수 없는 시험**이었다 — 받은 적이 없으니 차이가 늘 0.0% 다.
+    # 브라우저로 따로 잰 daily-budget 기록도 `dailyBudget() x 몫` 을 다시 계산한 것이라
+    # 비율이 늘 `DAILY_BUDGET x 몫합` 으로 나오는 **항등식**이었다 (사례 12 와 같은 부류).
+    # 이제 실제로 받게 해서 잰다.
+    def dayIndex(self, ms):
+        return int(ms // DAY_MS)
+
+    def dailyBudget(self):
+        return self.partsPerSecondEstimate() * 3600 * DAILY_BUDGET
+
+    def grant(self, gain):
+        """원본의 지급 두 줄 — 부품과 설계도를 같이 준다."""
+        self.G["parts"] += gain
+        self.G["plans"] = self.G.get("plans", 0.0) + gain * BP_RATIO
+        return gain
+
+    def rolloverDay(self):
+        today = self.dayIndex(self.now_ms)
+        if today <= (self.G.get("maxDay") or 0):
+            if today > (self.G.get("day") or 0):
+                self.G["day"] = today
+            return None
+        prev = self.G.get("login") or {"streak": 0, "lastDay": -1}
+        cont = prev.get("lastDay") == today - 1
+        self.G["login"] = {"streak": min(LOGIN_DAYS, prev.get("streak", 0) + 1) if cont else 1,
+                           "lastDay": today}
+        self.G["quest"] = {"zone": 0, "up": 0, "stage": 0}
+        self.G["questTaken"] = {}
+        self.G["keys"] = KEY_MAX
+        self.G["day"] = today
+        self.G["maxDay"] = today
+        w = LOGIN_SHARES[self.G["login"]["streak"] - 1] if self.G["login"]["streak"] - 1 < len(LOGIN_SHARES) else LOGIN_SHARES[0]
+        gain = self.grant(self.dailyBudget() * w)
+        return {"kind": "login", "day": self.G["login"]["streak"], "gain": gain}
+
+    def questReady(self, qid):
+        return (self.G.get("quest", {}).get(qid, 0) >= QUEST_NEEDS[qid]
+                and not (self.G.get("questTaken") or {}).get(qid))
+
+    def takeQuest(self, qid):
+        if not self.questReady(qid):
+            return False
+        self.G.setdefault("questTaken", {})[qid] = 1
+        return self.grant(self.dailyBudget() * QUEST_SHARES[qid])
+
+    def openSupply(self):
+        if (self.G.get("keys") or 0) <= 0:
+            return False
+        self.G["keys"] -= 1
+        return self.grant(self.dailyBudget() * SUPPLY_SHARE / KEY_MAX)
+
     def buyStat(self, i):
         if i in GEAR_ONLY_STATS:                 # M4 4.3
             return False
@@ -867,7 +934,8 @@ class Sim(object):
 
 # ── 자동구매 1런 — 감사가 매번 다시 짜던 절차를 여기 고정한다 ────────
 def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
-             offline_every_min=None, offline_hours=8, on_buy=None, focus_duty=None):
+             offline_every_min=None, offline_hours=8, on_buy=None, focus_duty=None,
+             stop_zone=None):
     """가장 싼 것부터 계속 사면서 구역 10 까지 간다.
 
     `offline_every_min` 을 주면 그만큼 놀고 나서 `offline_hours` 시간 자리를 비운다.
@@ -884,7 +952,12 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
     idle_buy = 0          # 살 수 있는데 안 산 매수 틱 (c22 가 읽는다)
     # 사망은 이제 Sim 안에서 처리된다(자동 후퇴). 여기서는 세기만 한다.
     off_t, off_n, off_gain = 0.0, 0, 0.0
-    while s.t < max_min * 60 and s.G["zone"] < ZONE_COUNT:
+    # stop_zone 을 주면 그 구역에 닿는 순간 멈추고 **Sim 을 그대로 돌려준다.**
+    # 다른 도구가 "구역 z 에 있는 진짜 상태" 를 필요로 할 때 쓴다 (tools/daily_budget.py).
+    # 여기서 멈추게 하는 이유: 매수 줄을 도구마다 새로 짜면 **자가 둘이 되어** 갈라진다.
+    # 2026-09-16 에 바로 그 방식으로 8일을 잃었다 (cases/2026-09-16-22).
+    limit = ZONE_COUNT if stop_zone is None else min(stop_zone, ZONE_COUNT)
+    while s.t < max_min * 60 and s.G["zone"] < limit:
         # M4 2 — focus_duty=(켜는 초, 주기 초) 를 주면 **쿨타임을 지키며** 집중 사격을 켠다.
         # 사람이 가장 부지런히 눌렀을 때를 모사한 것이다. 기본은 None = 안 누름.
         if focus_duty:
@@ -963,7 +1036,7 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
     return dict(zone_min={z: round(v / 60, 1) for z, v in sorted(zone_at.items())},
                 wall=wall, deaths=deaths, total_min=round(s.t / 60, 1),
                 final_zone=s.G["zone"], offline_n=off_n, offline_gain=off_gain,
-                idle_buy=idle_buy)
+                idle_buy=idle_buy, sim=s)
 
 
 # ── 자기 점검 ─────────────────────────────────────────────────────────
