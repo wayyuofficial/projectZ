@@ -175,6 +175,10 @@ const STAGES_PER_ZONE = 5, STAGE_BONUS_RATIO = 0.20;
 /* M4 1 — 일일 리듬 (조사 ⑤ "방치형인데 방치를 못 한다" [3], 2026-09-15).
    서버가 없어도 된다 — 날짜는 기기 시계로 충분하다. 다만 **시계를 뒤로 돌리면 안 준다**:
    본 적 있는 가장 큰 날(maxDay)보다 작은 날짜는 무시한다. */
+/* M4 2 — 수동 개입 (조사 ⑤ "직접 플레이가 더 빠르다" [2]).
+   전투 영역을 탭하면 잠깐 빨라진다. **부품을 안 쓰고, 안 눌러도 손해가 없다** —
+   정본 00-identity 의 "안 눌러도 계속 굴러간다" 를 지킨다. 총수입은 그대로고 **속도만** 바뀐다 (M4-B2). */
+const FOCUS_SEC = 3, FOCUS_MULT = 1.5, FOCUS_COOL_SEC = 30;   /* 2x·20초는 재보니 -11.5% 였다 (선 ±5%). M4-B2 의 반증 조건이 적어 둔 대로 배수·쿨타임을 줄였다 */
 const DAY_MS = 86400000;
 /* 몫은 **합이 1.0 을 안 넘게** 나눈다 — 과제 0.55 + 상자 0.20 + 접속 최대 0.25 = 1.00.
    그래야 하루 일일 보상 총량이 dailyBudget() 안에 들어간다 (WBS 1.4).
@@ -360,7 +364,7 @@ function weaponPower() {
   return w.mult * (1 + TIER_POWER * (tier - 1));
 }
 function hitDamage() { return statOf('atk') * weaponPower(); }
-function attacksPerSec() { return statOf('spd'); }
+function attacksPerSec() { return statOf('spd') * (focusActive() ? FOCUS_MULT : 1); }   // M4 2: 집중 사격
 function playerDPS() { return hitDamage() * attacksPerSec(); }
 function maxHP() { return statOf('hp'); }
 function regenPerSec() { return statOf('reg'); }
@@ -487,6 +491,18 @@ const MAX_CONTACT_ZOMBIES = Math.floor(CONTACT_REACH / ZOMBIE_GAP) + 1;   // = 3
 const SPAWN_X = GAME_W + 36;        // 화면 밖 오른쪽
 
 let spawnTimer = 0, attackTimer = 0, killIndex = 0;
+/* M4 2 — 집중 사격. **저장하지 않는다.** 껐다 켜면 초기화되지만 공짜 가속이라 손해가 없다.
+   저장에 안 넣으니 SAVE_VERSION 도 안 오른다. */
+let focusUntil = 0, focusReadyAt = 0;
+function focusActive() { return performance.now() < focusUntil; }
+function focusReady()  { return performance.now() >= focusReadyAt; }
+function triggerFocus() {
+  if (!focusReady()) return false;
+  focusUntil = performance.now() + FOCUS_SEC * 1000;
+  focusReadyAt = performance.now() + FOCUS_COOL_SEC * 1000;
+  addFloat(GAME_W / 2, ARENA_TOP + 150, '집중 사격', '#7FB0B2', 22);
+  return true;
+}
 let deathFlash = 0, shake = 0;
 
 /* 죽어도 멈추지 않는다 (지시 #35). 터치를 요구하면 자리를 비운 사이 죽었을 때
@@ -1243,7 +1259,8 @@ function drawHUD() {
   ctx.fillText(saveError ? '저장 실패 — 진행이 남지 않는다'
     : loadError ? loadError
     : '체력 ' + fmt(G.hp) + ' / ' + fmt(maxHP()) + '     DPS ' + fmt(playerDPS())
-      + (boostActive() ? '     부품 2배' : ''), GAME_W / 2, 94, GAME_W - 48);
+      + (boostActive() ? '     부품 2배' : '')
+      + (focusActive() ? '     집중' : (focusReady() ? '     탭!' : '')), GAME_W / 2, 94, GAME_W - 48);
 }
 
 function drawPanelBg() {
@@ -1416,6 +1433,11 @@ canvas.addEventListener('pointerdown', (e) => {
     return;
   }
 
+  /* M4 2 — 버튼이 아닌 전투 영역을 탭하면 집중 사격. 팝업이 떠 있으면 안 한다. */
+  if (!b && !offlineReport && !reviveOffer && p.y >= ARENA_TOP && p.y <= ARENA_BOT) {
+    if (triggerFocus()) buildButtons();
+    return;
+  }
   if (!b || b.enabled === false) return;
   b.onTap();
   buildButtons();

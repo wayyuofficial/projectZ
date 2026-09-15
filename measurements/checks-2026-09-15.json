@@ -1,5 +1,5 @@
 {
-  "ran_at": "2026-09-15T22:41:59",
+  "ran_at": "2026-09-15T22:59:19",
   "blocking": 0,
   "warn": 3,
   "skip": 0,
@@ -90,9 +90,10 @@
     {
       "status": "warn",
       "detail": [
-        "storage-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 2cdcd9dcd1020225. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
-        "upgrade-cadence-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 2cdcd9dcd1020225. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
-        "tap-m4-1-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 c5ec23ca484eea87 다. 현재 빌드는 2cdcd9dcd1020225. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)"
+        "storage-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 72fa78f82598a4de. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "upgrade-cadence-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 72fa78f82598a4de. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "daily-budget-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 2cdcd9dcd1020225 다. 현재 빌드는 72fa78f82598a4de. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "tap-m4-1-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 c5ec23ca484eea87 다. 현재 빌드는 72fa78f82598a4de. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)"
       ],
       "check": "c19_evidence_stamp.py",
       "name": "판정 근거 기록이 현재 빌드의 것인지",
@@ -192,7 +193,7 @@
     {
       "status": "ok",
       "detail": [
-        "측정 기록 최신: balance-M4-curve-daily-2026-09-15.json, storage-m4-1-2026-09-15.json"
+        "측정 기록 최신: balance-M4-curve-focus-2026-09-15.json, storage-m4-1-2026-09-15.json"
       ],
       "check": "c9_measurement_freshness.py",
       "name": "게임을 고치고 측정을 다시 안 했는지",

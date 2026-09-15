@@ -80,6 +80,7 @@ WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_K
 ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
 STAGES_PER_ZONE = int(num("STAGES_PER_ZONE"))
 STAGE_BONUS_RATIO = num("STAGE_BONUS_RATIO")
+FOCUS_MULT = num("FOCUS_MULT")
 KEY_MAX = int(num("KEY_MAX"))
 QUEST_DEFS_IDS = ["zone", "up", "stage"]
 QUEST_NEEDS = {"zone": 3, "up": 20, "stage": 30}   # 원본 QUEST_DEFS 의 need. 바뀌면 여기도 바꾼다
@@ -160,7 +161,7 @@ MIRRORED = {
     "adRowY": "5ed5d78e1b23b919",
     "applyDamage": "44f3fc0acd0ea484",
     "applyOffline": "22e6b2208ac61edc",
-    "attacksPerSec": "50d4fd5785b29ace",
+    "attacksPerSec": "62c1a324deffd5c2",
     "boostActive": "ed9a9a513325e7ef",
     "buildButtons": "d540ef1d502cb53e",
     "buyStat": "d3f8bb96c8695d01",
@@ -367,7 +368,11 @@ class Sim(object):
         return self.statOf("atk") * self.weaponPower()
 
     def attacksPerSec(self):
-        return self.statOf("spd")
+        """M4 2 — 원본과 **같은 구조**로 옮긴다: 집중 사격 중이면 x FOCUS_MULT.
+           다만 시뮬의 기본은 `self.focus = False` 다 — 사람이 탭해야 켜지는 것이라
+           `auto_run` 은 '안 누르는 쪽' 을 잰다. 그게 M4-B2 의 기준선이다.
+           **배수를 아예 안 옮기면** 나중에 원본이 바뀌어도 c16 이 못 잡는다. 그래서 구조를 옮긴다."""
+        return self.statOf("spd") * (FOCUS_MULT if getattr(self, "focus", False) else 1)
 
     def playerDPS(self):
         return self.hitDamage() * self.attacksPerSec()
@@ -760,13 +765,14 @@ class Sim(object):
 
 # ── 자동구매 1런 — 감사가 매번 다시 짜던 절차를 여기 고정한다 ────────
 def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
-             offline_every_min=None, offline_hours=8, on_buy=None):
+             offline_every_min=None, offline_hours=8, on_buy=None, focus_duty=None):
     """가장 싼 것부터 계속 사면서 구역 10 까지 간다.
 
     `offline_every_min` 을 주면 그만큼 놀고 나서 `offline_hours` 시간 자리를 비운다.
     예측 B4(오프라인 계수를 2배로 바꿔도 진행이 20% 넘게 흔들리지 않는다)를 재는 데 쓴다.
 
     `on_buy(t초, 구역, 산것, 값)` 을 주면 살 때마다 부른다 — 업그레이드 간격을 재는 데 쓴다.
+    `focus_duty=(3, 20)` 을 주면 20초마다 3초씩 집중 사격을 켠다 (M4 2).
 
     돌아오는 값: 구역별 도달 시각(분) · 벽(10분 넘게 정체한 구역) · 사망 수 · 총 분."""
     s = Sim(seed=seed)
@@ -776,6 +782,11 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
     # 사망은 이제 Sim 안에서 처리된다(자동 후퇴). 여기서는 세기만 한다.
     off_t, off_n, off_gain = 0.0, 0, 0.0
     while s.t < max_min * 60 and s.G["zone"] < ZONE_COUNT:
+        # M4 2 — focus_duty=(켜는 초, 주기 초) 를 주면 **쿨타임을 지키며** 집중 사격을 켠다.
+        # 사람이 가장 부지런히 눌렀을 때를 모사한 것이다. 기본은 None = 안 누름.
+        if focus_duty:
+            on_s, period_s = focus_duty
+            s.focus = (s.t % period_s) < on_s
         s.step(dt)
         deaths = s.deaths
         if offline_every_min:
