@@ -1,7 +1,7 @@
 {
-  "ran_at": "2026-09-15T23:13:52",
+  "ran_at": "2026-09-15T23:51:19",
   "blocking": 0,
-  "warn": 4,
+  "warn": 3,
   "skip": 0,
   "results": [
     {
@@ -90,11 +90,13 @@
     {
       "status": "warn",
       "detail": [
-        "storage-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 6bdcd91c25b11f2b. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
-        "upgrade-cadence-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 6bdcd91c25b11f2b. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
-        "daily-budget-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 2cdcd9dcd1020225 다. 현재 빌드는 6bdcd91c25b11f2b. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
-        "tap-m4-1-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 c5ec23ca484eea87 다. 현재 빌드는 6bdcd91c25b11f2b. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
-        "focus-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 72fa78f82598a4de 다. 현재 빌드는 6bdcd91c25b11f2b. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)"
+        "storage-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 20a4134a43b77334. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "upgrade-cadence-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 20a4134a43b77334. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "daily-budget-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 2cdcd9dcd1020225 다. 현재 빌드는 20a4134a43b77334. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "tap-m4-1-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 c5ec23ca484eea87 다. 현재 빌드는 20a4134a43b77334. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "focus-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 72fa78f82598a4de 다. 현재 빌드는 20a4134a43b77334. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "gear-roll-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 6bdcd91c25b11f2b 다. 현재 빌드는 20a4134a43b77334. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "tap-m4-3-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 6bdcd91c25b11f2b 다. 현재 빌드는 20a4134a43b77334. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)"
       ],
       "check": "c19_evidence_stamp.py",
       "name": "판정 근거 기록이 현재 빌드의 것인지",
@@ -121,8 +123,9 @@
     {
       "status": "warn",
       "detail": [
-        "upgrade-cadence-m3-5b-2026-09-14.json 가 게임 파일보다 낡았다 — 게임을 고치고 간격을 다시 안 쟀다",
-        "구역 29개 · 간격 중앙 0~66초 (상한 120)"
+        "upgrade-cadence-m4-gear-2026-09-15.json: 중앙 간격이 상한 120초를 넘는 구역 1개 — ['23:362초'] (정본 SCOPE_UPGRADE_GAP_MAX_SEC)",
+        "upgrade-cadence-m4-gear-2026-09-15.json: 업그레이드가 3회 미만인 구역 [16, 20, 23] — 올릴 게 없는 구역이다",
+        "구역 28개 · 간격 중앙 0~362초 (상한 120)"
       ],
       "check": "c21_upgrade_cadence.py",
       "name": "업그레이드 간격이 정본 상한을 넘는지 (M3)",
@@ -192,9 +195,9 @@
       "priority": 2
     },
     {
-      "status": "warn",
+      "status": "ok",
       "detail": [
-        "index.html 가 밸런스 기록(balance-M4-curve-focus-2026-09-15.json)보다 새롭다 — 다시 재라"
+        "측정 기록 최신: balance-M4-curve-gear-2026-09-15.json, storage-m4-1-2026-09-15.json"
       ],
       "check": "c9_measurement_freshness.py",
       "name": "게임을 고치고 측정을 다시 안 했는지",

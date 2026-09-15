@@ -85,9 +85,11 @@ TIER_MAX_PORT = int(num("TIER_MAX"))
 GEAR_SHAPES = int(num("GEAR_SHAPES"))
 GEAR_AFFIXES = int(num("GEAR_AFFIXES"))
 BAG_MAX = int(num("BAG_MAX"))
+AUTOSELL_ZONE = int(num("AUTOSELL_ZONE"))
 GEAR_SLOT_IDS = ["weapon", "head", "body", "hands", "feet"]
 AFFIX_IDS = ["hp", "reg", "atk", "spd", "inc"]
 AFFIX_PER = {"hp": 0.18, "reg": 0.15, "atk": 0.10, "spd": 0.08, "inc": 0.09}
+GEAR_ONLY_STATS = set()   # M4 4.3 을 되돌렸다 — 원본과 같이 비어 있다 (게임 주석에 이유를 적었다)
 KEY_MAX = int(num("KEY_MAX"))
 QUEST_DEFS_IDS = ["zone", "up", "stage"]
 QUEST_NEEDS = {"zone": 3, "up": 20, "stage": 30}   # 원본 QUEST_DEFS 의 need. 바뀌면 여기도 바꾼다
@@ -174,13 +176,13 @@ MIRRORED = {
     "buyStat": "d3f8bb96c8695d01",
     "buyWeapon": "e58bfe7e010aeddb",
     "damageZombie": "9dfa910d5cf6855b",
-    "dropGear": "99f563c83f231f22",
+    "dropGear": "990bf216887801f8",
     "equip": "c815c6819c3b6edb",
     "fitGame": "d526a00619b69c86",
     "freshState": "15bc5afe1f90d9aa",
     "gearMult": "c2392bb827fd20df",
     "gearScore": "d7dd0e82bc73c578",
-    "gearSellPrice": "8dd970098e094ba0",
+    "gearSellPrice": "81a178c6a44a414e",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "78764110ba1a3fdd",
     "isBossKill": "e461a4a51bbb69c5",
@@ -457,8 +459,16 @@ class Sim(object):
                     m *= a["mult"]
         return m
 
+    def _income(self, kind, v):
+        """**측정용 계수기.** 원본 게임에는 없다 — 그래서 MIRRORED 대상이 아니다.
+           부품이 어디서 들어왔는지 나눠 센다 (M4 4.1 / M4-B3)."""
+        d = getattr(self, "income", None)
+        if d is None:
+            d = self.income = {"kill": 0.0, "sell": 0.0}
+        d[kind] = d.get(kind, 0.0) + v
+
     def gearSellPrice(self, g):
-        return (self.zoneIncome(g.get("zone") or self.G["zone"]) * 0.05
+        return (self.zoneIncome(g.get("zone") or self.G["zone"]) * 0.09
                 * math.pow(1.55, g["tier"] - 1) * self.statOf("inc"))
 
     def dropGear(self, g):
@@ -467,10 +477,18 @@ class Sim(object):
         if not self.G["gear"].get(g["slot"]):
             self.G["gear"][g["slot"]] = g
             return "equip"
+        if ((self.G.get("bestZone") or 1) >= AUTOSELL_ZONE
+                and g["tier"] <= max(0, min(TIER_MAX_PORT - 1, self.G.get("autoSell") or 0))):
+            v = self.gearSellPrice(g)
+            self.G["parts"] += v
+            self._income("sell", v)                     # M4 4.2
+            return "autosell"
         self.G["bag"].append(g)
         if len(self.G["bag"]) > BAG_MAX:
             self.G["bag"].sort(key=lambda x: self.gearScore(x))
-            self.G["parts"] += self.gearSellPrice(self.G["bag"].pop(0))
+            v = self.gearSellPrice(self.G["bag"].pop(0))
+            self.G["parts"] += v
+            self._income("sell", v)
         return "bag"
 
     @staticmethod
@@ -521,6 +539,8 @@ class Sim(object):
         q[qid] = q.get(qid, 0) + n
 
     def buyStat(self, i):
+        if i in GEAR_ONLY_STATS:                 # M4 4.3
+            return False
         c = self.statCost(i)
         if self.G["parts"] < c:
             return False
@@ -617,7 +637,7 @@ class Sim(object):
             keys = self.G.get("keys", 0)
             put_row("supply", "buy" if keys > 0 else "off", keys > 0, None)
         elif self.tab == "stat":
-            for s in STATS:
+            for s in [x for x in STATS if x["id"] not in GEAR_ONLY_STATS]:   # M4 4.3
                 cost = self.statCost(s["id"])
                 put_row("stat", "buy", self.G["parts"] >= cost, s["id"])
         else:
@@ -710,6 +730,7 @@ class Sim(object):
         gain = (self.killReward(self.G["zone"]) * (BOSS_EVERY if z["boss"] else 1)
                 * self.rewardMult() * self.statOf("inc"))
         self.G["parts"] += gain
+        self._income("kill", gain)
         self.G["totalKills"] += 1
         self.killIndex += 1
         # M3 4.2 — 단계 클리어 일시금. 구역을 넘는 마지막 칸에서는 안 준다.
