@@ -174,10 +174,24 @@ def main():
         p = os.path.join(ROOT, "measurements", "device-_selftest.json")
         w(p, '{"측정일": "2026-09-14", "요청 절": ["아무거나"]}'); made.append(p)
 
-        # c21: 정본 상한(120초)을 넘는 간격 기록을 가장 새 것으로 심는다 — warn 이 나야 한다
+        # c21: 정본 하한(구역당 3회)보다 적은 매수 기록을 가장 새 것으로 심는다 — warn 이 나야 한다.
+        # 2026-09-16 지시 #102 로 판정선이 간격 상한에서 매수 횟수 하한으로 바뀌었다.
         p = os.path.join(ROOT, "measurements", "upgrade-cadence-_selftest.json")
-        w(p, '{"구역별": [{"구역": 1, "매수_횟수_중앙": 5, "간격_초_중앙": 30.0}, {"구역": 2, "매수_횟수_중앙": 5, "간격_초_중앙": 999.0}], "매수_3회_미만_구역": []}')
+        w(p, '{"구역별": [{"구역": 1, "매수_횟수_중앙": 5, "간격_초_중앙": 30.0}, {"구역": 2, "매수_횟수_중앙": 1, "간격_초_중앙": 12.0}], "매수_3회_미만_구역": [2]}')
         os.utime(p, (_future, _future)); made.append(p)
+
+        # c22: **자를 고장 낸다.** 2026-09-16 에 실제로 있던 어긋남을 그대로 되살린다 —
+        # 무기 값을 설계도가 아니라 부품과 견주게 한다. 그러면 못 살 무기가 "가장 싼 것" 으로
+        # 뽑혀 매수 틱이 멈추고, 살 수 있는 것을 쥔 채 지나간다. fail 이 나야 한다.
+        port = os.path.join(ROOT, "tools", "sim_port.py")
+        port_backup = port + ".selftest-backup"
+        shutil.copy2(port, port_backup); made.append(port_backup)
+        _pt = io.open(port, encoding="utf-8").read()
+        _bug_from = 'if c is not None and c <= s.G.get("plans", 0.0) and c < wcheap:'
+        _bug_to   = 'if c is not None and c <= s.G["parts"] and c < wcheap:'
+        if _bug_from not in _pt:
+            raise SystemExit("자가진단: sim_port 의 무기 매수 줄을 못 찾았다 — c22 픽스처를 고쳐라")
+        w(port, _pt.replace(_bug_from, _bug_to))
 
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
@@ -207,6 +221,7 @@ def main():
             ("c19_evidence_stamp.py", ("warn",)),
             ("c20_request_matches_criterion.py", ("fail",)),
             ("c21_upgrade_cadence.py", ("warn",)),
+            ("c22_buyer_not_hoarding.py", ("fail",)),
         ]
 
         bad = []
@@ -273,10 +288,19 @@ def main():
             shutil.move(game_backup, gamep)
             if game_backup in made:
                 made.remove(game_backup)
+        # **남은 백업을 통째로 되돌린다.** 위는 파일마다 한 덩이씩 적혀 있어서,
+        # 새로 망가뜨릴 파일을 더할 때 되돌리는 쪽을 빠뜨리기 쉽다. 그러면 자가진단이
+        # **저장소를 망가진 채로 두고 끝난다.** 2026-09-16 에 c22 픽스처를 더하면서
+        # 실제로 그 자리에 왔다 (sim_port.py). 이 줄이 그 부류를 없앤다.
+        for b in glob.glob(os.path.join(ROOT, "**", "*.selftest-backup"), recursive=True):
+            shutil.move(b, b[:-len(".selftest-backup")])
+            if b in made:
+                made.remove(b)
         for p in made:
             if os.path.exists(p):
                 os.remove(p)
         left = glob.glob(os.path.join(ROOT, "**", "_selftest*"), recursive=True) + \
+            glob.glob(os.path.join(ROOT, "**", "*.selftest-backup"), recursive=True) + \
             glob.glob(os.path.join(ROOT, "rules", "R999-*"))
         if left:
             print("정리 실패로 남은 파일: %s" % left)

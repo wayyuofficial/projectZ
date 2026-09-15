@@ -881,6 +881,7 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
     s.G["hp"] = s.maxHP()
     zone_at, wall = {1: 0.0}, {}
     deaths, buyT, stuck_from, last_zone = 0, 0.0, 0.0, 1
+    idle_buy = 0          # 살 수 있는데 안 산 매수 틱 (c22 가 읽는다)
     # 사망은 이제 Sim 안에서 처리된다(자동 후퇴). 여기서는 세기만 한다.
     off_t, off_n, off_gain = 0.0, 0, 0.0
     while s.t < max_min * 60 and s.G["zone"] < ZONE_COUNT:
@@ -904,24 +905,53 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
         buyT += dt
         if buyT >= buy_every:
             buyT = 0.0
+            # **재화가 둘이면 줄도 둘이다.** (2026-09-16, 지시 #102)
+            # 전에는 무기 값도 `parts` 와 견주고 결제는 `plans` 로 했다.
+            # 그래서 못 살 무기가 "가장 싼 것" 으로 뽑히면 그 틱이 통째로 멈췄고,
+            # 살 수 있는 능력치까지 건너뛰었다. 구역 29 에서 **부품 98억을 안 쓰고
+            # 쌓아 둔 채 3180틱을 헛돌았다.** 사람이 그렇게 놀 리가 없다.
+            # 값을 통화끼리 견주는 것 자체가 뜻이 없다 — 부품을 아껴 무기를 살 수 없다.
+            # 그래서 **각 재화 안에서만** 싼 것부터 산다. 게임 화면은 처음부터 이랬다
+            # (game/index.html 의 무기 버튼은 `G.plans >= cost` 로 켜진다).
             bought = True
             while bought:
                 bought = False
-                bid, cheap = None, float("inf")
+
+                bid, cheap = None, float("inf")          # 능력치 — 부품
                 for st in STATS:
                     c = s.statCost(st["id"])
                     if c <= s.G["parts"] and c < cheap:
                         cheap, bid = c, st["id"]
-                for w in WEAPON_TYPES:
-                    c = s.weaponUpgradeCost(w["id"])
-                    if c is not None and c <= s.G["parts"] and c < cheap:
-                        cheap, bid = c, "W:" + w["id"]
-                if bid:
-                    bought = s.buyWeapon(bid[2:]) if bid.startswith("W:") else s.buyStat(bid)
+                if bid and s.buyStat(bid):
+                    bought = True
                     # on_buy 를 주면 산 것을 하나씩 알려준다 (tools/upgrade_cadence.py).
                     # 기본은 None 이라 curve_check 등 기존 호출은 그대로다.
-                    if bought and on_buy:
+                    if on_buy:
                         on_buy(s.t, s.G["zone"], bid, cheap)
+
+                wid, wcheap = None, float("inf")         # 무기 — 설계도
+                for w in WEAPON_TYPES:
+                    c = s.weaponUpgradeCost(w["id"])
+                    if c is not None and c <= s.G.get("plans", 0.0) and c < wcheap:
+                        wcheap, wid = c, w["id"]
+                if wid and s.buyWeapon(wid):
+                    bought = True
+                    if on_buy:
+                        on_buy(s.t, s.G["zone"], "W:" + wid, wcheap)
+
+            # **자가 고장 났는지 자기가 센다.** 매수를 끝낸 직후에는 살 수 있는 게
+            # 하나도 남아 있으면 안 된다 — 남았다면 이 가짜 사람이 돈을 쥐고 안 쓴 것이다.
+            # 2026-09-16 에 바로 그 일이 8일 동안 조용히 있었다 (cases/2026-09-16-22).
+            # checks/c22 가 이 수를 읽는다. 여기서 세는 이유는 **매수 줄이 하나뿐이어야**
+            # 검사와 도구가 갈라지지 않기 때문이다.
+            if any(s.statCost(st["id"]) <= s.G["parts"] for st in STATS):
+                idle_buy += 1
+            else:
+                for w in WEAPON_TYPES:
+                    c = s.weaponUpgradeCost(w["id"])
+                    if c is not None and c <= s.G.get("plans", 0.0):
+                        idle_buy += 1
+                        break
         if s.G["zone"] != last_zone:
             if s.t - stuck_from > 600:
                 wall[last_zone] = round((s.t - stuck_from) / 60)
@@ -932,7 +962,8 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
         wall[s.G["zone"]] = round((s.t - stuck_from) / 60)
     return dict(zone_min={z: round(v / 60, 1) for z, v in sorted(zone_at.items())},
                 wall=wall, deaths=deaths, total_min=round(s.t / 60, 1),
-                final_zone=s.G["zone"], offline_n=off_n, offline_gain=off_gain)
+                final_zone=s.G["zone"], offline_n=off_n, offline_gain=off_gain,
+                idle_buy=idle_buy)
 
 
 # ── 자기 점검 ─────────────────────────────────────────────────────────
