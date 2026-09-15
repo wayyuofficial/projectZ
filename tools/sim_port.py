@@ -81,6 +81,13 @@ ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
 STAGES_PER_ZONE = int(num("STAGES_PER_ZONE"))
 STAGE_BONUS_RATIO = num("STAGE_BONUS_RATIO")
 FOCUS_MULT = num("FOCUS_MULT")
+TIER_MAX_PORT = int(num("TIER_MAX"))
+GEAR_SHAPES = int(num("GEAR_SHAPES"))
+GEAR_AFFIXES = int(num("GEAR_AFFIXES"))
+BAG_MAX = int(num("BAG_MAX"))
+GEAR_SLOT_IDS = ["weapon", "head", "body", "hands", "feet"]
+AFFIX_IDS = ["hp", "reg", "atk", "spd", "inc"]
+AFFIX_PER = {"hp": 0.18, "reg": 0.15, "atk": 0.10, "spd": 0.08, "inc": 0.09}
 KEY_MAX = int(num("KEY_MAX"))
 QUEST_DEFS_IDS = ["zone", "up", "stage"]
 QUEST_NEEDS = {"zone": 3, "up": 20, "stage": 30}   # 원본 QUEST_DEFS 의 need. 바뀌면 여기도 바꾼다
@@ -163,18 +170,22 @@ MIRRORED = {
     "applyOffline": "22e6b2208ac61edc",
     "attacksPerSec": "62c1a324deffd5c2",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "d540ef1d502cb53e",
+    "buildButtons": "1a8cc75732aa03dd",
     "buyStat": "d3f8bb96c8695d01",
     "buyWeapon": "e58bfe7e010aeddb",
     "damageZombie": "9dfa910d5cf6855b",
+    "dropGear": "99f563c83f231f22",
     "equip": "c815c6819c3b6edb",
     "fitGame": "d526a00619b69c86",
-    "freshState": "d163e40e504a14a6",
+    "freshState": "15bc5afe1f90d9aa",
+    "gearMult": "c2392bb827fd20df",
+    "gearScore": "d7dd0e82bc73c578",
+    "gearSellPrice": "8dd970098e094ba0",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "78764110ba1a3fdd",
     "isBossKill": "e461a4a51bbb69c5",
     "killReward": "0ef3ffe5d2eb73ba",
-    "killZombie": "2b65ffa9fbd775f4",
+    "killZombie": "75529bacc76c2f24",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "46bb14aa20673823",
@@ -185,11 +196,13 @@ MIRRORED = {
     "playerDPS": "6e388f9e36329ce1",
     "regenPerSec": "73badd17c9fc2857",
     "rewardMult": "bff5bcb3e94a3395",
+    "rollGear": "c082d7808bc48c0e",
+    "rollTier": "802162caae06b933",
     "spawnZombie": "d4054c63f48a4d4a",
     "stageKills": "4cb2b09008d21635",
     "statCost": "3915c9b212b37571",
     "statDef": "e7ad6087978fd6ec",
-    "statOf": "bd53f6155e340e8d",
+    "statOf": "ce944d01f686e148",
     "stepCombat": "477e00f37b335b3e",
     "tabRowY": "d001ac81a8afa161",
     "weaponOf": "cd23351858d3c448",
@@ -312,7 +325,7 @@ class Sim(object):
     # ---- 저장 ----
     def freshState(self):
         return dict(v=SAVE_VERSION, parts=0.0, plans=0.0, zone=1, kills=0,
-                    day=0, maxDay=0, quest=dict(zone=0, up=0, stage=0), questTaken={},
+                    gear={}, bag=[], day=0, maxDay=0, quest=dict(zone=0, up=0, stage=0), questTaken={},
                     login=dict(streak=0, lastDay=-1), keys=KEY_MAX,
                     lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0), weapon="pipe",
                     owned=dict(pipe=1), hp=100.0, bestZone=1, totalKills=0,
@@ -350,7 +363,7 @@ class Sim(object):
 
     def statOf(self, i):
         s = self.statDef(i)
-        return s["base"] * (s["growth"] ** self.G["lv"].get(i, 0))
+        return s["base"] * (s["growth"] ** self.G["lv"].get(i, 0)) * self.gearMult(i)
 
     def statCost(self, i):
         s = self.statDef(i)
@@ -402,6 +415,63 @@ class Sim(object):
     @staticmethod
     def zoneIncome(z):
         return Sim.zoneReward(z) * Sim.zoneKills(z)
+
+    def rollTier(self, z):
+        center = 1 + (TIER_MAX_PORT - 1) * min(1.0, (z - 1) / float(ZONE_COUNT - 1))
+        t = jsround(center + (self.rnd() + self.rnd() + self.rnd() - 1.5) * 1.6)
+        return max(1, min(TIER_MAX_PORT, t))
+
+    def rollGear(self, z):
+        armor = GEAR_SLOT_IDS[1:]
+        slot = armor[int(self.rnd() * len(armor))]
+        tier = self.rollTier(z)
+        shape = int(self.rnd() * GEAR_SHAPES)
+        n_aff = min(GEAR_AFFIXES, 2 if self.rnd() < (tier - 1) / float(TIER_MAX_PORT - 1) else 1)
+        pool = list(AFFIX_IDS)
+        affixes = []
+        for _ in range(n_aff):
+            if not pool:
+                break
+            k = int(self.rnd() * len(pool))
+            aid = pool.pop(k)
+            affixes.append({"id": aid, "mult": 1 + AFFIX_PER[aid] * tier * (0.7 + self.rnd() * 0.6)})
+        return {"slot": slot, "shape": shape, "tier": tier, "affixes": affixes, "zone": z}
+
+    @staticmethod
+    def gearScore(g):
+        if not g:
+            return 0.0
+        v = math.pow(2.1, g["tier"] - 1)
+        for a in g["affixes"]:
+            v *= a["mult"]
+        return v
+
+    def gearMult(self, sid):
+        m = 1.0
+        for slot in GEAR_SLOT_IDS:
+            g = (self.G.get("gear") or {}).get(slot)
+            if not g:
+                continue
+            for a in g["affixes"]:
+                if a["id"] == sid:
+                    m *= a["mult"]
+        return m
+
+    def gearSellPrice(self, g):
+        return (self.zoneIncome(g.get("zone") or self.G["zone"]) * 0.05
+                * math.pow(1.55, g["tier"] - 1) * self.statOf("inc"))
+
+    def dropGear(self, g):
+        self.G.setdefault("gear", {})
+        self.G.setdefault("bag", [])
+        if not self.G["gear"].get(g["slot"]):
+            self.G["gear"][g["slot"]] = g
+            return "equip"
+        self.G["bag"].append(g)
+        if len(self.G["bag"]) > BAG_MAX:
+            self.G["bag"].sort(key=lambda x: self.gearScore(x))
+            self.G["parts"] += self.gearSellPrice(self.G["bag"].pop(0))
+        return "bag"
 
     @staticmethod
     def stageBlueprint(z):
@@ -509,8 +579,8 @@ class Sim(object):
             return bs
 
         # M4 1 — 탭 3개. 폭 164, 간격 8 (원본과 같다)
-        TW, TG = 164, 8
-        for i, tid in enumerate(("stat", "weapon", "daily")):
+        TW, TG = 120, 6                       # M4 3.4: 탭 4개
+        for i, tid in enumerate(("stat", "weapon", "gear", "daily")):
             b("tab_" + tid, 24 + i * (TW + TG), self.tabRowY(), TW, ROW_H,
               "on" if self.tab == tid else "off")
 
@@ -525,7 +595,17 @@ class Sim(object):
                 return
             b(kind, 24, y, GAME_W - 48, ROW_H, tone, enabled, wid, clip)
 
-        if self.tab == "daily":
+        if self.tab == "gear":
+            for sl in GEAR_SLOT_IDS:
+                put_row("gear_slot", "ghost", False, sl)
+            bag = self.G.get("bag") or []
+            if not bag:
+                put_row("bag_empty", "ghost", False, None)
+            for g in sorted(bag, key=lambda x: -self.gearScore(x)):
+                cur = (self.G.get("gear") or {}).get(g["slot"])
+                better = self.gearScore(g) > self.gearScore(cur)
+                put_row("bag_item", "buy" if better else "off", True, g["slot"])
+        elif self.tab == "daily":
             # M4 1 — 접속 1줄 + 과제 3줄 + 보급 상자 1줄
             put_row("login", "ghost", False, None)
             for q in QUEST_DEFS_IDS:
@@ -636,6 +716,7 @@ class Sim(object):
         if (self.killIndex % self.stageKills(self.G["zone"]) == 0
                 and self.killIndex < self.zoneKills(self.G["zone"])):
             self.questProgress("stage", 1)
+            self.dropGear(self.rollGear(self.G["zone"]))   # M4 3.4
             self.G["plans"] = self.G.get("plans", 0.0) + (
                 self.stageBlueprint(self.G["zone"]) * self.rewardMult() * self.statOf("inc"))
         if z["boss"]:

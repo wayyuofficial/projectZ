@@ -96,7 +96,7 @@ setTimeout(function () {
 
 const SAVE_VERSION = 4;   // M4 1: 일일 리듬(day·quest·login·keys). v1~v3 은 migrate() 가 끌어올린다   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
 const ZONE_COUNT   = 30;   // M2 (지시 #60·#61). M1 은 10
-const TIER_MAX     = 3;
+const TIER_MAX     = 8;   // M4 3: 정본 개정(지시 #96). 색만 바꾼다 — 모양은 안 늘린다
 const MAX_ONSCREEN_ZOMBIES = 8;
 
 const STATS = [
@@ -178,6 +178,28 @@ const STAGES_PER_ZONE = 5, STAGE_BONUS_RATIO = 0.20;
 /* M4 2 — 수동 개입 (조사 ⑤ "직접 플레이가 더 빠르다" [2]).
    전투 영역을 탭하면 잠깐 빨라진다. **부품을 안 쓰고, 안 눌러도 손해가 없다** —
    정본 00-identity 의 "안 눌러도 계속 굴러간다" 를 지킨다. 총수입은 그대로고 **속도만** 바뀐다 (M4-B2). */
+/* M4 3 — 장비 체계 (조사 ① 핵심 루프 [4]). 정본 개정 2026-09-15 (지시 #96).
+   부위 5칸. **무기 부위는 기존 WEAPON_TYPES 10종을 그대로 쓴다** — 있는 것을 버리지 않는다.
+   방어구 4부위는 부위마다 모양 3개. 모양은 코드로 그린다(무기와 같은 방식).
+   등급은 8단계, **색만** 바뀐다. 옵션은 2줄까지 랜덤으로 붙는다. */
+const GEAR_SLOTS = [
+  { id: 'weapon', name: '무기',   shapes: null },      // 기존 무기 10종
+  { id: 'head',   name: '머리',   shapes: ['모자', '투구', '방독면'] },
+  { id: 'body',   name: '몸',     shapes: ['재킷', '방탄복', '코트'] },
+  { id: 'hands',  name: '장갑',   shapes: ['목장갑', '가죽장갑', '완갑'] },
+  { id: 'feet',   name: '신발',   shapes: ['운동화', '군화', '부츠'] }
+];
+const GEAR_SHAPES = 3;                                  // 부위별 방어구 모양 (정본 상한)
+const GEAR_AFFIXES = 2;                                 // 옵션 줄 수 상한 (정본 상한)
+/* 옵션 — 죽어 있던 최대체력·체력회복이 여기로 온다 (M4 4.3 / M4-B5).
+   `stat` 은 STATS 의 id, `per` 는 등급 1 기준 배수 폭. */
+const AFFIX_DEFS = [
+  { id: 'hp',  name: '최대체력', per: 0.18 },
+  { id: 'reg', name: '체력회복', per: 0.15 },
+  { id: 'atk', name: '공격력',   per: 0.10 },
+  { id: 'spd', name: '공격속도', per: 0.08 },
+  { id: 'inc', name: '수입',     per: 0.09 }
+];
 const FOCUS_SEC = 3, FOCUS_MULT = 1.5, FOCUS_COOL_SEC = 30;   /* 2x·20초는 재보니 -11.5% 였다 (선 ±5%). M4-B2 의 반증 조건이 적어 둔 대로 배수·쿨타임을 줄였다 */
 const DAY_MS = 86400000;
 /* 몫은 **합이 1.0 을 안 넘게** 나눈다 — 과제 0.55 + 상자 0.20 + 접속 최대 0.25 = 1.00.
@@ -288,6 +310,8 @@ function freshState() {
     lastSeen: Date.now(),
     boostUntil: 0,
     /* M4 1 — 일일. day 는 "오늘" 의 날짜 번호, maxDay 는 본 적 있는 가장 큰 날짜(시계 되돌리기 방지) */
+    gear: {},                                  // M4 3: 부위 -> 장비. 없으면 빈칸
+    bag: [],                                   // M4 4: 아직 안 판 장비
     day: 0, maxDay: 0,
     quest: { zone: 0, up: 0, stage: 0 }, questTaken: {},
     login: { streak: 0, lastDay: -1 },
@@ -355,7 +379,7 @@ function load() {
    ========================================================================= */
 
 function statDef(id) { return STATS.find(x => x.id === id); }
-function statOf(id) { const s = statDef(id); return s.base * Math.pow(s.growth, G.lv[id] || 0); }
+function statOf(id) { const s = statDef(id); return s.base * Math.pow(s.growth, G.lv[id] || 0) * gearMult(id); }   // M4 3: 장비 옵션이 곱해진다
 function statCost(id) { const s = statDef(id); return Math.ceil(s.cost0 * Math.pow(s.costG, G.lv[id] || 0)); }
 function weaponOf(id) { return WEAPON_TYPES.find(w => w.id === id); }
 function weaponPower() {
@@ -373,6 +397,114 @@ function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1); }
 function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO; }
 function zoneKills(z) { return KILLS_PER_ZONE * ((z >= WALL_START && z % WALL_EVERY === 0) ? WALL_KILL_MULT : 1); }   // M2 벽: 처치 수만 늘어난다
 function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z); }   // M2 벽: 처치당 보상 ÷2 — 벽의 총수입은 보통 구역과 같다 (M2-B2‴, 지시 #63)
+/* =========================================================================
+   3.5 장비 생성기 — M4 3.3
+   구역이 깊을수록 높은 등급이 잘 나온다. **정해진 목록이 아니라 뽑는다** — 조사 ① 의 핵심.
+   난수는 `Math.random()` 만 쓴다 — 포트가 LCG 를 심어 같은 수열을 따라온다 (12차 감사 교훈).
+   ========================================================================= */
+
+/* 구역 z 에서 등급 분포. 중심이 구역과 함께 오르고, 위아래로 흩어진다.
+   반환은 1..TIER_MAX. */
+function rollTier(z) {
+  const center = 1 + (TIER_MAX - 1) * Math.min(1, (z - 1) / (ZONE_COUNT - 1));
+  const spread = 1.6;
+  let t = Math.round(center + (Math.random() + Math.random() + Math.random() - 1.5) * spread);
+  return Math.max(1, Math.min(TIER_MAX, t));
+}
+
+/* 장비 하나를 뽑는다. slot 을 안 주면 부위도 뽑는다(무기 부위 제외 — 무기는 상점에서 산다). */
+function rollGear(z, slotId) {
+  const armor = GEAR_SLOTS.filter((s) => s.shapes);
+  const slot = slotId ? GEAR_SLOTS.find((s) => s.id === slotId)
+                      : armor[Math.floor(Math.random() * armor.length)];
+  const tier = rollTier(z);
+  const shape = Math.floor(Math.random() * GEAR_SHAPES);
+  /* 옵션 줄 수 — 등급이 높을수록 두 줄이 잘 붙는다. 상한은 정본의 GEAR_AFFIXES. */
+  const nAff = Math.min(GEAR_AFFIXES, Math.random() < (tier - 1) / (TIER_MAX - 1) ? 2 : 1);
+  const pool = AFFIX_DEFS.slice();
+  const affixes = [];
+  for (let i = 0; i < nAff && pool.length; i++) {
+    const k = Math.floor(Math.random() * pool.length);
+    const d = pool.splice(k, 1)[0];
+    affixes.push({ id: d.id, mult: 1 + d.per * tier * (0.7 + Math.random() * 0.6) });
+  }
+  return { slot: slot.id, shape: shape, tier: tier, affixes: affixes, zone: z };
+}
+
+/* 장비의 값어치 — 판매가와 비교에 쓴다. 등급이 지배하고 옵션이 보탠다. */
+function gearScore(g) {
+  if (!g) return 0;
+  let v = Math.pow(2.1, g.tier - 1);
+  for (const a of g.affixes) v *= a.mult;
+  return v;
+}
+
+/* 장착 중인 장비가 주는 능력치 배수. 없으면 1. */
+function gearMult(statId) {
+  let m = 1;
+  for (const s of GEAR_SLOTS) {
+    const g = (G.gear || {})[s.id];
+    if (!g) continue;
+    for (const a of g.affixes) if (a.id === statId) m *= a.mult;
+  }
+  return m;
+}
+
+const BAG_MAX = 12;                 // 가방 칸. 넘치면 가장 값싼 것을 자동으로 판다
+
+/* 판매가 — 부품. 그 구역 총수입에 견줘 매긴다. 등급이 높을수록 값이 뛴다. */
+function gearSellPrice(g) {
+  return zoneIncome(g.zone || G.zone) * 0.05 * Math.pow(1.55, g.tier - 1) * statOf('inc');
+}
+
+function sellGear(g) {
+  G.parts += gearSellPrice(g);
+  return true;
+}
+
+/* 장비가 떨어진다. 빈 부위면 바로 장착하고, 아니면 가방에 넣는다. */
+function dropGear(g) {
+  if (!G.gear) G.gear = {};
+  if (!G.bag) G.bag = [];
+  if (!G.gear[g.slot]) { G.gear[g.slot] = g; return 'equip'; }
+  G.bag.push(g);
+  if (G.bag.length > BAG_MAX) {
+    G.bag.sort((a, b) => gearScore(a) - gearScore(b));
+    sellGear(G.bag.shift());                 // 가장 값싼 것부터 판다
+  }
+  return 'bag';
+}
+
+/* 가방의 장비를 장착한다. 벗은 것은 가방으로 돌아간다 — 잃지 않는다. */
+function equipGear(i) {
+  const g = (G.bag || [])[i];
+  if (!g) return false;
+  G.bag.splice(i, 1);
+  const old = (G.gear || {})[g.slot];
+  G.gear[g.slot] = g;
+  if (old) G.bag.push(old);
+  return true;
+}
+
+function sellBagAt(i) {
+  const g = (G.bag || [])[i];
+  if (!g) return false;
+  G.bag.splice(i, 1);
+  sellGear(g);
+  return true;
+}
+
+function affixText(a) {
+  const d = AFFIX_DEFS.find((x) => x.id === a.id);
+  return (d ? d.name : a.id) + ' +' + Math.round((a.mult - 1) * 100) + '%';
+}
+
+function gearName(g) {
+  const slot = GEAR_SLOTS.find((s) => s.id === g.slot);
+  const nm = slot && slot.shapes ? slot.shapes[g.shape % GEAR_SHAPES] : (slot ? slot.name : '장비');
+  return tierName(g.tier) + ' ' + nm;
+}
+
 function stageKills(z) { return Math.max(1, Math.round(zoneKills(z) / STAGES_PER_ZONE)); }
 function killReward(z) { return zoneReward(z); }   // M3 5: 단계 보상이 설계도로 옮겨가 부품은 분할 전 그대로
 function zoneIncome(z) { return zoneReward(z) * zoneKills(z); }
@@ -392,18 +524,23 @@ function weaponUpgradeCost(id) {
 /* 무기 등급을 색으로 보인다. 정본: "등급은 색만 바꾼다 (recolor)".
    등급이 오를수록 밝고 진해진다. 스프라이트를 3배로 그리지 않는다.
    2026-09-08 검증자 적발: tier 가 색 계산에 쓰이는 곳이 0곳이었다. */
+/* M4 3 — 등급이 3 → 8 이 되면서 색 계산을 **등급 수에 맞춰 일반화**했다.
+   전에는 2·3 을 손으로 적어 뒀다. 정본이 등급 수를 바꾸면 여기가 따라온다 — 숫자를 두 곳에 안 적는다. */
 function tierTint(hex, tier) {
   const t = Math.max(1, Math.min(TIER_MAX, tier || 1));
   if (t === 1) return hex;
+  const k = (t - 1) / Math.max(1, TIER_MAX - 1);   // 0 ~ 1
   const n = parseInt(hex.slice(1), 16);
   let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  const lift = t === 2 ? 0.28 : 0.52;          // 밝게
-  const warm = t === 3 ? 26 : 10;              // 등급 3은 금빛을 섞는다
+  const lift = 0.62 * k;                       // 밝게
+  const warm = 30 * k * k;                     // 높은 등급일수록 금빛
   r = Math.min(255, Math.round(r + (255 - r) * lift + warm));
   g = Math.min(255, Math.round(g + (255 - g) * lift + warm * 0.6));
   b = Math.min(255, Math.round(b + (255 - b) * lift * 0.7));
   return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
+const TIER_NAMES = ['일반', '고급', '정교', '희귀', '영웅', '전설', '초월', '영원'];
+function tierName(t) { return TIER_NAMES[Math.max(1, Math.min(TIER_MAX, t)) - 1] || ('등급 ' + t); }
 function weaponTint(id) { return tierTint(weaponOf(id).tint, G.owned[id] || 1); }
 
 function boostActive() { return Date.now() < (G.boostUntil || 0); }
@@ -580,6 +717,9 @@ function killZombie(z) {
        설계도만 안 커지면 무기가 영영 안 잡힌다 — 3시드 격자에서 BP_RATIO 를 0.08→1.5 로 올려도
        구역 30 을 못 깼다(최고 구역 18→27). 양의 문제가 아니라 **성장률**의 문제였다. */
     questProgress('stage', 1);             // M4 1.2
+    /* M4 3.4 — 단계 클리어마다 장비 하나가 떨어진다. 4단계에서 만든 자리를 그대로 쓴다.
+       가방이 차면 **가장 값싼 것을 자동으로 판다** — 조사 ④ "버리는 것이 자원". */
+    dropGear(rollGear(G.zone));
     const bp = stageBlueprint(G.zone) * rewardMult() * statOf('inc');
     G.plans += bp;
     addFloat(GAME_W / 2, ARENA_TOP + 100, '단계 ' + currentStage() + ' / ' + STAGES_PER_ZONE
@@ -939,14 +1079,16 @@ function buildButtons() {
   }
 
   /* 탭 3개 (M4 1: 일일 추가). 높이를 ROW_H 로 맞춰 탭 대상 크기(7.1)를 지킨다.
-     폭은 (540 - 24*2 - 간격 2칸) / 3 = 164. 29 CSS px 선과는 무관하다(높이가 기준) — 다만 브라우저로 확인한다. */
-  const TW = 164, TG = 8;
+     M4 3.4 에서 4개가 됐다. 폭 (540 - 24*2 - 간격 3칸) / 4 = 118.5 → 120, 간격 6.
+     29 CSS px 선은 **높이**가 기준이라 안 바뀐다 — 다만 폭도 브라우저·격자로 확인한다. */
+  const TW = 120, TG = 6;
   const mkTab = (i, id, label) => btn({ x: 24 + i * (TW + TG), y: tabRowY(), w: TW, h: ROW_H, label: label,
         enabled: true, tone: tab === id ? 'on' : 'off',
         onTap: () => { if (tab !== id) { tab = id; listScroll = 0; listVel = 0; } return true; } });
   mkTab(0, 'stat', '능력치');
   mkTab(1, 'weapon', '무기');
-  mkTab(2, 'daily', '일일' + (dailyDot() ? ' ●' : ''));
+  mkTab(2, 'gear', '장비' + ((G.bag || []).length ? ' ' + G.bag.length : ''));
+  mkTab(3, 'daily', '일일' + (dailyDot() ? ' ●' : ''));
 
   const top = listTopY(), bot = listBotY(), clip = [top, bot];
   let cy = 0;                                   // 목록 안 좌표 (스크롤 전)
@@ -960,7 +1102,36 @@ function buildButtons() {
     btn(o);
   };
 
-  if (tab === 'daily') {
+  if (tab === 'gear') {
+    // M4 3.4 — 위: 장착 중인 5부위. 아래: 가방(값비싼 것부터). 탭하면 장착, 길게 누르면 판다.
+    GEAR_SLOTS.forEach((sl) => {
+      const g = (G.gear || {})[sl.id];
+      if (sl.id === 'weapon') {
+        const w = weaponOf(G.weapon);
+        putRow({ label: sl.name + ' · ' + (w ? w.name : '-'),
+                 sub: '무기 탭에서 바꾼다', cost: null, enabled: false, tone: 'ghost', onTap: () => false });
+        return;
+      }
+      putRow({ label: sl.name + ' · ' + (g ? gearName(g) : '비었다'),
+               sub: g ? g.affixes.map((a) => affixText(a)).join('   ') : '장비가 떨어지면 자동으로 채워진다',
+               cost: null, enabled: false, tone: g ? 'equipped' : 'ghost',
+               tint: g ? tierTint('#6E8B8D', g.tier) : null, onTap: () => false });
+    });
+    const bag = (G.bag || []).slice().sort((a, b) => gearScore(b) - gearScore(a));
+    if (!bag.length) {
+      putRow({ label: '가방이 비었다', sub: '단계를 깨면 장비가 떨어진다', cost: null, enabled: false, tone: 'ghost', onTap: () => false });
+    }
+    bag.forEach((g) => {
+      const i = G.bag.indexOf(g);
+      const cur = (G.gear || {})[g.slot];
+      const better = gearScore(g) > gearScore(cur);
+      putRow({ label: gearName(g) + (better ? '  ▲' : ''),
+               sub: g.affixes.map((a) => affixText(a)).join('   ') + '   ·   팔면 ' + fmt(gearSellPrice(g)),
+               cost: null, enabled: true, tone: better ? 'buy' : 'off',
+               tint: tierTint('#6E8B8D', g.tier),
+               onTap: () => equipGear(i) });
+    });
+  } else if (tab === 'daily') {
     // M4 1 — 접속 보상 상태 · 과제 3개 · 보급 상자
     putRow({ label: '접속 ' + ((G.login && G.login.streak) || 0) + ' / ' + LOGIN_DAYS + '일',
              sub: '자정에 하나씩. 하루 빠지면 처음부터', cost: null, enabled: false, tone: 'ghost',

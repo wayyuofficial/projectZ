@@ -22,13 +22,23 @@ LIMIT_RE = re.compile(r"^\s*(SCOPE_MAX_[A-Z_]+)\s*=\s*(\d+)\s*$", re.M)
 ARRAYS = {
     "WEAPON_TYPES": "SCOPE_MAX_WEAPON_TYPES",
     "STATS": "SCOPE_MAX_STATS",
+    "GEAR_SLOTS": "SCOPE_MAX_GEAR_SLOTS",      # M4 3: 장비 부위
 }
 # 정수 상수 이름 -> 상한 키
 SCALARS = {
     "ZONE_COUNT": "SCOPE_MAX_ZONES",
     "TIER_MAX": "SCOPE_MAX_TIER",
     "MAX_ONSCREEN_ZOMBIES": "SCOPE_MAX_ONSCREEN_ZOMBIES",
+    "GEAR_SHAPES": "SCOPE_MAX_GEAR_SHAPES",    # M4 3: 부위별 방어구 모양
+    "GEAR_AFFIXES": "SCOPE_MAX_GEAR_AFFIXES",  # M4 3: 장비 랜덤 옵션 줄 수
 }
+
+# **없어도 되는 선언.** 상한은 "넘지 마라" 지 "반드시 있어라" 가 아니다.
+# 2026-09-15 M4 3.2 에서 장비 상한 셋을 더했다가 c17 이 잡았다 —
+# M1·M2 본보기에는 이 선언이 없어서 검사가 **사람이 "좋다" 로 판정한 산출물을 떨어뜨렸다.**
+# 불변 원칙 5: 그때는 산출물이 아니라 **검사를 의심한다.**
+# 없으면 0개로 보고 넘어간다. 있으면 상한과 견준다.
+OPTIONAL = {"GEAR_SLOTS", "GEAR_SHAPES", "GEAR_AFFIXES"}
 
 
 def read_limits(root):
@@ -79,6 +89,8 @@ def run(root):
         for name, key in sorted(ARRAYS.items()):
             n = count_ids(txt, name)
             if n is None:
+                if name in OPTIONAL:
+                    continue                 # 없어도 되는 선언 — 0개로 본다
                 bad.append("%s : const %s = [ ... ] 를 못 찾았다 (셀 수 없음)" % (base, name))
             elif n > limits.get(key, 0):
                 bad.append("%s : %s %d개 > 상한 %d개" % (base, name, n, limits.get(key, 0)))
@@ -86,6 +98,8 @@ def run(root):
         for name, key in sorted(SCALARS.items()):
             m = re.search(r"\bconst\s+%s\s*=\s*(\d+)" % re.escape(name), txt)
             if not m:
+                if name in OPTIONAL:
+                    continue                 # 없어도 되는 선언 — 0 으로 본다
                 bad.append("%s : const %s 선언을 못 찾았다 (셀 수 없음)" % (base, name))
             elif int(m.group(1)) > limits.get(key, 0):
                 bad.append("%s : %s=%s > 상한 %d"

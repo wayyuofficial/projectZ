@@ -1,7 +1,7 @@
 <title>좀비 RPG M4 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M4.md
-     source-sha256: 79504586f6353b1e0c977a4e80da40c6a8fb3c0e35d8b03690377b54373a615a
+     source-sha256: 0e665cdc4252e953d3ed7c1b77f1c34258fd054b696907e3ed78375bf8a0f507
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -285,20 +285,20 @@
     <div class="chart">
     <div class="bar-row"><div class="name">1 일일 리듬</div><div class="track"><div class="fill" style="width:75%"></div></div><div class="num">3 / 4</div></div>
     <div class="bar-row"><div class="name">2 수동 개입</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">2 / 2</div></div>
-    <div class="bar-row"><div class="name">3 정본·장비 뼈대</div><div class="track"><div class="fill" style="width:0%"></div></div><div class="num">0 / 4</div></div>
+    <div class="bar-row"><div class="name">3 정본·장비 뼈대</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">4 / 4</div></div>
     <div class="bar-row"><div class="name">4 판매와 축 흡수</div><div class="track"><div class="fill" style="width:0%"></div></div><div class="num">0 / 3</div></div>
     <div class="bar-row"><div class="name">5 밸런스 회복</div><div class="track"><div class="fill" style="width:0%"></div></div><div class="num">0 / 3</div></div>
     <div class="bar-row"><div class="name">6 마무리</div><div class="track"><div class="fill" style="width:0%"></div></div><div class="num">0 / 3</div></div>
-    <div class="bar-row"><div class="name"><strong>합</strong></div><div class="track"><div class="fill" style="width:26%"></div></div><div class="num">5 / 19</div></div>
+    <div class="bar-row"><div class="name"><strong>합</strong></div><div class="track"><div class="fill" style="width:47%"></div></div><div class="num">9 / 19</div></div>
     </div>
     <div class="tablewrap"><table><thead><tr><th>단계</th><th>작업</th><th>됨</th><th>사람 판정 대기</th><th>사람 승인 대기</th><th>착수 전</th></tr></thead><tbody>
       <tr><td>1 일일 리듬</td><td>4</td><td>3</td><td>1</td><td>0</td><td>0</td></tr>
       <tr><td>2 수동 개입</td><td>2</td><td>2</td><td>0</td><td>0</td><td>0</td></tr>
-      <tr><td>3 정본·장비 뼈대</td><td>4</td><td>0</td><td>0</td><td>1</td><td>3</td></tr>
+      <tr><td>3 정본·장비 뼈대</td><td>4</td><td>4</td><td>0</td><td>0</td><td>0</td></tr>
       <tr><td>4 판매와 축 흡수</td><td>3</td><td>0</td><td>0</td><td>0</td><td>3</td></tr>
       <tr><td>5 밸런스 회복</td><td>3</td><td>0</td><td>0</td><td>0</td><td>3</td></tr>
       <tr><td>6 마무리</td><td>3</td><td>0</td><td>0</td><td>0</td><td>3</td></tr>
-      <tr><td><strong>합</strong></td><td><strong>19</strong></td><td><strong>5</strong></td><td><strong>1</strong></td><td><strong>1</strong></td><td><strong>12</strong></td></tr>
+      <tr><td><strong>합</strong></td><td><strong>19</strong></td><td><strong>9</strong></td><td><strong>1</strong></td><td><strong>0</strong></td><td><strong>9</strong></td></tr>
     </tbody></table></div></section>
   <section><h2><span class="n">P</span>예측 — 결과를 보기 전에 잠갔다</h2>
     <p class="note">문구는 세울 때 그대로 둔다. <span class="mono">checks/c15_prediction_lock.py</span> 가 잠금 파일과 대조한다. 판정은 <strong>사람</strong>이 <span class="mono">tools/judge_prediction.py</span> 로 한다 — AI 는 판정하지 않는다.</p>
@@ -322,6 +322,12 @@
       <tr><td>2.1 집중 사격</td><td>됨</td><td class="judge">전투 영역 탭 → <strong>3초 ×1.5, 쿨 30초</strong>. 부품을 안 쓴다. 실제 트러스티드 클릭으로 발동·배수 1.50·쿨 중 재탭이 쿨을 안 늘리는 것 확인. 버튼 줄을 안 가린다(전투 영역만 받는다)</td></tr>
       <tr><td>2.2 안 눌러도 손해 없음</td><td>됨 · <strong>한 번 고쳤다</strong></td><td class="judge">첫 설정(3초 ×2, 쿨 20초)은 <strong>-11.5%</strong> 로 선을 넘었다. M4-B2 의 반증 조건이 적어 둔 대로 배수·쿨을 줄여 <strong>-4.5%</strong> (선 ±5%). <span class="mono">focus-2026-09-15.json</span></td></tr>
       <tr><td><strong>M4-B2</strong></td><td><strong>사람이 판정한다</strong></td><td class="judge">쿨 지켜 누름 -4.5% · 늘 켠 극단 -24.4%. 극단은 상한이다</td></tr>
-      <tr><td>전체</td><td>2단계 끝</td><td class="judge">3단계는 <strong>정본 개정</strong>이다 — 사람 승인이 필요하다</td></tr>
+      <tr><td>전체</td><td>2단계 끝</td><td class="judge">3단계로 갔다</td></tr>
+      <tr><td>3.1 정본 개정</td><td>됨</td><td class="judge">사람 승인 2026-09-15T23:09:43 (황창식). 등급 3→<strong>8</strong>, 부위 5, 방어구 모양 3, 옵션 2줄. 무기 10종은 그대로</td></tr>
+      <tr><td>3.2 c2 확장</td><td>됨 · <strong>c17 이 한 번 잡았다</strong></td><td class="judge">새 상한 셋을 <strong>필수</strong>로 넣었다가 M1·M2 본보기가 떨어졌다 — 사람이 "좋다" 한 산출물이다. <strong>검사를 고쳤다</strong>(원칙 5): 상한은 "넘지 마라" 지 "반드시 있어라" 가 아니다. <span class="mono">OPTIONAL</span> 로 두고, 선언을 지워도 통과·상한을 넘기면 실패하는 것을 확인</td></tr>
+      <tr><td>3.3 장비 생성기</td><td>됨</td><td class="judge">10,000개 뽑기: 부위 편차 최대 <strong>3.9%</strong>(선 ±10%), 옵션이 <strong>2줄을 안 넘음</strong>, 등급 중심이 구역과 함께 오름(구역1 → 1~2, 15 → 4~5, 30 → 7~8). <span class="mono">gear-roll-2026-09-15.json</span></td></tr>
+      <tr><td>3.4 드랍·인벤토리</td><td>됨</td><td class="judge">단계 클리어마다 장비 1개. 빈 부위면 자동 장착, 아니면 가방(12칸). 넘치면 <strong>가장 값싼 것을 자동 판매</strong>. 장비 탭 신설(탭 4개). 장비가 능력치를 실제로 곱한다(체력 100→192 확인)</td></tr>
+      <tr><td><strong>7.1 탭 대상</strong></td><td>유지</td><td class="judge">탭 4개에서도 고정 버튼 최소 <strong>30.07 CSS px</strong> — 폭은 113→85→62 로 줄어도 <strong>높이가 구속 조건</strong>이라 그대로. <span class="mono">tap-m4-3-2026-09-15.json</span></td></tr>
+      <tr><td>전체</td><td>3단계 끝</td><td class="judge">4단계(판매와 축 흡수)로 간다</td></tr>
     </tbody></table></div></section>
 </div>

@@ -1,7 +1,7 @@
 {
-  "ran_at": "2026-09-15T23:09:54",
+  "ran_at": "2026-09-15T23:13:52",
   "blocking": 0,
-  "warn": 3,
+  "warn": 4,
   "skip": 0,
   "results": [
     {
@@ -61,7 +61,7 @@
     {
       "status": "ok",
       "detail": [
-        "옮긴 함수 41개가 게임과 일치"
+        "옮긴 함수 47개가 게임과 일치"
       ],
       "check": "c16_port_sync.py",
       "name": "파이썬 포트가 게임과 어긋났는지",
@@ -90,10 +90,11 @@
     {
       "status": "warn",
       "detail": [
-        "storage-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 72fa78f82598a4de. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
-        "upgrade-cadence-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 72fa78f82598a4de. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
-        "daily-budget-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 2cdcd9dcd1020225 다. 현재 빌드는 72fa78f82598a4de. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
-        "tap-m4-1-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 c5ec23ca484eea87 다. 현재 빌드는 72fa78f82598a4de. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)"
+        "storage-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 6bdcd91c25b11f2b. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "upgrade-cadence-m3-5b-2026-09-14.json — wbs-M3.md 의 근거인데 도장이 9ae92ebaf555e111 다. 현재 빌드는 6bdcd91c25b11f2b. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "daily-budget-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 2cdcd9dcd1020225 다. 현재 빌드는 6bdcd91c25b11f2b. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "tap-m4-1-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 c5ec23ca484eea87 다. 현재 빌드는 6bdcd91c25b11f2b. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)",
+        "focus-2026-09-15.json — wbs-M4.md 의 근거인데 도장이 72fa78f82598a4de 다. 현재 빌드는 6bdcd91c25b11f2b. 다시 재거나 기록에 [옛빌드_사유] 를 적어라 (R005)"
       ],
       "check": "c19_evidence_stamp.py",
       "name": "판정 근거 기록이 현재 빌드의 것인지",
@@ -191,9 +192,9 @@
       "priority": 2
     },
     {
-      "status": "ok",
+      "status": "warn",
       "detail": [
-        "측정 기록 최신: balance-M4-curve-focus-2026-09-15.json, storage-m4-1-2026-09-15.json"
+        "index.html 가 밸런스 기록(balance-M4-curve-focus-2026-09-15.json)보다 새롭다 — 다시 재라"
       ],
       "check": "c9_measurement_freshness.py",
       "name": "게임을 고치고 측정을 다시 안 했는지",
