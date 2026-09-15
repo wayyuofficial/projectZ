@@ -50,14 +50,26 @@ def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=8)
     ap.add_argument("--out")
+    # M4 4.3 재현용 (2026-09-16, 사례 23). 여기 든 축은 buyStat 이 거부한다 = 장비로만 오른다.
+    # 2026-09-15 실험은 일회용 스크립트였고, 그때 auto_run 이 이 축을 후보에서 안 빼서
+    # "진행이 통째로 막혔다" 가 나왔다. 저장소 스크립트로 재현 가능하게 여기 둔다 (R005 1항).
+    ap.add_argument("--gear-only", default="", help="쉼표로 나눈 축 id — 장비 전용으로 두고 잰다 (예: hp,reg)")
     a = ap.parse_args(argv[1:])
     seeds = list(range(1, a.seeds + 1))
+    gear_only = {x.strip() for x in a.gear_only.split(",") if x.strip()}
+    SP.GEAR_ONLY_STATS = set(gear_only)
+    if gear_only:
+        print("장비 전용 축: %s (능력치 탭에서 못 산다)" % sorted(gear_only))
 
     base, bn, bd, bz = run_once(seeds)
     print("기준(전부 사용) : 구역 30 도달 %s · 완주 %d/%d · 사망 %.0f회"
           % (("%.1f분" % base) if base else "못함", bn, len(seeds), bd))
     rows, dead = [], []
     for s in SP.STATS:
+        if s["id"] in gear_only:
+            rows.append({"축": s["id"], "이름": s["name"], "장비_전용": True})
+            print("%-4s %-8s 장비 전용 — 잠금 대상 아님" % (s["id"], s["name"]))
+            continue
         m, n, d, z = run_once(seeds, lock=s["id"])
         if base and m:
             delta = (m - base) / base * 100

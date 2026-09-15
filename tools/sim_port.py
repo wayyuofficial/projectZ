@@ -955,7 +955,7 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
     # stop_zone 을 주면 그 구역에 닿는 순간 멈추고 **Sim 을 그대로 돌려준다.**
     # 다른 도구가 "구역 z 에 있는 진짜 상태" 를 필요로 할 때 쓴다 (tools/daily_budget.py).
     # 여기서 멈추게 하는 이유: 매수 줄을 도구마다 새로 짜면 **자가 둘이 되어** 갈라진다.
-    # 2026-09-16 에 바로 그 방식으로 8일을 잃었다 (cases/2026-09-16-22).
+    # 2026-09-16 에 바로 그 방식으로 이틀을 잃었다 (cases/2026-09-16-22).
     limit = ZONE_COUNT if stop_zone is None else min(stop_zone, ZONE_COUNT)
     while s.t < max_min * 60 and s.G["zone"] < limit:
         # M4 2 — focus_duty=(켜는 초, 주기 초) 를 주면 **쿨타임을 지키며** 집중 사격을 켠다.
@@ -992,9 +992,18 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
 
                 bid, cheap = None, float("inf")          # 능력치 — 부품
                 for st in STATS:
+                    if st["id"] in GEAR_ONLY_STATS:
+                        continue          # 못 사는 축은 후보도 아니다 — 아래 주석
                     c = s.statCost(st["id"])
                     if c <= s.G["parts"] and c < cheap:
                         cheap, bid = c, st["id"]
+                # **거부당할 후보가 남을 막으면 안 된다.** (2026-09-16 두 번째)
+                # 2026-09-15 4.3 실험은 hp·reg 를 GEAR_ONLY_STATS 로 막고 돌렸는데, 이 루프가
+                # 그 둘을 후보에서 안 뺐다. hp 가 "가장 싼 것" 으로 뽑히면 buyStat 이 False 를 내고
+                # 그 틱의 능력치 매수가 통째로 끝났다 — atk·spd·inc 를 살 수 있는데도.
+                # 그래서 "진행이 통째로 막혔다" 가 나왔다. 통화 버그와 같은 부류다:
+                # 고르는 줄과 결제하는 줄이 어긋나면 가짜 사람이 돈을 쥐고 논다.
+                # 고친 자로 다시 돌리니 헛돈틱 836,040 이 그것을 드러냈다 (cases/2026-09-16-22).
                 if bid and s.buyStat(bid):
                     bought = True
                     # on_buy 를 주면 산 것을 하나씩 알려준다 (tools/upgrade_cadence.py).
@@ -1014,10 +1023,11 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
 
             # **자가 고장 났는지 자기가 센다.** 매수를 끝낸 직후에는 살 수 있는 게
             # 하나도 남아 있으면 안 된다 — 남았다면 이 가짜 사람이 돈을 쥐고 안 쓴 것이다.
-            # 2026-09-16 에 바로 그 일이 8일 동안 조용히 있었다 (cases/2026-09-16-22).
+            # 2026-09-16 에 바로 그 일이 이틀 동안 조용히 있었다 (cases/2026-09-16-22).
             # checks/c22 가 이 수를 읽는다. 여기서 세는 이유는 **매수 줄이 하나뿐이어야**
             # 검사와 도구가 갈라지지 않기 때문이다.
-            if any(s.statCost(st["id"]) <= s.G["parts"] for st in STATS):
+            if any(s.statCost(st["id"]) <= s.G["parts"]
+                   for st in STATS if st["id"] not in GEAR_ONLY_STATS):
                 idle_buy += 1
             else:
                 for w in WEAPON_TYPES:
