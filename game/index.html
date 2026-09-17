@@ -55,6 +55,8 @@ const PALETTE = {
   tabOn: '#2A5257', tabOnInk: '#F2F8F6', tabOff: 'rgba(127,176,178,.06)', tabOffInk: '#7F9495',
   // M5 2.3 — 살 수 있는 줄은 청록 테두리·살짝 밝은 바탕. 못 사는 줄은 dim(위), 장착 중은 equipped(위).
   buyBd: 'rgba(127,176,178,.38)', buyBg: 'rgba(127,176,178,.07)',
+  // M5 3.2 — 좀비 아포칼립스 톤: 녹슨 금속(경계선) · 비네트(가장자리 어둡게). 구역 색상은 drawArena 의 zoneHue 가 올리브↔녹 범위로 묶는다
+  rust: 'rgba(138,75,47,.55)', rustSoft: 'rgba(138,75,47,.28)', vignette: 'rgba(0,0,0,.50)', clear: 'rgba(0,0,0,0)',
   line: 'rgba(127,176,178,0.18)', lineStrong: 'rgba(127,176,178,0.28)', lineFaint: 'rgba(127,176,178,0.08)',
   scrollTrack: 'rgba(127,176,178,0.10)', scrollThumb: 'rgba(127,176,178,0.45)',
   btnLine: 'rgba(127,176,178,.20)', btnLineDim: 'rgba(127,176,178,.10)', onBg: 'rgba(127,176,178,.18)', equippedBg: 'rgba(127,176,178,.12)',
@@ -1374,9 +1376,14 @@ function draw() {
   ctx.restore();
 }
 
+/* M5 3.2 — 구역 색상. 전엔 205 - 구역x13 으로 전 스펙트럼을 돌아 파랑·초록·빨강이 다 나왔다.
+   좀비 아포칼립스 톤으로 **올리브(90°) → 녹슨 갈색(15°)** 범위에 묶는다. 구역마다 2.6° 씩.
+   8차 감사가 잡았던 "인접 구역 RGB 차이 1/255" 는 채도·명도를 구역마다 흔드는 것으로 막는다
+   (적용 전 파이썬으로 30구역 인접 차이를 계산했다 — design-tone-2026-09-17.json). */
+function zoneHue() { return 90 - (G.zone - 1) * 2.6; }
 function drawArena() {
   // 구역마다 색이 눈에 띄게 달라야 한다 (검증자: 인접 구역 차이가 1/255 였다)
-  ctx.fillStyle = 'hsl(' + (205 - G.zone * 13) + ',' + (10 + (G.zone * 2) % 50) + '%,'
+  ctx.fillStyle = 'hsl(' + zoneHue() + ',' + (6 + (G.zone * 2) % 50 * 0.6) + '%,'
     + (8 + (G.zone % 3) * 3) + '%)';
   ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
 
@@ -1385,16 +1392,16 @@ function drawArena() {
   const sky = ctx.createLinearGradient(0, ARENA_TOP, 0, GROUND_Y);
   /* 위쪽 밝기를 4% 로 고정했더니 색상만 달라져도 RGB 로는 구역 6·7 이 완전히 같았다
      (8차 감사). 화면이 길수록 이 영역이 전투 화면 대부분을 먹는다. 밝기도 구역마다 옮긴다. */
-  sky.addColorStop(0, 'hsla(' + (205 - G.zone * 13) + ',' + (26 + (G.zone * 3) % 60) + '%,'
+  sky.addColorStop(0, 'hsla(' + zoneHue() + ',' + (13 + (G.zone * 3) % 60 * 0.5) + '%,'
     + (6 + (G.zone % 4) * 4) + '%,1)');
-  sky.addColorStop(1, 'hsla(' + (205 - G.zone * 13) + ',' + (14 + (G.zone * 3) % 60) + '%,'
+  sky.addColorStop(1, 'hsla(' + zoneHue() + ',' + (7 + (G.zone * 3) % 60 * 0.5) + '%,'
     + (10 + (G.zone % 3) * 2) + '%,1)');
   ctx.fillStyle = sky;
   ctx.fillRect(0, ARENA_TOP, GAME_W, skyH);
 
   // 원경 두 겹 — 높이를 전투 영역에 비례시킨다
   for (const layer of [{ d: 0.62, a: 0.10, off: 17 }, { d: 0.40, a: 0.18, off: 0 }]) {
-    ctx.fillStyle = 'hsla(' + (205 - G.zone * 13) + ',' + (14 + (G.zone * 3) % 60) + '%,'
+    ctx.fillStyle = 'hsla(' + zoneHue() + ',' + (10 + (G.zone * 3) % 60 * 0.5) + '%,'
       + (24 + (G.zone % 2) * 8) + '%,' + layer.a + ')';
     for (let i = 0; i < 10; i++) {
       const bw = 34 + ((i * 37 + G.zone * 13 + layer.off) % 34);
@@ -1402,10 +1409,14 @@ function drawArena() {
       ctx.fillRect(i * 58 - 10 + layer.off, GROUND_Y - bh, bw, bh);
     }
   }
+  // M5 3.2 — 비네트: 가장자리를 어둡게 해 시선을 가운데(생존자·좀비)로. 좀비 없는 상단이 넓어도 평평해 보이지 않는다
+  const vg = ctx.createRadialGradient(GAME_W / 2, (ARENA_TOP + GROUND_Y) / 2, GAME_W * .25, GAME_W / 2, (ARENA_TOP + GROUND_Y) / 2, GAME_W * .85);
+  vg.addColorStop(0, PALETTE.clear); vg.addColorStop(1, PALETTE.vignette);
+  ctx.fillStyle = vg; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
   // 바닥
   ctx.fillStyle = PALETTE.shade30;
   ctx.fillRect(0, GROUND_Y, GAME_W, ARENA_BOT - GROUND_Y);
-  ctx.strokeStyle = PALETTE.lineStrong;
+  ctx.strokeStyle = PALETTE.rust;          // M5 3.2 — 바닥선은 녹슨 금속
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(0, GROUND_Y + .5); ctx.lineTo(GAME_W, GROUND_Y + .5); ctx.stroke();
   ctx.strokeStyle = PALETTE.lineFaint;
@@ -1500,23 +1511,27 @@ function drawArena() {
 function drawHUD() {
   ctx.fillStyle = PALETTE.panel;
   ctx.fillRect(0, 0, GAME_W, ARENA_TOP);
-  ctx.strokeStyle = PALETTE.line;
+  ctx.strokeStyle = PALETTE.rustSoft;      // M5 3.2 — HUD 와 전투의 경계도 녹 빛
   ctx.beginPath(); ctx.moveTo(0, ARENA_TOP - .5); ctx.lineTo(GAME_W, ARENA_TOP - .5); ctx.stroke();
 
+  /* M5 3.1 — 재화 둘을 아이콘과 **한 줄**에. 라벨은 위, 숫자는 같은 기준선(54).
+     설계도는 부품 숫자 오른쪽에 금색으로 — 다른 재화라는 것이 색·아이콘·자리로 보인다.
+     (실기 2026-09-17 의 "설계도 글씨가 막대에 가려짐" 은 막대를 72 로 내려 이미 풀렸다 — 여기서도 68 아래엔 글씨가 없다) */
   ctx.textAlign = 'left';
-  ctx.fillStyle = PALETTE.parts;
+  ctx.font = '600 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  const partsTxt = fmt(G.parts), partsW = ctx.measureText(partsTxt).width;
+  const plansX = 48 + partsW + 22;
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('부품', 24, 26);
-  // M5 2.1 — 재화마다 아이콘. 부품 = 청록 톱니, 설계도 = 금색 도면
+  ctx.fillStyle = PALETTE.parts;  ctx.fillText('부품', 24, 26);
+  ctx.fillStyle = PALETTE.plans;  ctx.fillText('설계도', plansX, 26);
   drawIcon('c:parts', 33, 45, 18, PALETTE.parts);
   ctx.fillStyle = PALETTE.ink;
   ctx.font = '600 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(fmt(G.parts), 48, 54);
-  drawIcon('c:plans', 31, 64, 12, PALETTE.plans);
+  ctx.fillText(partsTxt, 48, 54);
+  drawIcon('c:plans', plansX + 8, 45, 14, PALETTE.plans);
   ctx.fillStyle = PALETTE.plans;   // M3 5: 설계도 — 무기 전용 재화
-  ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('설계도 ' + fmt(G.plans), 42, 68);   /* 실기 2026-09-17: 단계 막대에 가려져 안 보였다 — 막대를 72 로 내리고 글씨를 68 로 */
+  ctx.font = '600 18px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText(fmt(G.plans), plansX + 20, 54);
 
   ctx.textAlign = 'right';
   ctx.fillStyle = PALETTE.parts;
@@ -1563,7 +1578,7 @@ function drawHUD() {
 function drawPanelBg() {
   ctx.fillStyle = PALETTE.panel;
   ctx.fillRect(0, ARENA_BOT, GAME_W, GAME_H - ARENA_BOT);
-  ctx.strokeStyle = PALETTE.line;
+  ctx.strokeStyle = PALETTE.rustSoft;      // M5 3.2 — 전투와 패널의 경계도 녹 빛
   ctx.beginPath(); ctx.moveTo(0, ARENA_BOT + .5); ctx.lineTo(GAME_W, ARENA_BOT + .5); ctx.stroke();
 
   if (offlineReport) return;
