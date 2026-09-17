@@ -53,6 +53,8 @@ const PALETTE = {
   panel0: '#070B0D', panel2: '#121C1F', edge: 'rgba(127,176,178,0.26)', edgeSoft: 'rgba(127,176,178,0.12)',
   // M5 1.3 — 탭: 선택은 채운 배경, 나머지는 낮춘 명도
   tabOn: '#2A5257', tabOnInk: '#F2F8F6', tabOff: 'rgba(127,176,178,.06)', tabOffInk: '#7F9495',
+  // M5 2.3 — 살 수 있는 줄은 청록 테두리·살짝 밝은 바탕. 못 사는 줄은 dim(위), 장착 중은 equipped(위).
+  buyBd: 'rgba(127,176,178,.38)', buyBg: 'rgba(127,176,178,.07)',
   line: 'rgba(127,176,178,0.18)', lineStrong: 'rgba(127,176,178,0.28)', lineFaint: 'rgba(127,176,178,0.08)',
   scrollTrack: 'rgba(127,176,178,0.10)', scrollThumb: 'rgba(127,176,178,0.45)',
   btnLine: 'rgba(127,176,178,.20)', btnLineDim: 'rgba(127,176,178,.10)', onBg: 'rgba(127,176,178,.18)', equippedBg: 'rgba(127,176,178,.12)',
@@ -1216,17 +1218,17 @@ function buildButtons() {
       if (sl.id === 'weapon') {
         const w = weaponOf(G.weapon);
         putRow({ label: sl.name + ' · ' + (w ? w.name : '-'),
-                 sub: '무기 탭에서 바꾼다', cost: null, enabled: false, tone: 'ghost', onTap: () => false });
+                 sub: '무기 탭에서 바꾼다', cost: null, enabled: false, tone: 'ghost', icon: w ? 'w:' + w.shape : 'g:weapon', onTap: () => false });
         return;
       }
       putRow({ label: sl.name + ' · ' + (g ? gearName(g) : '비었다'),
                sub: g ? g.affixes.map((a) => affixText(a)).join('   ') : '장비가 떨어지면 자동으로 채워진다',
-               cost: null, enabled: false, tone: g ? 'equipped' : 'ghost',
+               cost: null, enabled: false, tone: g ? 'equipped' : 'ghost', icon: 'g:' + sl.id,
                tint: g ? tierTint(PALETTE.gearTint, g.tier) : null, onTap: () => false });
     });
     const bag = (G.bag || []).slice().sort((a, b) => gearScore(b) - gearScore(a));
     if (!bag.length) {
-      putRow({ label: '가방이 비었다', sub: '단계를 깨면 장비가 떨어진다', cost: null, enabled: false, tone: 'ghost', onTap: () => false });
+      putRow({ label: '가방이 비었다', sub: '단계를 깨면 장비가 떨어진다', cost: null, enabled: false, tone: 'ghost', icon: 'd:supply', onTap: () => false });
     }
     bag.forEach((g) => {
       const i = G.bag.indexOf(g);
@@ -1234,14 +1236,14 @@ function buildButtons() {
       const better = gearScore(g) > gearScore(cur);
       putRow({ label: gearName(g) + (better ? '  ▲' : ''),
                sub: g.affixes.map((a) => affixText(a)).join('   ') + '   ·   팔면 ' + fmt(gearSellPrice(g)),
-               cost: null, enabled: true, tone: better ? 'buy' : 'off',
+               cost: null, enabled: true, tone: better ? 'buy' : 'off', icon: 'g:' + g.slot,
                tint: tierTint(PALETTE.gearTint, g.tier),
                onTap: () => equipGear(i) });
     });
   } else if (tab === 'daily') {
     // M4 1 — 접속 보상 상태 · 과제 3개 · 보급 상자
     putRow({ label: '접속 ' + ((G.login && G.login.streak) || 0) + ' / ' + LOGIN_DAYS + '일',
-             sub: '자정에 하나씩. 하루 빠지면 처음부터', cost: null, enabled: false, tone: 'ghost',
+             sub: '자정에 하나씩. 하루 빠지면 처음부터', cost: null, enabled: false, tone: 'ghost', icon: 'd:login',
              onTap: () => false });
     QUEST_DEFS.forEach((q) => {
       const cur = Math.min(q.need, (G.quest && G.quest[q.id]) || 0);
@@ -1250,23 +1252,23 @@ function buildButtons() {
       putRow({ label: q.name,
                sub: taken ? '받았다' : cur + ' / ' + q.need + '  · ' + band + (cur >= q.need ? '   눌러서 받기' : ''),
                cost: null, enabled: !taken && cur >= q.need,
-               tone: taken ? 'ghost' : (cur >= q.need ? 'buy' : 'off'),
+               tone: taken ? 'ghost' : (cur >= q.need ? 'buy' : 'off'), icon: 'd:quest',
                onTap: () => takeQuest(q.id) });
     });
     putRow({ label: '보급 상자', sub: '열쇠 ' + (G.keys || 0) + ' / ' + KEY_MAX + '   자정에 채워진다',
-             cost: null, enabled: (G.keys || 0) > 0, tone: (G.keys || 0) > 0 ? 'buy' : 'off',
+             cost: null, enabled: (G.keys || 0) > 0, tone: (G.keys || 0) > 0 ? 'buy' : 'off', icon: 'd:supply',
              onTap: () => openSupply() });
     /* 테스트용 저장 지우기 (사람 요청 2026-09-17). 실수로 못 지우게 **5초 안에 두 번** 눌러야 한다.
        디자인이 끝나면 숨기거나 뺀다 — 그때 이 줄과 포트 거울(buildButtons)의 reset 행을 같이 지운다. */
     const armed = resetArmAt && (performance.now() - resetArmAt) < RESET_CONFIRM_MS;
     putRow({ label: '저장 지우기 (테스트)', sub: armed ? '정말? 5초 안에 한 번 더 누르면 처음부터' : '두 번 눌러야 지워진다',
-             cost: null, enabled: true, tone: armed ? 'ad' : 'ghost', onTap: () => resetSave() });
+             cost: null, enabled: true, tone: armed ? 'ad' : 'ghost', icon: 'd:reset', onTap: () => resetSave() });
   } else if (tab === 'stat') {
     STATS.filter((s) => !s.gearOnly).forEach((s) => {   // M4 4.3: 장비 전용 축은 줄이 없다
       const cost = statCost(s.id), val = statOf(s.id);
       putRow({ label: s.name + '  Lv.' + (G.lv[s.id] || 0),
                sub: fmt(val) + s.unit + '  ▸  ' + fmt(val * s.growth) + s.unit,
-               cost: cost, enabled: G.parts >= cost, tone: 'buy',
+               cost: cost, enabled: G.parts >= cost, tone: 'buy', icon: 's:' + s.id, costKind: 'parts',   // M5 2.1·2.2
                onTap: () => buyStat(s.id) });
     });
   } else {
@@ -1275,7 +1277,7 @@ function buildButtons() {
       if (!weaponUnlocked(w)) {
         // 다음 해금 무기 하나만 잠긴 줄로 보여 준다 — 눌리지 않는다 (enabled false)
         if (!lockedShown) { lockedShown = true;
-          putRow({ label: '???', sub: '구역 ' + w.unlock + ' 도달 시 해금', cost: null, enabled: false, tone: 'ghost', wid: w.id, onTap: () => false }); }
+          putRow({ label: '???', sub: '구역 ' + w.unlock + ' 도달 시 해금', cost: null, enabled: false, tone: 'ghost', wid: w.id, icon: 'lock', onTap: () => false }); }
         return;
       }
       const tier = G.owned[w.id] || 0;
@@ -1290,7 +1292,7 @@ function buildButtons() {
                                  ? (G.plans >= cost ? '강화 · 설계도 ' + fmt(cost) : '강화 — 설계도 ' + fmt(cost - G.plans) + ' 더 필요')
                                  : '장착 · 한 번 더 누르면 강화')
                             : (G.plans >= cost ? '해금 · 설계도 ' + fmt(cost) : '해금 — 설계도 ' + fmt(cost - G.plans) + ' 더 필요')),
-               cost: maxed ? null : cost,
+               cost: maxed ? null : cost, icon: 'w:' + w.shape, costKind: 'plans',   // M5 2.1·2.2: 무기 값은 설계도
                /* 가진 무기는 언제나 눌린다 — 장착 전환. 지시 #70 실기: 다음 등급을 못 사면 줄이 죽어서
                   실수로 약한 무기를 고르면 돈이 모일 때까지 되돌릴 수 없었다. */
                enabled: tier > 0 || (!maxed && G.plans >= cost),
@@ -1505,12 +1507,16 @@ function drawHUD() {
   ctx.fillStyle = PALETTE.parts;
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText('부품', 24, 26);
+  // M5 2.1 — 재화마다 아이콘. 부품 = 청록 톱니, 설계도 = 금색 도면
+  drawIcon('c:parts', 33, 45, 18, PALETTE.parts);
   ctx.fillStyle = PALETTE.ink;
   ctx.font = '600 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText(fmt(G.parts), 24, 54);
+  ctx.textAlign = 'left';
+  ctx.fillText(fmt(G.parts), 48, 54);
+  drawIcon('c:plans', 31, 64, 12, PALETTE.plans);
   ctx.fillStyle = PALETTE.plans;   // M3 5: 설계도 — 무기 전용 재화
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('설계도 ' + fmt(G.plans), 24, 68);   /* 실기 2026-09-17: 단계 막대에 가려져 안 보였다 — 막대를 72 로 내리고 글씨를 68 로 */
+  ctx.fillText('설계도 ' + fmt(G.plans), 42, 68);   /* 실기 2026-09-17: 단계 막대에 가려져 안 보였다 — 막대를 72 로 내리고 글씨를 68 로 */
 
   ctx.textAlign = 'right';
   ctx.fillStyle = PALETTE.parts;
@@ -1605,6 +1611,44 @@ function drawIcon(kind, cx, cy, s, color) {
   } else if (kind === 'daily') {               // 해 (원 + 빛살)
     ctx.beginPath(); ctx.arc(0, 0, h * .42, 0, Math.PI * 2); ctx.fill();
     for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; ctx.beginPath(); ctx.moveTo(Math.cos(a) * h * .62, Math.sin(a) * h * .62); ctx.lineTo(Math.cos(a) * h, Math.sin(a) * h); ctx.stroke(); }
+  /* M5 2.1 — 재화. 부품 = 톱니, 설계도 = 도면(줄 있는 종이). 색은 부르는 쪽이 준다 */
+  } else if (kind === 'c:parts') {
+    ctx.beginPath(); ctx.arc(0, 0, h * .55, 0, Math.PI * 2); ctx.stroke();
+    for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; ctx.fillRect(Math.cos(a) * h * .75 - 1.5, Math.sin(a) * h * .75 - 1.5, 3, 3); }
+    ctx.beginPath(); ctx.arc(0, 0, h * .2, 0, Math.PI * 2); ctx.fill();
+  } else if (kind === 'c:plans') {
+    ctx.strokeRect(-h * .6 + .5, -h + .5, h * 1.2, s - 1);
+    for (let i = 0; i < 3; i++) ctx.fillRect(-h * .35, -h * .45 + i * h * .45, h * .7, 1.5);
+  /* M5 2.2 — 능력치 */
+  } else if (kind === 's:atk') {               // 칼날 하나
+    ctx.beginPath(); ctx.moveTo(-h + 2, h - 2); ctx.lineTo(h - 2, -h + 2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-h + 2, h - 6); ctx.lineTo(-h + 6, h - 2); ctx.stroke();
+  } else if (kind === 's:spd') {               // 겹친 화살촉
+    for (const dx of [-h * .45, h * .15]) { ctx.beginPath(); ctx.moveTo(dx - h * .3, -h * .7); ctx.lineTo(dx + h * .3, 0); ctx.lineTo(dx - h * .3, h * .7); ctx.stroke(); }
+  } else if (kind === 's:inc') {               // 동전 더미
+    for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.ellipse(0, h * .55 - i * h * .45, h * .7, h * .28, 0, 0, Math.PI * 2); ctx.stroke(); }
+  /* M5 2.2 — 무기 모양 (전투 화면의 무기 그리기를 작게) */
+  } else if (kind === 'w:bar')      { ctx.fillRect(-h + 2, -2, s - 4, 4);
+  } else if (kind === 'w:long')     { ctx.fillRect(-h, -1.5, s, 3); ctx.fillRect(-h, -4, h * .4, 8);
+  } else if (kind === 'w:wide')     { ctx.fillRect(-h, -4, s, 8);
+  } else if (kind === 'w:nozzle')   { ctx.fillRect(-h, -2, s * .6, 4); ctx.beginPath(); ctx.moveTo(h * .2, -5); ctx.lineTo(h, 0); ctx.lineTo(h * .2, 5); ctx.closePath(); ctx.fill();
+  } else if (kind === 'w:cross')    { ctx.fillRect(-h, -2, s, 4); ctx.fillRect(-2, -h, 4, s * .8);
+  } else if (kind === 'w:disc')     { ctx.beginPath(); ctx.arc(0, 0, h * .7, 0, Math.PI * 2); ctx.fill();
+  } else if (kind === 'w:twin')     { ctx.fillRect(-h, -5, s, 3); ctx.fillRect(-h, 2, s, 3); ctx.fillRect(-h - 1, -7, 4, 14);
+  } else if (kind === 'w:launcher') { ctx.fillRect(-h, -5, s * .75, 10); ctx.fillRect(h * .5, -8, 4, 16);
+  } else if (kind === 'w:saw')      { ctx.fillRect(-h, -1, s, 5); for (let i = 0; i < 5; i++) ctx.fillRect(-h + 1 + i * (s / 5), -5, 2.5, 4);
+  } else if (kind === 'w:rail')     { ctx.fillRect(-h, -1, s, 2.5); ctx.fillRect(-h * .5, -5, 3, 10); ctx.fillRect(h * .3, -5, 3, 10);
+  } else if (kind === 'lock')       { ctx.strokeRect(-h * .55 + .5, -h * .1 + .5, h * 1.1, h); ctx.beginPath(); ctx.arc(0, -h * .2, h * .4, Math.PI, 0); ctx.stroke();
+  /* M5 2.2 — 장비 부위 */
+  } else if (kind === 'g:head')  { ctx.beginPath(); ctx.arc(0, h * .1, h * .7, Math.PI, 0); ctx.lineTo(h * .7, h * .5); ctx.lineTo(-h * .7, h * .5); ctx.closePath(); ctx.stroke();
+  } else if (kind === 'g:body')  { ctx.beginPath(); ctx.moveTo(-h * .6, -h * .7); ctx.lineTo(h * .6, -h * .7); ctx.lineTo(h * .8, -h * .2); ctx.lineTo(h * .5, h * .8); ctx.lineTo(-h * .5, h * .8); ctx.lineTo(-h * .8, -h * .2); ctx.closePath(); ctx.stroke();
+  } else if (kind === 'g:hands') { ctx.strokeRect(-h * .5 + .5, -h * .3 + .5, h, h * 1.1); for (let i = 0; i < 3; i++) ctx.fillRect(-h * .4 + i * h * .35, -h * .8, 3, h * .5);
+  } else if (kind === 'g:feet')  { ctx.beginPath(); ctx.moveTo(-h * .4, -h * .8); ctx.lineTo(h * .2, -h * .8); ctx.lineTo(h * .2, h * .1); ctx.lineTo(h * .9, h * .5); ctx.lineTo(h * .9, h * .8); ctx.lineTo(-h * .4, h * .8); ctx.closePath(); ctx.stroke();
+  } else if (kind === 'g:weapon') { ctx.fillRect(-h, -2, s, 4);
+  /* M5 2.2 — 일일 */
+  } else if (kind === 'd:login')  { ctx.strokeRect(-h * .7 + .5, -h * .6 + .5, h * 1.4, h * 1.3); ctx.fillRect(-h * .7, -h * .6, h * 1.4, 4); ctx.fillRect(-h * .3, -h * .1, 3, 3); ctx.fillRect(h * .1, -h * .1, 3, 3);
+  } else if (kind === 'd:quest')  { ctx.strokeRect(-h * .7 + .5, -h * .7 + .5, h * 1.4, h * 1.4); ctx.beginPath(); ctx.moveTo(-h * .4, 0); ctx.lineTo(-h * .1, h * .35); ctx.lineTo(h * .45, -h * .35); ctx.stroke();
+  } else if (kind === 'd:supply') { ctx.strokeRect(-h * .7 + .5, -h * .4 + .5, h * 1.4, h * 1.1); ctx.fillRect(-h * .7, -h * .4, h * 1.4, 3); ctx.fillRect(-1.5, -h * .4, 3, h * 1.1);
+  } else if (kind === 'd:reset')  { ctx.strokeRect(-h * .5 + .5, -h * .3 + .5, h, h * 1.1); ctx.fillRect(-h * .7, -h * .5, h * 1.4, 3); ctx.fillRect(-h * .2, -h * .75, h * .4, 3);
   }
   ctx.restore();
 }
@@ -1620,13 +1664,19 @@ function drawButtons() {
     else if (b.tone === 'ad') { bg = PALETTE.adBg; bd = PALETTE.gold; fg = PALETTE.goldInk; }
     else if (b.tone === 'equipped') { bg = PALETTE.equippedBg; bd = PALETTE.parts; }
     else if (b.tone === 'ghost') { bg = PALETTE.ghostBg; fg = PALETTE.ink2; }
+    // M5 2.3 — 살 수 있는 줄(buy, 눌림)은 청록 테두리·살짝 밝은 바탕. 탭은 위에서 따로.
+    if (b.tone === 'buy' && b.enabled !== false) { bg = PALETTE.buyBg; bd = PALETTE.buyBd; }
     if (b.enabled === false) { fg = PALETTE.dim; bd = PALETTE.btnLineDim; bg = PALETTE.disabledBg; }
 
     ctx.fillStyle = bg; rr(b.x, b.y, b.w, b.h, 8); ctx.fill();
     ctx.strokeStyle = bd; ctx.lineWidth = 1; rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 8); ctx.stroke();
     if (b.tint) { ctx.fillStyle = b.tint; rr(b.x + 8, b.y + 8, 6, b.h - 16, 3); ctx.fill(); }
 
-    const tx = b.x + (b.tint ? 22 : 14);
+    // M5 2.2 — 목록 줄(sub 가 있는 줄)은 왼쪽에 아이콘. 등급 띠(tint)가 있으면 그 오른쪽에.
+    const rowIcon = b.sub && b.icon;
+    const ix = b.x + (b.tint ? 22 : 14) + 11;
+    if (rowIcon) drawIcon(b.icon, ix, b.y + b.h / 2, 22, b.enabled === false ? PALETTE.dim2 : (b.tone === 'ghost' ? PALETTE.ink3 : fg));
+    const tx = b.x + (b.tint ? 22 : 14) + (rowIcon ? 30 : 0);
     ctx.fillStyle = fg;
     ctx.font = '600 15px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
     if (b.sub) {
@@ -1649,10 +1699,15 @@ function drawButtons() {
     }
 
     if (b.cost != null) {
+      // M5 2.1 — 값은 재화 색 + 재화 아이콘. 부품 청록, 설계도 금색 (전엔 둘 다 금색이라 구분이 안 됐다 — 지시 #111)
+      const kind = b.costKind === 'plans' ? 'c:plans' : 'c:parts';
+      const col = b.enabled === false ? PALETTE.dim : (kind === 'c:plans' ? PALETTE.plans : PALETTE.parts);
       ctx.textAlign = 'right';
-      ctx.fillStyle = b.enabled === false ? PALETTE.dim : PALETTE.gold;
+      ctx.fillStyle = col;
       ctx.font = '600 14px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-      ctx.fillText(fmt(b.cost), b.x + b.w - 14, b.y + b.h / 2 + 5);
+      const cs = fmt(b.cost), cw = ctx.measureText(cs).width;
+      ctx.fillText(cs, b.x + b.w - 14, b.y + b.h / 2 + 5);
+      drawIcon(kind, b.x + b.w - 14 - cw - 12, b.y + b.h / 2, 14, col);
     }
     if (b.clip) ctx.restore();
   }

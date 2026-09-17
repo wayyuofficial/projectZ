@@ -1,0 +1,67 @@
+{
+  "측정일": "2026-09-17",
+  "대상": "M5 2.1 재화 아이콘·색 · 2.2 줄 아이콘 · 2.3 줄 상태 — 브라우저 375x812",
+  "빌드도장": "ec2a160b220f15bb",
+  "방법": "로컬 HTTP. 게임 함수로 상태(구역 14, 무기 3종, 장비 4개, 과제 진행)를 세우고 탭마다 buildButtons() 뒤 목록 줄(sub 있는 줄)을 셌다. 넘침은 measureText 로 '왼쪽 여백+아이콘 + max(제목,부제) + 값+재화 아이콘 ≤ 줄 폭' 을 계산. 값은 브라우저가 낸 그대로.",
+  "탭별_줄": {
+    "stat": {
+      "n": 3,
+      "icons": 3,
+      "overflow": 0,
+      "kinds": [
+        "s:atk",
+        "s:spd",
+        "s:inc"
+      ]
+    },
+    "weapon": {
+      "n": 5,
+      "icons": 5,
+      "overflow": 0,
+      "kinds": [
+        "w:bar",
+        "w:long",
+        "w:wide",
+        "w:nozzle",
+        "w:cross"
+      ]
+    },
+    "gear": {
+      "n": 5,
+      "icons": 5,
+      "overflow": 0,
+      "kinds": [
+        "w:long",
+        "g:head",
+        "g:body",
+        "g:hands",
+        "g:feet"
+      ]
+    },
+    "daily": {
+      "n": 5,
+      "icons": 5,
+      "overflow": 0,
+      "kinds": [
+        "d:login",
+        "d:quest",
+        "d:quest",
+        "d:quest",
+        "d:supply"
+      ]
+    }
+  },
+  "글자_넘침_합": 0,
+  "재화": {
+    "부품": "청록(PALETTE.parts) 톱니 — HUD 큰 숫자 왼쪽, 능력치 값 왼쪽",
+    "설계도": "금색(PALETTE.plans) 도면 — HUD 둘째 줄, 무기 값 왼쪽"
+  },
+  "줄_상태": {
+    "살_수_있음(buy·enabled)": "청록 테두리(buyBd)·살짝 밝은 바탕(buyBg)",
+    "못_삼(enabled false)": "dim 글자·btnLineDim 테두리·disabledBg",
+    "장착_중(equipped)": "equippedBg·parts 테두리(기존)"
+  },
+  "불변": "버튼 자리·크기·tone 값 그대로 — 거울 리실 55개, c16 OK",
+  "못_잰_것": "'구분된다' 는 사람 눈 — 실기-2. 스크린샷 4장은 대화에만 있다(파일로 못 남김).",
+  "판정하지_않는다": "판정은 검증자·사람 몫이다."
+}
