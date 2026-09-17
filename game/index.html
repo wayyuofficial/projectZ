@@ -333,7 +333,7 @@ let GAME_ASP = GAME_W / GAME_H;
 const MAX_BACK_W = 2160;
 
 const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
+let ctx = canvas.getContext('2d');
 let cssW = 0, cssH = 0, backW = 0, backH = 0, dpr = 1;
 
 function fitGame() {
@@ -1410,9 +1410,13 @@ function drawArena() {
     }
   }
   // M5 3.2 — 비네트: 가장자리를 어둡게 해 시선을 가운데(생존자·좀비)로. 좀비 없는 상단이 넓어도 평평해 보이지 않는다
-  const vg = ctx.createRadialGradient(GAME_W / 2, (ARENA_TOP + GROUND_Y) / 2, GAME_W * .25, GAME_W / 2, (ARENA_TOP + GROUND_Y) / 2, GAME_W * .85);
-  vg.addColorStop(0, PALETTE.clear); vg.addColorStop(1, PALETTE.vignette);
-  ctx.fillStyle = vg; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
+  // M5 4.1 — 그라데이션은 배치(GROUND_Y)가 같으면 다시 안 만든다
+  if (!vignetteCache || vignetteCache.gy !== GROUND_Y) {
+    const vg = ctx.createRadialGradient(GAME_W / 2, (ARENA_TOP + GROUND_Y) / 2, GAME_W * .25, GAME_W / 2, (ARENA_TOP + GROUND_Y) / 2, GAME_W * .85);
+    vg.addColorStop(0, PALETTE.clear); vg.addColorStop(1, PALETTE.vignette);
+    vignetteCache = { gy: GROUND_Y, vg: vg };
+  }
+  ctx.fillStyle = vignetteCache.vg; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
   // 바닥
   ctx.fillStyle = PALETTE.shade30;
   ctx.fillRect(0, GROUND_Y, GAME_W, ARENA_BOT - GROUND_Y);
@@ -1611,7 +1615,26 @@ function drawPanelBg() {
 
 /* M5 1.3 — 단색 아이콘. 글자 없이도 무엇인지 알게 한다 (사람 제보: "메뉴가 텍스트뿐이라 가시성이 안 좋다").
    canvas 경로만 쓴다 — 이모지는 기기마다 모양·색이 달라 통일감이 깨진다. 크기 s 는 한 변. */
+/* M5 4.1 — 아이콘 캐시. 한 프레임에 아이콘이 20개 넘게 그려지고 전부 경로(arc·stroke)라,
+   폰(DPR 4)에서 매 프레임 다시 그리면 fps 가 샌다. (종류, 크기, 색, DPR) 마다 한 번만 그려 두고 drawImage 로 찍는다.
+   본체 drawIconPath 는 그대로 — 캐시는 그 결과를 저장할 뿐 모양을 바꾸지 않는다. */
+const iconCache = new Map();
+let vignetteCache = null;
 function drawIcon(kind, cx, cy, s, color) {
+  const dpr = (typeof backW === 'number' && typeof cssW === 'number' && cssW > 0) ? backW / cssW : (window.devicePixelRatio || 1);
+  const key = kind + '|' + s + '|' + color + '|' + dpr.toFixed(2);
+  let c = iconCache.get(key);
+  if (!c) {
+    const pad = 4, px = Math.ceil((s + pad * 2) * dpr);
+    c = document.createElement('canvas'); c.width = px; c.height = px;
+    const g = c.getContext('2d'); g.scale(dpr, dpr);
+    const saved = ctx; ctx = g;                 // drawIconPath 는 전역 ctx 에 그린다 — 잠깐 바꿔 끼운다
+    try { drawIconPath(kind, s / 2 + pad, s / 2 + pad, s, color); } finally { ctx = saved; }
+    c._pad = pad; iconCache.set(key, c);
+  }
+  ctx.drawImage(c, cx - s / 2 - c._pad, cy - s / 2 - c._pad, s + c._pad * 2, s + c._pad * 2);
+}
+function drawIconPath(kind, cx, cy, s, color) {
   const h = s / 2;
   ctx.save(); ctx.translate(cx, cy); ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   if (kind === 'stat') {                       // 오르는 막대 셋
