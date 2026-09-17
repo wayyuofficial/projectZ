@@ -6,7 +6,7 @@
 
 실행: python tools/selftest_checks.py
 """
-import io, os, re, sys, glob, time, shutil, importlib.util
+import json, io, os, re, sys, glob, time, shutil, importlib.util
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -180,6 +180,12 @@ def main():
         w(p, '{"구역별": [{"구역": 1, "매수_횟수_중앙": 5, "간격_초_중앙": 30.0}, {"구역": 2, "매수_횟수_중앙": 1, "간격_초_중앙": 12.0}], "매수_3회_미만_구역": [2]}')
         os.utime(p, (_future, _future)); made.append(p)
 
+        # c23: 같은 도장·같은 시드인데 기준선이 다른 기록 둘을 심는다 — warn 이 나야 한다 (2026-09-17, R008)
+        for name, field, val in (("sell-share-_selftest.json", "구역30_도달_중앙_분", 100.0),
+                                 ("focus-_selftest.json", "안누름_분", 150.0)):
+            p = os.path.join(ROOT, "measurements", name)
+            w(p, json.dumps({"빌드도장": "selftest00000000", "시드": [1, 2, 3], field: val}, ensure_ascii=False)); made.append(p)
+
         # c22: **자를 고장 낸다.** 2026-09-16 에 실제로 있던 어긋남을 그대로 되살린다 —
         # 무기 값을 설계도가 아니라 부품과 견주게 한다. 그러면 못 살 무기가 "가장 싼 것" 으로
         # 뽑혀 매수 틱이 멈추고, 살 수 있는 것을 쥔 채 지나간다. fail 이 나야 한다.
@@ -222,6 +228,7 @@ def main():
             ("c20_request_matches_criterion.py", ("fail",)),
             ("c21_upgrade_cadence.py", ("warn",)),
             ("c22_buyer_not_hoarding.py", ("fail",)),
+            ("c23_baseline_agree.py", ("warn",)),
         ]
 
         bad = []

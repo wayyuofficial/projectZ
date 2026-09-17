@@ -57,6 +57,9 @@ def main(argv):
     a = ap.parse_args(argv[1:])
     seeds = list(range(1, a.seeds + 1))
     gear_only = {x.strip() for x in a.gear_only.split(",") if x.strip()}
+    # 2026-09-17: 원본이 gearOnly 를 갖게 됐다(4.3 (a)). 옵션 없이도 원본 것은 잠금 대상이 아니다 —
+    # 못 사는 축을 잠가 봐야 0% 가 나와 "없어도 되는 축" 으로 잘못 찍힌다 (같은 날 실제로 그랬다).
+    gear_only |= set(SP.GEAR_ONLY_STATS)
     SP.GEAR_ONLY_STATS = set(gear_only)
     if gear_only:
         print("장비 전용 축: %s (능력치 탭에서 못 산다)" % sorted(gear_only))

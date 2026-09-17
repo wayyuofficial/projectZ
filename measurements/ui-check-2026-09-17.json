@@ -1,0 +1,17 @@
+{
+  "측정일": "2026-09-17",
+  "대상": "4.3(a) 장비 전용 축 · 1.2(a) 시간대 과제가 게임 함수에서 실제로 그렇게 도는지 — 브라우저",
+  "빌드도장": "260c066247c4ff71",
+  "방법": "로컬 HTTP 로 게임을 열고 게임 함수를 그대로 불렀다. freshState() 뒤 parts·plans 를 넉넉히 주고 buyStat / questProgress / questOpen 을 직접 호출.",
+  "결과": {
+    "hp_gearOnly": true, "reg_gearOnly": true,
+    "buy_hp": false, "buy_reg": false, "buy_atk": true,
+    "lv_after": {"atk": 1, "spd": 0, "hp": 0, "reg": 0, "inc": 0},
+    "bands": ["zone:0", "up:1", "stage:2"],
+    "hour": 12, "band_now": 0, "open_ids": ["zone"],
+    "quest_after_5each": {"zone": 5, "up": 0, "stage": 0}
+  },
+  "읽기": "장비 전용 축은 돈이 있어도 못 산다(atk 는 산다). 로컬 12시엔 시간대 0(06~14) 만 열려 있어 세 과제에 5씩 넣어도 zone 에만 쌓인다 — 시간대 게이트가 선다.",
+  "못_잰_것": "능력치 탭에 hp·reg 줄이 안 그려지는지는 이 방법으로 못 봤다 — buildButtons 의 행 배열이 window 에 안 실린다. 그 경로는 포트 거울(buildButtons, c16)과 tap_check 가 덮는다. 눈으로 보는 것은 실기 묶음.",
+  "판정하지_않는다": "판정은 검증자·사람 몫이다."
+}

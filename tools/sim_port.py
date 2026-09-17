@@ -64,8 +64,8 @@ def table(name):
     out = []
     for row in re.finditer(r"\{([^{}]*)\}", m.group(1)):
         d = {}
-        for k, v in re.findall(r"(\w+)\s*:\s*('[^']*'|\"[^\"]*\"|-?[\d.]+)", row.group(1)):
-            d[k] = v[1:-1] if v[0] in "'\"" else float(v)
+        for k, v in re.findall(r"(\w+)\s*:\s*('[^']*'|\"[^\"]*\"|-?[\d.]+|true|false)", row.group(1)):
+            d[k] = v[1:-1] if v[0] in "'\"" else (v == "true" if v in ("true", "false") else float(v))
         out.append(d)
     return out
 
@@ -89,17 +89,12 @@ AUTOSELL_ZONE = int(num("AUTOSELL_ZONE"))
 GEAR_SLOT_IDS = ["weapon", "head", "body", "hands", "feet"]
 AFFIX_IDS = ["hp", "reg", "atk", "spd", "inc"]
 AFFIX_PER = {"hp": 0.18, "reg": 0.15, "atk": 0.10, "spd": 0.08, "inc": 0.09}
-GEAR_ONLY_STATS = set()   # M4 4.3 을 되돌렸다 — 원본과 같이 비어 있다 (게임 주석에 이유를 적었다)
 KEY_MAX = int(num("KEY_MAX"))
 SUPPLY_SHARE = num("SUPPLY_SHARE")
 LOGIN_DAYS = int(num("LOGIN_DAYS"))
 DAY_MS = int(num("DAY_MS"))
 LOGIN_SHARES = [float(x) for x in re.search(
     r"const\s+LOGIN_SHARES\s*=\s*\[([^\]]*)\]", SRC).group(1).replace(" ", "").split(",") if x]
-QUEST_SHARES = {m.group(1): float(m.group(2)) for m in re.finditer(
-    r"id:\s*'(\w+)'[^}]*?share:\s*([\d.]+)", SRC)}
-QUEST_DEFS_IDS = ["zone", "up", "stage"]
-QUEST_NEEDS = {"zone": 3, "up": 20, "stage": 30}   # 원본 QUEST_DEFS 의 need. 바뀌면 여기도 바꾼다
 DAILY_BUDGET = num("DAILY_BUDGET")
 BP_RATIO = num("BP_RATIO")
 BP_STAGE_SHARE = num("BP_STAGE_SHARE")
@@ -142,6 +137,15 @@ MIN_TAP_CSS = num("MIN_TAP_CSS")
 
 STATS = table("STATS")
 WEAPON_TYPES = table("WEAPON_TYPES")
+# M4 4.3 (a) 2026-09-17 — 장비로만 오르는 축. **원본의 gearOnly 에서 읽는다.** 여기 손으로 적으면
+# 원본과 갈라진다 (사례 23: 한 개념이 두 곳에 있으면 한 곳은 남는다).
+GEAR_ONLY_STATS = {s["id"] for s in STATS if s.get("gearOnly")}
+# M4 1.2 (a) 2026-09-17 — 과제도 원본 표에서 읽는다. 전에는 need 를 손으로 베껴 두고 "바뀌면 여기도" 라고 적었다.
+QUEST_DEFS = table("QUEST_DEFS")
+QUEST_DEFS_IDS = [q["id"] for q in QUEST_DEFS]
+QUEST_NEEDS = {q["id"]: int(q["need"]) for q in QUEST_DEFS}
+QUEST_SHARES = {q["id"]: float(q["share"]) for q in QUEST_DEFS}
+QUEST_BANDS = [int(x) for x in re.search(r"const\s+QUEST_BANDS\s*=\s*\[([^\]]*)\]", SRC).group(1).replace(" ", "").split(",") if x]
 
 
 # ── 원본 함수 본문을 그대로 떠서 해시한다 ─────────────────────────────
@@ -179,8 +183,8 @@ MIRRORED = {
     "applyOffline": "22e6b2208ac61edc",
     "attacksPerSec": "62c1a324deffd5c2",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "1a8cc75732aa03dd",
-    "buyStat": "d3f8bb96c8695d01",
+    "buildButtons": "8d2a997905d62c0e",
+    "buyStat": "55e7f37e19e75aee",
     "buyWeapon": "e58bfe7e010aeddb",
     "dailyBudget": "51f1b98162132ed0",
     "damageZombie": "9dfa910d5cf6855b",
@@ -206,6 +210,8 @@ MIRRORED = {
     "openSupply": "39e13a85803de479",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "playerDPS": "6e388f9e36329ce1",
+    "questBand": "47a268e16a55bfbd",
+    "questOpen": "14e21773cabeb67b",
     "questReady": "d56a30909b205279",
     "regenPerSec": "73badd17c9fc2857",
     "rewardMult": "bff5bcb3e94a3395",
@@ -545,11 +551,22 @@ class Sim(object):
         return 2 if self.boostActive() else 1
 
     # ---- 구매 ----
+    def questBand(self, hour):
+        return 2 if (hour >= QUEST_BANDS[2] or hour < QUEST_BANDS[0]) else (1 if hour >= QUEST_BANDS[1] else 0)
+
+    def questOpen(self, q):
+        # 원본은 로컬 시각(getHours). 포트는 now_ms 의 UTC 시각 — 시간대 **번호**가 같으면 된다.
+        return self.questBand(int((self.now_ms // 3600000) % 24)) == int(q["band"])
+
     def questProgress(self, qid, n):
         """M4 1 — 카운터만 센다. **시뮬은 일일 보상을 수령하지 않는다** (사람이 눌러야 받는다).
-           그래서 auto_run 의 진행에 일일 보상이 안 섞이고 곡선 측정이 흔들리지 않는다."""
-        q = self.G.setdefault("quest", {})
-        q[qid] = q.get(qid, 0) + n
+           그래서 auto_run 의 진행에 일일 보상이 안 섞이고 곡선 측정이 흔들리지 않는다.
+           M4 1.2 (a): 열린 시간대에만 센다."""
+        q = next((x for x in QUEST_DEFS if x["id"] == qid), None)
+        if q is not None and not self.questOpen(q):
+            return
+        d = self.G.setdefault("quest", {})
+        d[qid] = d.get(qid, 0) + n
 
     # ---- 일일 보상 (M4 1) ----
     # **2026-09-16 에 옮겼다.** 전에는 이 넷이 포트에 없어서 `auto_run` 이 일일 보상을
