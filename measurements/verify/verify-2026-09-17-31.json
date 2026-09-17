@@ -1,0 +1,157 @@
+{
+  "검증일": "2026-09-17",
+  "회차": 31,
+  "범위": "전수",
+  "대상": "M5 디자인(wbs-M5 1.1~6.3) + M4 열린 항목(6.2 본보기·실기-4·1.2 새 문구) + 도구·기록·예측 잠금. HEAD dac358f, 빌드도장 510e4d9b47c1b5f7(sha256 직접 계산). 브라우저: python -m http.server 8765 실오리진, 375x812, DPR 2 — 실기(DPR 4)를 대체하지 않는다. 화면 '눈으로' 판정은 사람 몫으로 두고 본 사실만 적었다",
+  "가장_불리한_셋": [
+    "예측 M5-B3 반증 조건과 WBS 5.1 이 가리키는 battery.sh 가 저장소에 없다 — -c 12종을 무엇으로 떴는지 추적 불가(값 자체는 내가 5종 재실행해 동일)",
+    "wbs-M4.md 22~24행 결정 전 문장이 30차 지적 뒤에도 그대로 — '서술 오류 3건 정정' 커밋이 못 고쳤다",
+    "4.1 fps 문구는 이 창(rAF 0회)에서도 못 쟀고, ui-check-2026-09-17b 의 도장 d7621… 은 어느 커밋에도 없어 사유를 git 으로 확인할 수 없다"
+  ],
+  "결과": [
+    {
+      "항목": "검사 checks/run.py",
+      "판정": "통과",
+      "근거": "python checks/run.py → 차단 0 / 경고 1(c18 체류 밖 22개, 정보) / 전체 23, RC 0. 커밋본 measurements/checks-2026-09-17.json(ran_at 21:38:53)과 내 실행(21:40:01)의 차이는 ran_at 한 줄뿐(git diff). 실행 뒤 git checkout 으로 되돌렸다"
+    },
+    {
+      "항목": "자가진단 selftest_checks",
+      "판정": "통과",
+      "근거": "python tools/selftest_checks.py → 검사 23개 전부 기대대로 위반을 잡음"
+    },
+    {
+      "항목": "포트 c16 / tap_check",
+      "판정": "통과",
+      "근거": "python tools/sim_port.py → 옮긴 함수 55개 일치, RC 0. python tools/tap_check.py → 표본 124320, 최소 30.07 CSS px(tab_stat, 280x560), 선 29"
+    },
+    {
+      "항목": "디자인이 기능을 안 건드렸는가 (핵심)",
+      "판정": "통과",
+      "근거": "git show 1fd5417(도장 8235657515a7ae6d) vs HEAD(510e4d9b47c1b5f7) game/index.html 을 파싱해 대조: (a) 대문자 const 71→72, 바뀐 값 0, 추가는 PALETTE 하나 / 숫자 변수 변경 0. (b) buildButtons 에서 x·y·h·tone·enabled·onTap 값 목록이 전부 동일(tone 17·onTap 17·x/y/h 6), 추가된 필드는 icon·costKind 와 tierTint('#6E8B8D')→PALETTE.gearTint 뿐. (c) 함수 98개 중 본문이 바뀐 것 16개 — 그 중 로직 함수 9개(fatal·triggerFocus·damageZombie·killZombie·onDeath·acceptRevive·takeQuest·openSupply·adReward)는 unified diff 상 전부 addFloat/CSS 의 색 인자 '#RRGGBB'→PALETTE.* 치환뿐, 수치·분기 무변경. 나머지 7개는 draw*·buildButtons. 새 함수 drawIcon·drawIconPath·zoneHue. 주의: sim_port MIRRORED 해시가 6개(acceptRevive·damageZombie·killZombie·onDeath·openSupply·takeQuest) 재봉인됐다 — 색 인자 치환에 따른 것"
+    },
+    {
+      "항목": "5.1 근거 12종 재측정 = M4 마지막",
+      "판정": "통과",
+      "근거": "내가 HEAD 에서 재실행: sell_share --seeds 20 → 완주 20/20 · 구역30 155.5분 · 판매 비중 84.9% / focus_check → −3.6%, 늘 켠 극단 −17.1% / quest_pace --start-hour 8·16·0 → 열린 과제 20/20(zone 1.13·up 1.39·stage 3.34분), 닫힌 과제 0/20. 다섯 기록 모두 -c(510e…)·-b(8235…) 와 판정 칸 diff 없음(측정일·도장 제외). design-b3-2026-09-17.json 12종 다른_칸 []. c19·c23 OK. 결함: 예측 M5-B3 반증 조건과 WBS 5.1 작업 셀이 가리키는 battery.sh 가 저장소 어디에도 없다(grep tools/ checks/ procedures/ → 0건) — -c 12종을 무엇으로 떴는지 저장소로는 추적 불가"
+    },
+    {
+      "항목": "1.1 색 표 PALETTE 한 곳",
+      "판정": "통과",
+      "근거": "python tools/palette_check.py → 0개, RC 0. 도구 정규식에 백스페이스 문자 없음(소스 바이트 검사 False), '#7FB0B2x' 미매치 = 단어 경계가 살아 있음, \"'rgba(' + PALETTE.x\" 미매치. 임시 사본(scratchpad) draw() 안에 ctx.fillStyle='#7FB0B2' 심음 → 1개/미달/RC 1, rgba(255,0,0,.5) 추가 → 2개(draw·drawArena)/RC 1. 저장소 파일 안 건드림"
+    },
+    {
+      "항목": "1.2 영역 표면",
+      "판정": "사람 몫",
+      "근거": "c12 OK(checks). 로컬 HTTP(127.0.0.1:8765, 실오리진) 375x812 DPR2 캔버스 getImageData: HUD #0a1012 · 전투 #36351d(구역 14) · 탭띠 #121c1f · 목록 #070b0d · 광고띠 #121c1f · 선택탭 #2a5257 · 비선택탭 #182427 — 만든 쪽 design-surfaces 와 전투(구역·톤 다름)만 빼고 같다. 내 스크린샷에서 다섯 영역 경계가 보인다(사실). '눈으로 구분된다' 는 실기-2 사람"
+    },
+    {
+      "항목": "1.3 탭",
+      "판정": "사람 몫",
+      "근거": "기계 부분 통과: 탭 4개 x 24/150/276/402 · y 631(375x812) · 120x58, tone on/off, 아이콘 stat/weapon/gear/daily(buttons 읽음). tap_check 30.07 ≥ 29, c16 OK, buildButtons x/y/h 불변. 스크린샷에서 선택 탭이 채운 배경(#2a5257)+밝은 글자로 보인다(사실). '한눈에' 는 사람"
+    },
+    {
+      "항목": "2.1 재화 아이콘·색",
+      "판정": "사람 몫",
+      "근거": "buttons 의 costKind: 능력치 3줄 'parts', 무기 7줄 'plans'. 스크린샷: HUD 부품 청록 톱니+큰 숫자, 설계도 금색 도면 아이콘+금색 숫자 같은 줄; 무기 줄 값 옆에 금색 도면 아이콘, 능력치 값 옆에 청록 톱니(사실). '구분된다' 는 사람"
+    },
+    {
+      "항목": "2.2 줄 아이콘",
+      "판정": "사람 몫",
+      "근거": "네 탭 스크린샷 4장(내가 찍음, 구역 14·무기 3·장비 4+가방 2·과제 진행 상태): 줄 3/7/7/6 개 전부 icon 필드 있음(s:atk·s:spd·s:inc / w:bar·w:long·w:wide·w:nozzle·w:cross·w:disc·w:twin / w:bar·g:head·g:body·g:hands·g:feet·g:body·g:body / d:login·d:quest×3·d:supply·d:reset). 스크린샷에서 잘린 글자는 안 보였다(사실, DPR2). measureText 넘침 재측정은 안 했다 — 그 절은 미검증"
+    },
+    {
+      "항목": "2.3 줄 상태",
+      "판정": "사람 몫",
+      "근거": "기계 부분 통과: buildButtons tone 값 17개 8235→HEAD 동일. 실제 상태에서 tone buy(enabled)·buy(disabled)·equipped·off·ghost 가 나온다. 스크린샷에서 살 수 있는 줄 청록 테두리, 못 사는 줄 흐림, 장착 줄 별도 테두리가 보인다(사실). '구분된다' 는 사람"
+    },
+    {
+      "항목": "3.1 HUD 한 줄",
+      "판정": "사람 몫",
+      "근거": "기계 부분 통과: HUD_H 100(브라우저 읽음, 1fd5417 과 같음). drawHUD 소스: 글씨 기준선 26·54·68(11/26/18px), 단계 막대 y 72~76, 체력 막대 79~87, 상태 줄 98 — 기하상 겹치지 않음. 375x812 DPR2 스크린샷에서 '설계도 3K'·'1 / 5 단계' 가 막대 위에 온전(사실). 실기-4 ✗ 항목의 폰(DPR 4) 재확인은 사람"
+    },
+    {
+      "항목": "3.2 톤",
+      "판정": "사람 몫",
+      "근거": "zoneHue·drawArena 가 27b1abc(design-tone 도장 7247…)→HEAD 에서 비네트 캐시만 바뀌고 공식 동일(diff). design-tone 의 RGB 차 계산은 재현 안 함(미검증). '따로 놀지 않는다'·'판타지 요소 0' 은 사람"
+    },
+    {
+      "항목": "4.1 캐시·fps",
+      "판정": "확인 불가",
+      "근거": "이 브라우저 창에서 requestAnimationFrame 이 1.5초 동안 0회(visibilityState visible 인데도), 10초 표본 스크립트는 45초 타임아웃 — 문구(rAF 간격 중앙 17ms 이하)를 못 쟀다. 만든 쪽 design-perf 도 같은 이유로 못 쟀다. grep 절은 통과: drawIconPath 호출 자리 game/index.html 1632행 1곳(정의 1637행), iconCache 36 · vignetteCache true. fps 는 실기"
+    },
+    {
+      "항목": "4.2 버튼 자리 (안 함)",
+      "판정": "통과",
+      "근거": "buildButtons x/y/w/h 값 목록 8235→HEAD 동일(위 핵심 항목), c16 55 일치, tap_check 30.07"
+    },
+    {
+      "항목": "6.1 실기 묶음",
+      "판정": "미검증(실기 전)",
+      "근거": "요청서 plans/실기요청-2026-09-17.md 의 인용 13개(M1 10.1 · M4 2.1/3.4/4.2/1.3 · M5 1.2/1.3/2.1/2.2/2.3/3.1/3.2/4.1)를 스크립트로 WBS 완료 판정 셀과 == 비교 → 13/13 문자열 동일(M1 10.1 은 wbs-M1.md 165행 셀). 옛 작업 설명 셀은 인용 안 됐고 '지금 설정 ×1.3·45초' 를 명시했다. 다만 wbs-M4.md 48행 2.1 작업 설명 셀은 여전히 '2배, 쿨 20초' 로 낡아 있다(판정 셀 아님). 사람 답변은 아직 없다"
+    },
+    {
+      "항목": "6.2 전수 감사(이 회차)",
+      "판정": "미검증",
+      "근거": "회귀: 0건(30차에 되던 것 중 지금 안 되는 것 없음). M5-B3 근거 있음(5.1). M5-B1·B2·B4 근거는 실기 뒤에만 생긴다 — 지금은 없다"
+    },
+    {
+      "항목": "6.3 본보기 등록(M4 6.2 이월)",
+      "판정": "실패(착수 전)",
+      "근거": "ls exemplars/good/ → M1(2026-09-10)·M2(2026-09-11) 뿐. 사람의 '좋다' 없음"
+    },
+    {
+      "항목": "M4 6.2 본보기 (열린 항목)",
+      "판정": "실패(착수 전)",
+      "근거": "위와 같음 — exemplars/good 에 M4 빌드 없음"
+    },
+    {
+      "항목": "M4 실기-4 (2.1·3.4·4.2·1.3)",
+      "판정": "사람 몫",
+      "근거": "요청서 인용 4개가 wbs-M4.md 판정 셀과 문자열 동일. 브라우저 DPR2 에서 무기 줄 두 번 탭을 실제 포인터(left_click)로: 1탭 → G.weapon 'rifle'(장착, ★1 유지), 2탭 → ★2, 설계도 3000→2400, 부제 '강화 · 설계도 900'. 설계도 100 으로 두고 장착 중 소총 탭 → 안 사고 floats '설계도 부족 — 800 더', 부제 '강화 — 설계도 800 더 필요'. 폰(DPR4) 은 사람"
+    },
+    {
+      "항목": "M4 1.2 (지시 #108 새 문구)",
+      "판정": "통과",
+      "근거": "quest_pace --start-hour 8/16/0 각 20시드 내 실행: 열린 시간대 과제 20/20, 처음 닿은 시각 중앙 1.13/1.39/3.34분(전부 30분 안), 닫힌 시간대 과제 0/20. 도장 510e4d9b47c1b5f7"
+    },
+    {
+      "항목": "저장 test_storage.js",
+      "판정": "통과",
+      "근거": "로컬 HTTP 에서 fetch('/tools/test_storage.js') 후 eval → 19/19 OK, FAIL 0. 뒤에 새로고침·localStorage 비움"
+    },
+    {
+      "항목": "예측 잠금 c15 · M5-B1~B4 · M3-B5 이력",
+      "판정": "통과",
+      "근거": "c15 [OK] 28개. predictions-lock.json 의 M5-B1~B4 예측·반증 문구가 plans/GAMEDESIGN.md 310~313행과 같다(둘 다 읽어 대조), 판정 미판정. M3-B5: 판정 '반증', 판정이력 {2026-09-17T16:24:31, 황창식, 미판정→반증, 근거 upgrade-cadence-m4-g-2026-09-17.json, stdin_is_tty true}; 커밋 97d072c"
+    },
+    {
+      "항목": "c19 옛빌드 사유 사실 확인",
+      "판정": "통과(1건 확인 불가)",
+      "근거": "git 대조: ① -b 12종 사유('그 뒤 변경은 디자인뿐, -c 값 동일') — 참(핵심 항목·5.1). ② ui-check-weapon(8235) 'buildButtons onTap·tone 그대로' — 참(onTap 17·tone 17 동일). ③ upgrade-cadence-m4-g-2026-09-17(260c) '그 뒤 변경은 HUD 좌표·삭제 버튼·무기 줄 글씨뿐' — 참(bb388c1→1fd5417 변경 함수 save·buildButtons·drawHUD + resetSave 추가). ④ design-rows(ec2a) 'drawButtons 줄 배치 불변' — 참(ca06d4e→HEAD drawButtons diff 0). ⑤ design-tone(7247) 'zoneHue·drawArena 공식 동일' — 참. ⑥ design-surfaces(a4c5) 'panel0/panel2/edge 값 그대로' — 참(PALETTE 변경 0, 추가 6키), 단 그 뒤 drawPanelBg·drawHUD 가 바뀌어(3.2 녹 경계) 기록의 경계선 표본 두 값은 HEAD 의 것이 아닐 수 있다. ⑦ ui-check-2026-09-17b 도장 d7621cb7685f2802 는 어느 커밋의 game/index.html 도 아니다(bb388c1~HEAD 18개 커밋 도장 계산) — 사유를 git 으로 확인할 수 없다"
+    },
+    {
+      "항목": "30차 실패 재확인 — 기록·도구",
+      "판정": "통과",
+      "근거": "checks 커밋본 = 내 실행(ran_at 외 동일). cp949 콘솔(PYTHONIOENCODING 없이, sys.stdout.encoding cp949)에서 tap_check RC 0 · sell_share --seeds 1 RC 0, '—' 출력됨"
+    },
+    {
+      "항목": "30차 실패 재확인 — WBS 서술",
+      "판정": "실패",
+      "근거": "plans/wbs-M4.md 22~24행에 30차가 지적한 결정 적용 전 문장이 그대로다: '\"사람 판정 대기\" 둘은 재봤더니 떨어진 것이다 — 1.2(과제 3.79분) · 4.3(16%·15%) … M4 는 이 셋이 정해져야 닫힌다.' 표(4.3 됨)·전체 행(조건부 마감)과 모순. 커밋 fe4634c 메시지 '서술 오류 3건 정정' 은 이 문장을 안 고쳤다(git show fe4634c -- plans/wbs-M4.md 에 22~24행 변경 없음). 덧붙여 wbs-M5.md 진행 현황 1.1 행 'PALETTE 49키' 는 지금 63키다"
+    },
+    {
+      "항목": "회귀(30차→31차)",
+      "판정": "통과",
+      "근거": "0건. 30차 회귀 1건(M3-B5 76.7%)은 사람이 반증으로 판정해 판정된 예측이 됐고 값은 그대로(-c 76.7%)"
+    }
+  ],
+  "요약": {
+    "통과": 13,
+    "실패": 3,
+    "미검증": 2,
+    "범위밖": 0,
+    "사람 몫": 8,
+    "확인 불가": 1
+  },
+  "뒷정리": "http.server(PID 1404) 종료·포트 8765 닫힘 확인. 실행이 바꾼 measurements/checks-2026-09-17.json 은 git checkout 으로 복원. 브라우저 localStorage(127.0.0.1:8765) 비움, 뷰포트 desktop 복원. 저장소 쓰기는 이 파일 하나"
+}
