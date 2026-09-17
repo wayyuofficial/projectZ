@@ -49,6 +49,10 @@
    1.1 은 옮기기만 했다 — 값은 옮기기 전과 같다. 보이는 변화는 1.2 부터. */
 const PALETTE = {
   sky: '#0E1416', panel: '#0A1012',
+  // M5 1.2 — 표면 3단계: 목록 바탕(가장 어둡게) < 패널 < 탭·광고 띠. 경계는 1px 선.
+  panel0: '#070B0D', panel2: '#121C1F', edge: 'rgba(127,176,178,0.26)', edgeSoft: 'rgba(127,176,178,0.12)',
+  // M5 1.3 — 탭: 선택은 채운 배경, 나머지는 낮춘 명도
+  tabOn: '#2A5257', tabOnInk: '#F2F8F6', tabOff: 'rgba(127,176,178,.06)', tabOffInk: '#7F9495',
   line: 'rgba(127,176,178,0.18)', lineStrong: 'rgba(127,176,178,0.28)', lineFaint: 'rgba(127,176,178,0.08)',
   scrollTrack: 'rgba(127,176,178,0.10)', scrollThumb: 'rgba(127,176,178,0.45)',
   btnLine: 'rgba(127,176,178,.20)', btnLineDim: 'rgba(127,176,178,.10)', onBg: 'rgba(127,176,178,.18)', equippedBg: 'rgba(127,176,178,.12)',
@@ -1185,7 +1189,7 @@ function buildButtons() {
      M4 3.4 에서 4개가 됐다. 폭 (540 - 24*2 - 간격 3칸) / 4 = 118.5 → 120, 간격 6.
      29 CSS px 선은 **높이**가 기준이라 안 바뀐다 — 다만 폭도 브라우저·격자로 확인한다. */
   const TW = 120, TG = 6;
-  const mkTab = (i, id, label) => btn({ x: 24 + i * (TW + TG), y: tabRowY(), w: TW, h: ROW_H, label: label,
+  const mkTab = (i, id, label) => btn({ x: 24 + i * (TW + TG), y: tabRowY(), w: TW, h: ROW_H, label: label, icon: id,   // M5 1.3: 아이콘
         enabled: true, tone: tab === id ? 'on' : 'off',
         onTap: () => { if (tab !== id) { tab = id; listScroll = 0; listVel = 0; } return true; } });
   mkTab(0, 'stat', '능력치');
@@ -1559,6 +1563,19 @@ function drawPanelBg() {
   if (offlineReport) return;
   const top = listTopY(), bot = listBotY();
 
+  /* M5 1.2 — 영역이 어디서 시작하고 끝나는지 보이게 (사람 제보 2026-09-17: "메뉴 간 분간이 안 된다").
+     탭 줄과 광고 줄은 밝은 띠(panel2), 목록은 가장 어두운 바탕(panel0). 경계마다 1px 선. */
+  ctx.fillStyle = PALETTE.panel2;
+  ctx.fillRect(0, PANEL_TOP, GAME_W, top - 4 - PANEL_TOP);          // 탭 띠
+  ctx.fillRect(0, adRowY() - 6, GAME_W, GAME_H - (adRowY() - 6));   // 광고 띠
+  ctx.fillStyle = PALETTE.panel0;
+  ctx.fillRect(0, top - 4, GAME_W, (bot + 4) - (top - 4));            // 목록 바탕
+  ctx.strokeStyle = PALETTE.edge; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, top - 4 + .5); ctx.lineTo(GAME_W, top - 4 + .5);      // 탭 띠 ↔ 목록
+  ctx.moveTo(0, bot + 4 + .5); ctx.lineTo(GAME_W, bot + 4 + .5);      // 목록 ↔ 광고 띠
+  ctx.stroke();
+
   // 스크롤 막대 — 탭 이름이 구역을 말해주므로 목록 안 제목은 없앴다 — 더 있다는 것을 알려준다
   if (listMax > 0) {
     const trackH = bot - top;
@@ -1571,13 +1588,35 @@ function drawPanelBg() {
   }
 }
 
+/* M5 1.3 — 단색 아이콘. 글자 없이도 무엇인지 알게 한다 (사람 제보: "메뉴가 텍스트뿐이라 가시성이 안 좋다").
+   canvas 경로만 쓴다 — 이모지는 기기마다 모양·색이 달라 통일감이 깨진다. 크기 s 는 한 변. */
+function drawIcon(kind, cx, cy, s, color) {
+  const h = s / 2;
+  ctx.save(); ctx.translate(cx, cy); ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (kind === 'stat') {                       // 오르는 막대 셋
+    for (let i = 0; i < 3; i++) { const bh = h * (0.5 + i * 0.45); ctx.fillRect(-h + i * (s / 3), h - bh, s / 3 - 2, bh); }
+  } else if (kind === 'weapon') {              // 칼날 + 자루
+    ctx.beginPath(); ctx.moveTo(-h + 2, h - 2); ctx.lineTo(h - 3, -h + 3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-h + 5, h - 6); ctx.lineTo(-h + 1, h - 2); ctx.lineTo(-h + 5, h + 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-1, -h + 1); ctx.lineTo(h - 1, h - 1); ctx.stroke();
+  } else if (kind === 'gear') {                // 방패
+    ctx.beginPath(); ctx.moveTo(0, -h); ctx.lineTo(h, -h * .55); ctx.lineTo(h * .8, h * .3); ctx.lineTo(0, h); ctx.lineTo(-h * .8, h * .3); ctx.lineTo(-h, -h * .55); ctx.closePath(); ctx.stroke();
+    ctx.fillRect(-1, -h * .4, 2, h * .9);
+  } else if (kind === 'daily') {               // 해 (원 + 빛살)
+    ctx.beginPath(); ctx.arc(0, 0, h * .42, 0, Math.PI * 2); ctx.fill();
+    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; ctx.beginPath(); ctx.moveTo(Math.cos(a) * h * .62, Math.sin(a) * h * .62); ctx.lineTo(Math.cos(a) * h, Math.sin(a) * h); ctx.stroke(); }
+  }
+  ctx.restore();
+}
+
 function drawButtons() {
   for (const b of buttons) {
     if (b.tone === 'scrim') continue;   // 배경 닫기 영역은 그리지 않는다
     if (b.clip) { ctx.save(); ctx.beginPath(); ctx.rect(0, b.clip[0], GAME_W, b.clip[1] - b.clip[0]); ctx.clip(); }
     let bg = PALETTE.rowBg, fg = PALETTE.ink, bd = PALETTE.btnLine;
-    if (b.tone === 'on') { bg = PALETTE.onBg; bd = PALETTE.parts; }
-    else if (b.tone === 'off') { fg = PALETTE.muted; }
+    // M5 1.3 — 탭(icon 이 있는 버튼): 선택은 채운 배경+밝은 글자, 나머지는 낮춘 명도. 자리·크기는 그대로.
+    if (b.tone === 'on') { bg = b.icon ? PALETTE.tabOn : PALETTE.onBg; fg = b.icon ? PALETTE.tabOnInk : fg; bd = PALETTE.parts; }
+    else if (b.tone === 'off') { bg = b.icon ? PALETTE.tabOff : bg; fg = b.icon ? PALETTE.tabOffInk : PALETTE.muted; bd = b.icon ? PALETTE.edgeSoft : bd; }
     else if (b.tone === 'ad') { bg = PALETTE.adBg; bd = PALETTE.gold; fg = PALETTE.goldInk; }
     else if (b.tone === 'equipped') { bg = PALETTE.equippedBg; bd = PALETTE.parts; }
     else if (b.tone === 'ghost') { bg = PALETTE.ghostBg; fg = PALETTE.ink2; }
@@ -1596,6 +1635,14 @@ function drawButtons() {
       ctx.fillStyle = b.enabled === false ? PALETTE.dim2 : PALETTE.ink3;
       ctx.font = '400 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
       ctx.fillText(b.sub, tx, b.y + b.h / 2 + 15);
+    } else if (b.icon) {
+      // 아이콘 + 글자를 한 덩이로 가운데 맞춘다
+      ctx.font = '600 15px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+      const tw = ctx.measureText(b.label).width, iw = 18, gap = 7;
+      const x0 = b.x + (b.w - (iw + gap + tw)) / 2;
+      drawIcon(b.icon, x0 + iw / 2, b.y + b.h / 2, iw, fg);
+      ctx.textAlign = 'left';
+      ctx.fillText(b.label, x0 + iw + gap, b.y + b.h / 2 + 5);
     } else {
       ctx.textAlign = 'center';
       ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2 + 5);
