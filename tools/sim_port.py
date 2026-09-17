@@ -127,6 +127,7 @@ ZOMBIE_GAP = num("ZOMBIE_GAP")
 CONTACT_REACH = num("CONTACT_REACH")
 SPAWN_X = GAME_W + 36
 FIXED_STEP = 1.0 / 60
+DEFAULT_NOW_MS = 1000000000000   # 포트 시계의 시작(UTC 2001-09-09 01:46). 시간대 과제(M4 1.2)를 잴 때는 auto_run(now_ms=) 로 옮긴다
 MAX_STEPS = int(num("MAX_STEPS"))
 MAX_GAP = num("MAX_GAP")
 REVIVE_OFFER_SEC = num("REVIVE_OFFER_SEC")
@@ -324,9 +325,9 @@ class Sim(object):
 
     그리기와 입력은 없다. `now_ms` 는 `Date.now()` 자리다."""
 
-    def __init__(self, seed=1, state=None, now_ms=1000000000000):
+    def __init__(self, seed=1, state=None, now_ms=None):
         self.rnd = RNG(seed)
-        self.now_ms = now_ms
+        self.now_ms = DEFAULT_NOW_MS if now_ms is None else now_ms
         self.G = state if state is not None else self.freshState()
         self.zombies = []
         self.shots = 0                 # 궤적은 그리기용이라 개수만 센다
@@ -952,7 +953,7 @@ class Sim(object):
 # ── 자동구매 1런 — 감사가 매번 다시 짜던 절차를 여기 고정한다 ────────
 def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
              offline_every_min=None, offline_hours=8, on_buy=None, focus_duty=None,
-             stop_zone=None):
+             stop_zone=None, now_ms=None):
     """가장 싼 것부터 계속 사면서 구역 10 까지 간다.
 
     `offline_every_min` 을 주면 그만큼 놀고 나서 `offline_hours` 시간 자리를 비운다.
@@ -962,7 +963,7 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
     `focus_duty=(3, 20)` 을 주면 20초마다 3초씩 집중 사격을 켠다 (M4 2).
 
     돌아오는 값: 구역별 도달 시각(분) · 벽(10분 넘게 정체한 구역) · 사망 수 · 총 분."""
-    s = Sim(seed=seed)
+    s = Sim(seed=seed, now_ms=now_ms)     # now_ms: 시간대 과제를 재려고 시작 시각을 옮길 때만 (tools/quest_pace.py)
     s.G["hp"] = s.maxHP()
     zone_at, wall = {1: 0.0}, {}
     deaths, buyT, stuck_from, last_zone = 0, 0.0, 0.0, 1

@@ -1,7 +1,7 @@
 <title>좀비 RPG M4 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M4.md
-     source-sha256: 767bbe86756a19d924a840b55e6177978601760f20f4b6269b48444b2894a5de
+     source-sha256: eba4c8c58f1a77abb62078e75a1308caab537c0fd9aa18b31e32786b7a5e6ef5
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -220,13 +220,13 @@
   <header class="masthead"><div class="eyebrow">Milestone 4 · 작업분해도</div>
   <h1>장비와 리듬</h1><div class='rule'></div>
   <p class="lede">버섯커 키우기를 조사해 <strong>서버 없이 되는 것만</strong> 골랐다. 핵심은 <strong>장비를 쏟아내고 안 쓰는 것을 파는 루프</strong>다 — 조사에서 가장 많이 언급된 것이다. 그 앞에 <strong>일일 리듬</strong>과 <strong>수동 개입</strong>을 먼저 넣는다. 정본을 안 건드리고 폰에서 바로 체감되기 때문이다.</p></header>
-  <div class="status"><p><strong>결정 3건 적용 · 30차 감사 대기.</strong> 1.2 (a) 시간대 과제 · 4.3 (a) 두 축 장비 전용 · 5.1 (b) 기준선 그대로. 체력 성장률 1.58→1.63 재조정, 근거 10종을 새 도장 <span class="mono">260c066247c4ff71</span> 로. 눈에 띄는 것: 곡선 밖 16→<strong>22</strong>(선 ≤24 통과, 내 예측 "20 이하"는 틀렸다) · 무기 뒤 능력치 매수 <strong>76.7%</strong>(M3-B5 90% 아래 — 회귀, 사람이 판정) · 자가 세 번째로 고장나 있었다(사례 24, <span class="mono">c23</span>). 남은 것: 1.2 새 판정 문구(사람) · 6.2 본보기(사람 "좋다").</p></div>
+  <div class="status"><p><strong>30차 감사: 통과 24 / 실패 7 / 회귀 1 — M4 는 닫히지 않는다.</strong> 결정 3건은 적용됐고 근거 10종이 도장 <span class="mono">260c066247c4ff71</span> 로 섰다. 남은 것은 전부 사람 몫이다: <strong>1.2 새 판정 문구</strong>(후보 근거 있음) · <strong>M3-B5 회귀 판정</strong>(무기 뒤 능력치 76.7%, 선 90%) · <strong>6.2 본보기 "좋다"</strong>. 조건부 마감 여부도 사람이 정한다.</p></div>
   <div class="tiles">
     <div class="tile"><div class="k">단계</div><div class="v">6</div></div>
     <div class="tile"><div class="k">작업</div><div class="v">19</div></div>
     <div class="tile"><div class="k">공수 추정</div><div class="v">11.0<small>일</small></div></div>
     <div class="tile"><div class="k">잠근 예측</div><div class="v">5</div></div>
-    <div class="tile"><div class="k">사람 몫 남음</div><div class="v">2<small>건</small></div></div>
+    <div class="tile"><div class="k">사람 몫 남음</div><div class="v">3<small>건</small></div></div>
   </div>
   <section><h2><span class="n">A</span>공수 — 단계별 추정</h2><div class="chart">
     <div class="bar-row"><div class="name"><em>1</em>일일 리듬</div><div class="track"><div class="fill" style="width:67%"></div></div><div class="num">2.0일</div></div>
@@ -280,16 +280,16 @@
       <tr><td>6.2</td><td>본보기 등록</td><td class="judge"><span class="mono">exemplars/good/</span> 에 M4 빌드 등록, <span class="mono">c17</span> OK. <strong>사람의 "좋다" 가 필요하다</strong></td><td class="dep">6.1</td></tr>
       <tr><td>6.3</td><td>실기 묶음 갱신</td><td class="judge">M4 에서 생긴 실기 항목이 <span class="mono">plans/실기묶음.md</span> 에 판정 문구 원문과 함께 있다 (R006)</td><td class="dep">6.1</td></tr>
     </tbody></table></div></section>
-  <section><h2><span class="n">0</span>진행도 — 만든 쪽 자기보고 (2026-09-17 · 결정 3건 적용 뒤)</h2>
-    <p class="note">검증자 판정이 <strong>아니다.</strong> "사람 판정 대기" 하나는 1.2 — (a) 는 들어갔고 새 판정 문구를 사람이 정한다. 착수 전 하나는 6.2 본보기(사람 "좋다"). <strong>30차 감사가 이 표를 덮는다.</strong></p>
+  <section><h2><span class="n">0</span>진행도 — 30차 감사 뒤 (2026-09-17)</h2>
+    <p class="note">통과 16 / 실패 3 은 <strong>검증자 판정</strong>이다(<span class="mono">verify-2026-09-17-30.json</span>). 실패 3 = 1.2(판정 문구 없음) · 6.1(회귀 1) · 6.2(본보기 없음). 셋 다 사람 몫이다.</p>
     <div class="chart">
     <div class="bar-row"><div class="name">1 일일 리듬</div><div class="track"><div class="fill" style="width:75%"></div></div><div class="num">3 / 4</div></div>
     <div class="bar-row"><div class="name">2 수동 개입</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">2 / 2</div></div>
     <div class="bar-row"><div class="name">3 정본·장비 뼈대</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">4 / 4</div></div>
     <div class="bar-row"><div class="name">4 판매와 축 흡수</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">3 / 3</div></div>
     <div class="bar-row"><div class="name">5 밸런스 회복</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">3 / 3</div></div>
-    <div class="bar-row"><div class="name">6 마무리</div><div class="track"><div class="fill" style="width:67%"></div></div><div class="num">2 / 3</div></div>
-    <div class="bar-row"><div class="name"><strong>합</strong></div><div class="track"><div class="fill" style="width:89%"></div></div><div class="num">17 / 19</div></div>
+    <div class="bar-row"><div class="name">6 마무리</div><div class="track"><div class="fill" style="width:33%"></div></div><div class="num">1 / 3</div></div>
+    <div class="bar-row"><div class="name"><strong>합</strong></div><div class="track"><div class="fill" style="width:84%"></div></div><div class="num">16 / 19</div></div>
     </div>
     <div class="tablewrap"><table><thead><tr><th>단계</th><th>작업</th><th>됨</th><th>사람 판정 대기</th><th>사람 승인 대기</th><th>착수 전</th></tr></thead><tbody>
       <tr><td>1 일일 리듬</td><td>4</td><td>3</td><td>1</td><td>0</td><td>0</td></tr>
@@ -297,8 +297,8 @@
       <tr><td>3 정본·장비 뼈대</td><td>4</td><td>4</td><td>0</td><td>0</td><td>0</td></tr>
       <tr><td>4 판매와 축 흡수</td><td>3</td><td>3</td><td>0</td><td>0</td><td>0</td></tr>
       <tr><td>5 밸런스 회복</td><td>3</td><td>3</td><td>0</td><td>0</td><td>0</td></tr>
-      <tr><td>6 마무리</td><td>3</td><td>2</td><td>0</td><td>0</td><td>1</td></tr>
-      <tr><td><strong>합</strong></td><td><strong>19</strong></td><td><strong>17</strong></td><td><strong>1</strong></td><td><strong>0</strong></td><td><strong>1</strong></td></tr>
+      <tr><td>6 마무리</td><td>3</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+      <tr><td><strong>합</strong></td><td><strong>19</strong></td><td><strong>16</strong></td><td><strong>2</strong></td><td><strong>1</strong></td><td><strong>0</strong></td></tr>
     </tbody></table></div></section>
   <section><h2><span class="n">P</span>예측 — 결과를 보기 전에 잠갔다</h2>
     <p class="note">문구는 세울 때 그대로 둔다. <span class="mono">checks/c15_prediction_lock.py</span> 가 잠금 파일과 대조한다. 판정은 <strong>사람</strong>이 <span class="mono">tools/judge_prediction.py</span> 로 한다 — AI 는 판정하지 않는다.</p>
@@ -313,7 +313,7 @@
     <p class="note">검증자 판정이 <strong>아니다.</strong> 감사 회차가 돌면 이 자리에 검증자 판정이 함께 선다.</p>
     <div class="tablewrap"><table><thead><tr><th>작업</th><th>상태</th><th>근거</th></tr></thead><tbody>
       <tr><td>1.1 날짜·저장 v4</td><td>됨</td><td class="judge"><span class="mono">dayIndex</span> 는 <strong>로컬 자정</strong> 기준. 저장 <strong>19/19</strong>, v1·v2·v3 전부 초기화 없이 v4 (<span class="mono">storage-m4-2026-09-17.json</span>). <strong>시계를 되돌리면 아무것도 안 준다</strong> — <span class="mono">maxDay</span> 보다 작은 날은 무시. 브라우저로 확인</td></tr>
-      <tr><td>1.2 일일 과제 3</td><td><strong>(a) 적용 · 판정 문구는 사람 몫</strong></td><td class="judge">과제마다 시간대(06–14 · 14–22 · 22–06), <strong>열린 시간대에만 진행이 센다.</strong> 브라우저: 로컬 12시에 zone 만 열려 세 과제에 5씩 넣어도 zone 에만 쌓임(<span class="mono">ui-check-2026-09-17.json</span>). 20시드 1런(포트 시각 01시, 시간대 2 열림): stage <strong>20/20 · 중앙 3.34분</strong>, zone·up <strong>0/20</strong>(닫힘) — 결정요청 1절의 후보 문구를 만족한다(<span class="mono">quest-pace-2026-09-17.json</span>). 옛 문구는 이제 구조상 항상 참이라 시험이 아니다 — <strong>새 문구는 사람이 정한다</strong></td></tr>
+      <tr><td>1.2 일일 과제 3</td><td><strong>실패 (30차) — 판정 문구 없음</strong></td><td class="judge">(a) 구현은 브라우저에서 확인됐다(로컬 15시: up 만 열림, 일일 탭 "06~14시 닫힘 / 14~22시 열림 / 22~06시 닫힘"). 옛 문구는 항등식이고 <strong>새 문구를 사람이 안 정했다</strong> — 판정 문구 없는 작업은 통과가 아니다(R003). 후보 문구(결정요청 1절)의 근거는 만들어 뒀다: <span class="mono">quest_pace --start-hour</span> 로 시간대 셋을 각각 20시드 — 열린 시간대 과제 <strong>20/20</strong>(시작 08시 zone 1.13분 · 16시 up 1.39분 · 00시 stage 3.34분), 닫힌 시간대 <strong>0/20</strong>. <span class="mono">quest-pace-h8-2026-09-17.json</span> · <span class="mono">quest-pace-h16-2026-09-17.json</span> · <span class="mono">quest-pace-h0-2026-09-17.json</span>. <strong>문구를 정해 주시면 그대로 옮긴다</strong></td></tr>
       <tr><td>1.3 접속 7일 · 열쇠</td><td>됨</td><td class="judge">연속이면 streak 증가(7 에서 멈춤), 하루 빠지면 1 로. 열쇠 3개 소진 확인. 실제 트러스티드 클릭으로 탭 이동·수령 확인</td></tr>
       <tr><td>1.4 일일 총량 묶기</td><td>됨</td><td class="judge"><span class="mono">tools/daily_budget.py</span> 가 실제로 받고 일부러 여러 번 시도한다. 구역 1~30 전부 <strong>17.1%</strong>(선 20%) · 과제 재수령 막힘 · 상자 3회(상한 3). <span class="mono">daily-budget-2026-09-17.json</span></td></tr>
       <tr><td><strong>지급 함수를 포트에 옮겼다</strong></td><td>곁가지</td><td class="judge"><span class="mono">dayIndex</span>·<span class="mono">dailyBudget</span>·<span class="mono">rolloverDay</span>·<span class="mono">questReady</span>·<span class="mono">takeQuest</span>·<span class="mono">openSupply</span> 여섯을 거울로 더했다(포트 53개). 전에는 포트에 없어서 시뮬이 일일 보상을 <strong>한 번도 안 받았다</strong></td></tr>
@@ -337,7 +337,7 @@
       <tr><td><strong>M4-B3</strong></td><td><strong>성립 방향 — 사람이 판정한다</strong></td><td class="judge">판매 비중 84.9% (선 30%)</td></tr>
       <tr><td><strong>5단계로 넘어가는 빚</strong></td><td>열림</td><td class="judge">장비가 들어오면서 <strong>도달 밖 3 → 20</strong>, <strong>간격 120초 초과 1개</strong>(구역 23, 362초)가 생겼다. 간격은 <strong>정본 상한 위반</strong>이라 5단계에서 반드시 잡는다</td></tr>
       <tr><td>전체</td><td>4단계 끝</td><td class="judge">5단계로 갔다</td></tr>
-      <tr><td>5.1 곡선 재조정</td><td>됨 · <strong>2회차</strong></td><td class="judge">4.3 (a) 로 146→95분으로 빨라져 체력 성장률만 1.58→<strong>1.63</strong>(8시드 격자: 1.62 139분 · 1.63 156분 · 1.66 201분 — 0.01 에 10분). 20시드: <strong>체류 밖 22개</strong>(선 ≤24 — 두 자 비교), 구역 30 도달 <strong>155.5분</strong>, 도달 밖 20개, 벽 비 {'10': 3.0625, '15': 1.871, '20': 1.9259, '25': 2.8044}, 골짜기 {'10': 0.33, '15': 1.21, '20': 2.04, '25': 0.27}. <strong>내 예측(20개 이하)은 틀렸다</strong> — 22개. 도달 밖은 7→20 로 나빠졌다(hp·reg 가 빠져 초반이 목표보다 빠르다). <span class="mono">balance-M4-curve-g-2026-09-17.json</span></td></tr>
+      <tr><td>5.1 곡선 재조정</td><td>됨 · <strong>2회차</strong></td><td class="judge">4.3 (a) 로 146→95분으로 빨라져 체력 성장률만 1.58→<strong>1.63</strong>. 격자는 스크래치 스크립트로 돌려 <strong>기록이 없었다</strong>(30차 지적, R005) — <span class="mono">tools/curve_sweep.py</span> 로 옮겨 다시 떴다: <span class="mono">curve-sweep-2026-09-17.json</span>. 20시드: <strong>체류 밖 22개</strong>(선 ≤24 — 두 자 비교), 구역 30 도달 <strong>155.5분</strong>, 도달 밖 20개, 벽 비 {'10': 3.0625, '15': 1.871, '20': 1.9259, '25': 2.8044}, 골짜기 {'10': 0.33, '15': 1.21, '20': 2.04, '25': 0.27}. <strong>내 예측(20개 이하)은 틀렸다</strong> — 22개. 도달 밖은 7→20 로 나빠졌다(hp·reg 가 빠져 초반이 목표보다 빠르다). <span class="mono">balance-M4-curve-g-2026-09-17.json</span></td></tr>
       <tr><td><strong>등급 값 배수가 낡아 있었다</strong></td><td>곁가지</td><td class="judge"><span class="mono">TIER_COST_MULT = 6</span> 은 <strong>등급이 3개이던 시절 값</strong>이다. M4 3 에서 <span class="mono">TIER_MAX</span> 를 3→8 로 올리며 아무도 다시 안 봤다 — 6⁷ = <strong>28만 배</strong>라 한참 모으다 한 번에 튀었다. 인접 구역 체류가 3배씩 널뛴 원인이다. 1.5 로 낮추니 최대 이탈 1.85→0.87. <strong>대가</strong>: 무기 5종이 8등급 천장에 닿는다(전에는 최고 6등급). 안 쓴 설계도는 8.8%→<strong>3.9%</strong> 로 오히려 줄었다</td></tr>
       <tr><td><strong>자가 고장나 있었다</strong></td><td><strong>찾음 · 고침 · 검사로 내림</strong></td><td class="judge"><span class="mono">sim_port.auto_run</span> 이 무기 값을 <strong>부품</strong>과 견주고 결제는 <strong>설계도</strong>로 했다. 못 살 무기가 "가장 싼 것"으로 뽑히면 그 틱이 멈춰 <strong>살 수 있는 능력치까지 건너뛰었다.</strong> 구역 29 에서 <strong>부품 98억을 안 쓰고 쌓아 둔 채 3,180틱을 헛돌았다.</strong> <strong>이틀</strong> 동안 차단도 경고도 안 떴다 — 나온 숫자가 그럴듯했다. (처음엔 "8일"로 적었다. 통화가 갈라진 건 <span class="mono">734a473</span>·2026-09-14 다) cases/2026-09-16-22 · checks/c22 · 규칙 승격은 <strong>1회라 보류</strong>(제안서를 사람이 본다)</td></tr>
       <tr><td><strong>다시 재야 하는 판단</strong></td><td><strong>좁혔다 (29차 감사)</strong></td><td class="judge">고장은 통화가 갈라진 <strong>M3 5단계(<span class="mono">734a473</span>, 2026-09-14)</strong> 부터다. 그 <strong>뒤</strong>에 내린 것만 오염됐다 — M3 5(<span class="mono">BP_RATIO</span>) · M4 4.1 · M4 4.3 되돌림 · M4 5.1 되돌림 · 집중 사격. <strong>M3 3.2(<span class="mono">costG</span> −0.015)는 오염이 아니다</strong> — 그 앞이고 그때 자는 성했다. 내가 처음 적은 "전부" 는 틀렸다</td></tr>
@@ -345,10 +345,10 @@
       <tr><td><strong>지표가 무너졌다</strong></td><td><strong>닫힘</strong></td><td class="judge">중앙 간격이 0 인 구역이 16/28 이던 것도 같은 고장의 그림자였다. 사람이 2026-09-16 에 지표를 <strong>구역당 매수 횟수 하한</strong>으로 바꾸고 승인했다 (지시 #102)</td></tr>
       <tr><td>5.3 포트·표·저장</td><td>됨</td><td class="judge"><span class="mono">c16</span> 어긋남 0 · 저장 <strong>19/19</strong> · 표 일치</td></tr>
       <tr><td>전체</td><td>5단계 끝</td><td class="judge">5.1·5.2·5.3 닫혔다(5.1 기준선은 결정요청 3절). 6단계로 갔다</td></tr>
-      <tr><td>6.1 전수 감사</td><td>됨(29차) · <strong>30차 예정</strong></td><td class="judge">29차: 통과 19 / 실패 7 / 미검증 1 / 회귀 0. 결정 셋을 적용한 빌드 <span class="mono">260c066247c4ff71</span> 로 <strong>30차</strong>를 돈다 — 그 판정이 이 표의 자기보고를 덮는다</td></tr>
+      <tr><td>6.1 전수 감사</td><td><strong>실패 (29차·30차)</strong></td><td class="judge">29차: 통과 19 / 실패 7 / 미검증 1 / 회귀 0 — <strong>실패</strong>. 30차(<span class="mono">verify-2026-09-17-30.json</span>): 통과 24 / 실패 7 / 미검증 0 / <strong>회귀 1</strong>(M3-B5 76.7%, 선 90%). 완료 판정 "회귀 0" 미충족. ※ 내가 앞서 "됨(29차)" 이라 적었다 — <strong>거짓</strong>이었다(30차가 잡았다). 29차 실패 7건 중 닫힘 4(4.3·6.3·8일주장·M3오염주장), 열림 3(1.2·6.1·6.2)</td></tr>
       <tr><td><strong>재봤더니 뒤집힌 것</strong></td><td>사례 23 · R008 승격</td><td class="judge">4.3 되돌림을 고친 자로 재는 순간 <strong>자가 또 고장나 있었다</strong>(장비 전용 축을 후보에서 안 뺌, 헛돈틱 836,040). 고치니 완주 0/20 → <strong>8/8</strong>. 같은 패턴 2회 → 절차 40 대로 <span class="mono">rules/R008</span> 승격</td></tr>
       <tr><td>6.2 본보기 등록</td><td><strong>착수 전</strong></td><td class="judge">사람의 "좋다" 가 필요하다. 그 전에 1.2·4.3 결정으로 게임이 바뀔 수 있어 <strong>결정 뒤에</strong> 한다</td></tr>
       <tr><td>6.3 실기 묶음 갱신</td><td>됨</td><td class="judge"><span class="mono">plans/실기묶음.md</span> 실기-4 에 M4 항목 — 2.1·3.4·4.2·1.3 의 완료 판정 <strong>원문 그대로</strong>(R006) + 폰에서만 알 수 있는 것(능력치 탭에 hp·reg 줄 없음 · 일일 탭 시간대 표시 · DPR 4 렌더링). 디자인 뒤 새 도장에서 돈다</td></tr>
-      <tr><td>전체</td><td><strong>결정 3건 적용 · 30차 감사 대기</strong></td><td class="judge">1.2 (a)·4.3 (a)·5.1 (b) 적용, 체력 1.63 재조정, 근거 10종 새 도장. 남은 것: 1.2 새 판정 문구(사람) · 6.2 본보기(사람 "좋다") · M3-B5 회귀(사람 판정) · 30차 감사</td></tr>
+      <tr><td>전체</td><td><strong>30차: 통과 24 / 실패 7 / 회귀 1 — 닫히지 않음</strong></td><td class="judge">남은 것은 전부 사람 몫: 1.2 새 판정 문구 · M3-B5 회귀 판정 · 6.2 본보기 "좋다". 조건부 마감 여부도 사람이 정한다</td></tr>
     </tbody></table></div></section>
 </div>

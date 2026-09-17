@@ -7,6 +7,7 @@
 (`git config core.hooksPath .githooks`). 저장소를 새로 받은 사람도 이 한 줄이면 같은 보호를 받는다.
 """
 import os, sys, subprocess
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # cp949 콘솔에서 '—' 로 죽었다 (2026-09-17, 30차 감사가 잡은 것과 같은 결함)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

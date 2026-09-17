@@ -15,6 +15,7 @@
 """
 import io, os, sys, json, argparse, hashlib, datetime, statistics
 
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # cp949 콘솔에서 '—' 로 죽어 기록을 못 남겼다 (30차 감사)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sim_port as S
 

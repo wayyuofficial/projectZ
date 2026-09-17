@@ -18,16 +18,19 @@
 """
 import io, os, sys, json, argparse, hashlib, datetime, statistics
 
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # cp949 콘솔에서 '—' 로 죽어 기록을 못 남겼다 (30차 감사)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sim_port as S
 
 LINE_MIN = 30.0          # 연속 30분 안에 셋 다 채워지면 실패
 
 
-def measure(seeds):
+def measure(seeds, start_hour=None):
     """각 시드에서 과제 셋이 need 에 **처음 닿은 시각**(분)을 잰다.
 
-    `questProgress` 를 감싼다 — 매수 줄처럼 여기서 진행을 새로 짜면 자가 둘이 된다."""
+    `questProgress` 를 감싼다 — 매수 줄처럼 여기서 진행을 새로 짜면 자가 둘이 된다.
+    `start_hour` 를 주면 그 시각(UTC, 포트 기준)에 런을 시작한다 — 시간대 셋을 각각 재려고 (30차 감사:
+    "후보 문구조차 지금 도구로는 시간대 하나만 재진다")."""
     orig = S.Sim.questProgress
     rows = []
     try:
@@ -40,7 +43,10 @@ def measure(seeds):
                     _h[qid] = self.t / 60.0
 
             S.Sim.questProgress = qp
-            S.auto_run(seed=sd, max_min=900)
+            kw = {}
+            if start_hour is not None:
+                kw["now_ms"] = S.DEFAULT_NOW_MS - (S.DEFAULT_NOW_MS % S.DAY_MS) + int(start_hour) * 3600000
+            S.auto_run(seed=sd, max_min=900, **kw)
             rows.append(dict(hit))
     finally:
         S.Sim.questProgress = orig        # 감싼 것은 반드시 벗긴다
@@ -51,10 +57,11 @@ def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=20)
     ap.add_argument("--out")
+    ap.add_argument("--start-hour", type=int, default=None, help="런 시작 시각(UTC 0~23). 시간대 하나를 골라 잰다")
     a = ap.parse_args(argv[1:])
     seeds = list(range(1, a.seeds + 1))
 
-    rows = measure(seeds)
+    rows = measure(seeds, a.start_hour)
     full = [r for r in rows if len(r) == len(S.QUEST_DEFS_IDS)]
     last = sorted(max(r.values()) for r in full)
     within = [x for x in last if x <= LINE_MIN]
@@ -64,7 +71,7 @@ def main(argv):
     # 시간대 2([22,06)) 과제만 열려 있고, 06:00 = 4시간 14분 뒤에야 시간대 0 이 열린다.
     # 그래서 "셋 다 채워진 시드" 는 이제 구조상 0 이다 — 그 수는 더 이상 시험이 아니다.
     # 시험이 되는 것은 **열린 시간대의 과제가 얼마나 빨리 채워지는가**다. 과제별로 따로 찍는다.
-    s0 = S.Sim(seed=1)
+    s0 = S.Sim(seed=1, now_ms=(S.DEFAULT_NOW_MS - (S.DEFAULT_NOW_MS % S.DAY_MS) + a.start_hour * 3600000) if a.start_hour is not None else S.DEFAULT_NOW_MS)
     bands = {q["id"]: int(q["band"]) for q in S.QUEST_DEFS}
     open_now = {q["id"]: s0.questOpen(q) for q in S.QUEST_DEFS}
     print("시작 시각(UTC) %02d시 · 열린 시간대 %d · 과제별 시간대 %s"
@@ -80,7 +87,9 @@ def main(argv):
               % (statistics.median(last), last[0], last[-1]))
     print("연속 %.0f분 안에 셋 다 채워진 시드: %d/%d" % (LINE_MIN, len(within), len(seeds)))
     ok = len(within) == 0
-    print("완료 판정('채워지지 않는다'): %s" % ("통과" if ok else "**떨어진다**"))
+    # 2026-09-17 (a) 뒤로 옛 문구("연속 30분 안에 전부 채워지지 않는다")는 시간대가 셋이라 **구조상 항상 참**이다.
+    # 항등식은 시험이 아니다 — 여기서 '통과' 라고 찍으면 자기채점이다 (30차 감사가 잡았다). 새 문구는 사람이 정한다.
+    print("옛 문구('채워지지 않는다'): %s — 시간대가 생긴 뒤로는 **항등식이라 판정이 아니다.** 새 문구는 사람 몫" % ("항상 참" if ok else "거짓(?)"))
 
     if a.out:
         stamp = hashlib.sha256(io.open(S.GAME, "rb").read()).hexdigest()[:16]
@@ -90,6 +99,7 @@ def main(argv):
                "과제": {q: S.QUEST_NEEDS[q] for q in S.QUEST_DEFS_IDS},
                "시드별_처음_닿은_시각_분": rows,
                "셋_다_채워진_시드": len(full),
+               "시작_시각_옵션": a.start_hour,
                "시간대": {"시작_시각_UTC": int((s0.now_ms // 3600000) % 24), "과제별_시간대": bands, "시작시_열림": open_now},
                "과제별": {qid: {"채워진_시드": sum(1 for r in rows if qid in r),
                                "처음_닿은_시각_분_중앙": round(statistics.median([r[qid] for r in rows if qid in r]), 2) if any(qid in r for r in rows) else None}
@@ -99,7 +109,8 @@ def main(argv):
                                       "최대": round(last[-1], 2) if last else None},
                "선_분": LINE_MIN,
                "선_안에_들어온_시드": len(within),
-               "결과": "통과" if ok else "떨어진다",
+               "옛_문구_결과": ("항상 참 — 항등식, 판정 아님" if ok else "거짓"),
+               "판정_문구": "없음 — 2026-09-17 (a) 뒤 옛 문구는 항등식. 새 문구는 사람이 정한다 (결정요청 1절 후보)",
                "내가_틀린_것": "2026-09-15 에 나는 '못 잰다'고 적었다. 판정 문구가 재라는 것은 수령이 아니라 채워지는 시각이고, questProgress 가 이미 세고 있었다. 29차 감사가 잡았다.",
                "판정하지_않는다": "M4-B1 판정은 검증자·사람 몫이다."}
         io.open(a.out, "w", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=2))

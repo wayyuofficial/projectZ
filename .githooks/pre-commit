@@ -10,4 +10,7 @@ if [ $code -ne 0 ]; then
   echo "차단을 고치고 다시 커밋한다. 정말 넘겨야 하면 git commit --no-verify 를 쓰고 이유를 남긴다."
   exit 1
 fi
+# 2026-09-17 (30차 감사): checks/run.py 가 방금 다시 쓴 검사 기록을 **다시 스테이징**한다.
+# 전에는 git add 시점의 옛 기록이 커밋에 들어가 "커밋본 경고 2 / 실제 경고 1" 로 어긋났다 (29차·30차 연속).
+git add measurements/checks-*.json 2>/dev/null
 exit 0
