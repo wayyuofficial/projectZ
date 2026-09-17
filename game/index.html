@@ -403,6 +403,7 @@ function migrate(raw) {
 }
 
 function save() {
+  if (resetting) return;                    // 저장 지우기 중 — 새로고침 전에 자동 저장이 옛 G 를 다시 쓰던 것 (2026-09-17 브라우저 확인)
   G.lastSeen = Date.now();
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(G)); saveError = null; }
   catch (e) { saveError = String(e); }   // 조용히 넘기지 않는다. HUD에 표시한다
@@ -998,6 +999,22 @@ function rolloverDay() {
   return { kind: 'login', day: G.login.streak, gain: gain };
 }
 
+const RESET_CONFIRM_MS = 5000;
+let resetArmAt = 0;
+let resetting = false;                      // 켜지면 save() 가 아무것도 안 쓴다
+function resetSave() {
+  const now = performance.now();
+  if (resetArmAt && now - resetArmAt < RESET_CONFIRM_MS) {
+    resetting = true;                        // 먼저 저장을 막는다 — reload 전 틈에 자동 저장이 끼어들었다
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+    G = freshState();                        // 메모리도 처음부터 (혹시 저장이 새어도 새 상태가 쓰인다)
+    resetArmAt = 0;
+    location.reload();                       // 처음부터 — 상태·화면을 통째로 새로 만든다
+    return true;
+  }
+  resetArmAt = now;
+  return false;
+}
 function questBand(hour) { return (hour >= QUEST_BANDS[2] || hour < QUEST_BANDS[0]) ? 2 : (hour >= QUEST_BANDS[1] ? 1 : 0); }
 function questOpen(q) { return questBand(new Date().getHours()) === q.band; }   // M4 1.2 (a): 로컬 시각
 function questProgress(id, n) {
@@ -1218,6 +1235,11 @@ function buildButtons() {
     putRow({ label: '보급 상자', sub: '열쇠 ' + (G.keys || 0) + ' / ' + KEY_MAX + '   자정에 채워진다',
              cost: null, enabled: (G.keys || 0) > 0, tone: (G.keys || 0) > 0 ? 'buy' : 'off',
              onTap: () => openSupply() });
+    /* 테스트용 저장 지우기 (사람 요청 2026-09-17). 실수로 못 지우게 **5초 안에 두 번** 눌러야 한다.
+       디자인이 끝나면 숨기거나 뺀다 — 그때 이 줄과 포트 거울(buildButtons)의 reset 행을 같이 지운다. */
+    const armed = resetArmAt && (performance.now() - resetArmAt) < RESET_CONFIRM_MS;
+    putRow({ label: '저장 지우기 (테스트)', sub: armed ? '정말? 5초 안에 한 번 더 누르면 처음부터' : '두 번 눌러야 지워진다',
+             cost: null, enabled: true, tone: armed ? 'ad' : 'ghost', onTap: () => resetSave() });
   } else if (tab === 'stat') {
     STATS.filter((s) => !s.gearOnly).forEach((s) => {   // M4 4.3: 장비 전용 축은 줄이 없다
       const cost = statCost(s.id), val = statOf(s.id);
@@ -1239,8 +1261,14 @@ function buildButtons() {
       const cost = weaponUpgradeCost(w.id);
       const maxed = tier >= TIER_MAX;
       putRow({ label: w.name + (tier ? '  ★' + tier : ''),
+               /* 2026-09-17 폰 제보 "이미 산 무기는 재화가 모여도 선택만 된다": 브라우저에서 규칙 #72 는 그대로 도는데
+                  (장착 → 한 번 더 → 강화), 그걸 알려 주는 게 부제 한 단어뿐이었고, 무기 값이 **설계도**인 것과
+                  설계도가 모자라면 탭이 조용히 재장착으로 떨어지는 것을 화면이 말해 주지 않았다. 여기서 말한다. */
                sub: maxed ? '최대 등급 · 위력 ×' + (w.mult * (1 + TIER_POWER * (TIER_MAX - 1))).toFixed(2)
-                    : (tier ? (G.weapon === w.id ? '강화' : '장착') : '해금'),
+                    : (tier ? (G.weapon === w.id
+                                 ? (G.plans >= cost ? '강화 · 설계도 ' + fmt(cost) : '강화 — 설계도 ' + fmt(cost - G.plans) + ' 더 필요')
+                                 : '장착 · 한 번 더 누르면 강화')
+                            : (G.plans >= cost ? '해금 · 설계도 ' + fmt(cost) : '해금 — 설계도 ' + fmt(cost - G.plans) + ' 더 필요')),
                cost: maxed ? null : cost,
                /* 가진 무기는 언제나 눌린다 — 장착 전환. 지시 #70 실기: 다음 등급을 못 사면 줄이 죽어서
                   실수로 약한 무기를 고르면 돈이 모일 때까지 되돌릴 수 없었다. */
@@ -1252,6 +1280,7 @@ function buildButtons() {
                onTap: () => {
                  if (tier > 0 && G.weapon !== w.id) return equip(w.id);
                  if (!maxed && G.plans >= cost) return buyWeapon(w.id);
+                 if (!maxed) addFloat(GAME_W / 2, ARENA_TOP + 120, '설계도 부족 — ' + fmt(cost - G.plans) + ' 더', '#B8A15E', 20);   // 조용히 넘어가지 않는다
                  return equip(w.id);
                } });
     });
@@ -1460,7 +1489,7 @@ function drawHUD() {
   ctx.fillText(fmt(G.parts), 24, 54);
   ctx.fillStyle = '#B8A15E';   // M3 5: 설계도 — 무기 전용 재화
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('설계도 ' + fmt(G.plans), 24, 70);
+  ctx.fillText('설계도 ' + fmt(G.plans), 24, 68);   /* 실기 2026-09-17: 단계 막대에 가려져 안 보였다 — 막대를 72 로 내리고 글씨를 68 로 */
 
   ctx.textAlign = 'right';
   ctx.fillStyle = '#7FB0B2';
@@ -1471,7 +1500,7 @@ function drawHUD() {
   ctx.fillText(G.zone + ' / ' + ZONE_COUNT, GAME_W - 24, 54);
   ctx.fillStyle = '#7FB0B2';
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText(currentStage() + ' / ' + STAGES_PER_ZONE + ' 단계', GAME_W - 24, 70);
+  ctx.fillText(currentStage() + ' / ' + STAGES_PER_ZONE + ' 단계', GAME_W - 24, 68);
 
   const px = 24, pw = GAME_W - 48;
   // M3 4.1 — 진행 막대를 단계 수만큼 쪼갠다. 한 칸이 한 단계다.
@@ -1480,19 +1509,19 @@ function drawHUD() {
   for (let i = 0; i < STAGES_PER_ZONE; i++) {
     const x = px + i * (segW + 3);
     ctx.fillStyle = 'rgba(255,255,255,.06)';
-    ctx.fillRect(x, 62, segW, 5);
+    ctx.fillRect(x, 72, segW, 4);
     const doneInSeg = Math.max(0, Math.min(stKills, killIndex - i * stKills));
     if (doneInSeg > 0) {
       ctx.fillStyle = '#7FB0B2';
-      ctx.fillRect(x, 62, segW * (doneInSeg / stKills), 5);
+      ctx.fillRect(x, 72, segW * (doneInSeg / stKills), 4);
     }
   }
 
   const hpPct = Math.max(0, G.hp / maxHP());
   ctx.fillStyle = 'rgba(255,255,255,.06)';
-  ctx.fillRect(px, 72, pw, 9);
+  ctx.fillRect(px, 79, pw, 8);
   ctx.fillStyle = hpPct > .3 ? '#5E9A6B' : '#B2554E';
-  ctx.fillRect(px, 72, pw * hpPct, 9);
+  ctx.fillRect(px, 79, pw * hpPct, 8);
   ctx.textAlign = 'center';
   ctx.fillStyle = (saveError || loadError) ? '#E08A7A' : '#9FB2B0';
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
@@ -1501,7 +1530,7 @@ function drawHUD() {
     : loadError ? loadError
     : '체력 ' + fmt(G.hp) + ' / ' + fmt(maxHP()) + '     DPS ' + fmt(playerDPS())
       + (boostActive() ? '     부품 2배' : '')
-      + (focusActive() ? '     집중' : (focusReady() ? '     탭!' : '')), GAME_W / 2, 94, GAME_W - 48);
+      + (focusActive() ? '     집중' : (focusReady() ? '     탭!' : '')), GAME_W / 2, 98, GAME_W - 48);
 }
 
 function drawPanelBg() {

@@ -184,7 +184,7 @@ MIRRORED = {
     "applyOffline": "22e6b2208ac61edc",
     "attacksPerSec": "62c1a324deffd5c2",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "8d2a997905d62c0e",
+    "buildButtons": "9de56c17b398fea2",
     "buyStat": "55e7f37e19e75aee",
     "buyWeapon": "e58bfe7e010aeddb",
     "dailyBudget": "51f1b98162132ed0",
@@ -721,6 +721,7 @@ class Sim(object):
                         (not taken) and cur >= need, q)
             keys = self.G.get("keys", 0)
             put_row("supply", "buy" if keys > 0 else "off", keys > 0, None)
+            put_row("reset", "ghost", True, None)      # 테스트용 저장 지우기 (2026-09-17). 게임에서 빼면 여기도 뺀다
         elif self.tab == "stat":
             for s in [x for x in STATS if x["id"] not in GEAR_ONLY_STATS]:   # M4 4.3
                 cost = self.statCost(s["id"])
