@@ -4661,3 +4661,8 @@ sell_share·focus_check·upgrade_cadence·daily_budget 이 cp949 콘솔에서 `�
 2026-09-17.
 - **1.2 판정 문구 확정** (사람): *"20시드 1런에서, 시작 시각에 열린 시간대의 과제는 열린 뒤 30분 안에 채워지고, 닫힌 시간대의 과제는 채워지지 않는다(0/20)."* WBS 1.2 판정 칸에 그대로 옮겼다. 근거는 이미 있다(h8·h16·h0 각 20시드: 열린 20/20 · 닫힌 0/20).
 - **M3-B5 반증 판정** — `tools/judge_prediction.py` 는 tty 전용이라 **내가 못 돌린다.** 사람이 `python tools/judge_prediction.py M3-B5 반증` 을 직접 친다. 근거: `upgrade-cadence-m4-g-2026-09-17.json` 무기 뒤 60초 안 능력치 매수 **76.7%**(선 90%).
+
+### M3-B5 — 사람이 반증으로 판정했다 (지시 #108)
+`python tools/judge_prediction.py M3-B5 반증` 을 사람이 tty 에서 직접 쳤다. 근거 `upgrade-cadence-m4-g-2026-09-17.json` 76.7% (선 90%).
+반증 조건의 처방 "배분을 다시 정한다" 는 **M5 후보**로 둔다 — 지금 상수를 만지면 그 판정이 내 것이 된다.
+남은 사람 몫: 6.2 본보기 "좋다" 하나.
