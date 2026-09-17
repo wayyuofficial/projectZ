@@ -43,6 +43,23 @@
 <div id="stage"><canvas id="c"></canvas></div>
 
 <script>
+/* M5 1.1 — 색은 여기 한 곳에만 둔다 (사람이 2026-09-17 에 디자인을 당겼다, 지시 #112).
+   이름은 **역할**이다(무엇에 쓰는 색인가). 값을 바꾸면 화면 전체가 같이 바뀐다.
+   데이터 표의 색(WEAPON_TYPES 의 tint 등)은 내용이라 여기 안 둔다. tools/palette_check.py 가 여기 밖의 직접 쓴 색을 센다.
+   1.1 은 옮기기만 했다 — 값은 옮기기 전과 같다. 보이는 변화는 1.2 부터. */
+const PALETTE = {
+  sky: '#0E1416', panel: '#0A1012',
+  line: 'rgba(127,176,178,0.18)', lineStrong: 'rgba(127,176,178,0.28)', lineFaint: 'rgba(127,176,178,0.08)',
+  scrollTrack: 'rgba(127,176,178,0.10)', scrollThumb: 'rgba(127,176,178,0.45)',
+  btnLine: 'rgba(127,176,178,.20)', btnLineDim: 'rgba(127,176,178,.10)', onBg: 'rgba(127,176,178,.18)', equippedBg: 'rgba(127,176,178,.12)',
+  track: 'rgba(255,255,255,.06)', rowBg: 'rgba(255,255,255,.05)', ghostBg: 'rgba(255,255,255,.03)', disabledBg: 'rgba(255,255,255,.02)', adBg: 'rgba(217,162,75,.16)',
+  shade30: 'rgba(0,0,0,0.30)', shade35: 'rgba(0,0,0,.35)', shade55: 'rgba(0,0,0,.55)', scrim: 'rgba(5,8,10,.88)',
+  ink: '#E8F0EE', ink2: '#9FB2B0', ink3: '#8FA5A3', muted: '#6F8180', dim: '#556564', dim2: '#4A5857',
+  parts: '#7FB0B2', plans: '#B8A15E', gold: '#D9A24B', goldInk: '#F0D9AE', warn: '#E08A7A', danger: '#B2554E', hpOk: '#5E9A6B',
+  flash: '#F2F7F5', zombie: '#4E6B57', zombieDark: '#25311F', zombieLimb: '#8FA88C', boss: '#6B7F4E', bossCharge: '#C4703A', bossGlow: 'rgba(196,112,58,.25)', bossHit: '#FFD9A0', drop: '#7E9B72',
+  survivor: '#2E3F44', survivorHead: '#C8D6D2', survivorArm: '#3A4A4E', gearTint: '#6E8B8D',
+  deathRgb: '180,40,40', fatalBg: '#7A2E28', fatalInk: '#FFE6E2'
+};
 /* =========================================================================
    0. 실패를 보이게 한다 — **이 블록은 반드시 맨 앞이어야 한다.**
    2026-09-09 지시 #38: PC 브라우저에서 화면이 300x150 회색 상자로만 남고 단서가 없었다.
@@ -59,8 +76,8 @@ function fatal(what) {
     if (!d) {
       d = document.createElement('div');
       d.id = 'fatal';
-      d.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:99;background:#7A2E28;'
-        + 'color:#FFE6E2;font:12px/1.6 ui-monospace,Consolas,monospace;padding:10px 12px;'
+      d.style.cssText = 'position:fixed;left:0;top:0;right:0;z-index:99;background:' + PALETTE.fatalBg + ';'
+        + 'color:' + PALETTE.fatalInk + ';font:12px/1.6 ui-monospace,Consolas,monospace;padding:10px 12px;'
         + 'white-space:pre-wrap;word-break:break-all';
       document.body.appendChild(d);
     }
@@ -702,7 +719,7 @@ function triggerFocus() {
   if (!focusReady()) return false;
   focusUntil = performance.now() + FOCUS_SEC * 1000;
   focusReadyAt = performance.now() + FOCUS_COOL_SEC * 1000;
-  addFloat(GAME_W / 2, ARENA_TOP + 150, '집중 사격', '#7FB0B2', 22);
+  addFloat(GAME_W / 2, ARENA_TOP + 150, '집중 사격', PALETTE.parts, 22);
   return true;
 }
 let deathFlash = 0, shake = 0;
@@ -735,7 +752,7 @@ function addFloat(x, y, text, color, size) {
 
 function damageZombie(z, dmg) {
   z.hp -= dmg; z.flash = 0.12;
-  addFloat(z.x, z.y - 14, fmt(dmg), z.boss ? '#FFD9A0' : '#E8F0EE', 13);
+  addFloat(z.x, z.y - 14, fmt(dmg), z.boss ? PALETTE.bossHit : PALETTE.ink, 13);
   if (z.hp <= 0) killZombie(z);
 }
 
@@ -768,12 +785,12 @@ function killZombie(z) {
   for (let k = 0; k < (z.boss ? 16 : 7); k++) {
     particles.push({ x: z.x, y: z.y, vx: (Math.random() - .5) * 120,
       vy: (Math.random() - .5) * 120 - 30, life: .5 + Math.random() * .3,
-      t: 0, c: z.boss ? '#D9A24B' : '#7E9B72' });
+      t: 0, c: z.boss ? PALETTE.gold : PALETTE.drop });
   }
   const gain = killReward(G.zone) * (z.boss ? BOSS_EVERY : 1) * rewardMult() * statOf('inc');
   G.parts += gain;
   G.totalKills++;
-  addFloat(z.x, z.y - 30, '+' + fmt(gain), '#7FB0B2', 15);
+  addFloat(z.x, z.y - 30, '+' + fmt(gain), PALETTE.parts, 15);
   killIndex++;
   // M3 4.2 — 단계 클리어 일시금. 구역을 넘는 마지막 칸에서는 안 준다(그건 구역 클리어다).
   if (killIndex % stageKills(G.zone) === 0 && killIndex < zoneKills(G.zone)) {
@@ -788,12 +805,12 @@ function killZombie(z) {
     const bp = stageBlueprint(G.zone) * rewardMult() * statOf('inc');
     G.plans += bp;
     addFloat(GAME_W / 2, ARENA_TOP + 100, '단계 ' + currentStage() + ' / ' + STAGES_PER_ZONE
-      + '   설계도 +' + fmt(bp), '#B8A15E', 18);
+      + '   설계도 +' + fmt(bp), PALETTE.plans, 18);
   }
   if (z.boss) {
     const bp = bossBlueprint(G.zone) * rewardMult() * statOf('inc');
     G.plans += bp;
-    addFloat(GAME_W / 2, ARENA_TOP + 130, '보스 · 설계도 +' + fmt(bp), '#B8A15E', 18);
+    addFloat(GAME_W / 2, ARENA_TOP + 130, '보스 · 설계도 +' + fmt(bp), PALETTE.plans, 18);
   }
   if (killIndex >= zoneKills(G.zone)) {   // M2: 벽 구역은 3배
     killIndex = 0;
@@ -801,10 +818,10 @@ function killZombie(z) {
       G.zone++;
       questProgress('zone', 1);            // M4 1.2
       G.bestZone = Math.max(G.bestZone, G.zone);
-      addFloat(GAME_W / 2, ARENA_TOP + 60, '구역 ' + G.zone, '#D9A24B', 26);
+      addFloat(GAME_W / 2, ARENA_TOP + 60, '구역 ' + G.zone, PALETTE.gold, 26);
       zombies.length = 0; shots.length = 0;
     } else {
-      addFloat(GAME_W / 2, ARENA_TOP + 60, '최종 구역 방어 중', '#D9A24B', 20);
+      addFloat(GAME_W / 2, ARENA_TOP + 60, '최종 구역 방어 중', PALETTE.gold, 20);
     }
   }
   G.kills = killIndex;
@@ -912,7 +929,7 @@ function onDeath() {
   killIndex = 0; G.kills = 0;
   reviveOffer = { zone: from, t: 0 };
   addFloat(GAME_W / 2, ARENA_TOP + 60,
-    G.zone < from ? '구역 ' + G.zone + ' 로 후퇴' : '버텼다', '#E08A7A', 22);
+    G.zone < from ? '구역 ' + G.zone + ' 로 후퇴' : '버텼다', PALETTE.warn, 22);
   save();
 }
 
@@ -925,7 +942,7 @@ function acceptRevive() {
   killIndex = 0; G.kills = 0;
   zombies.length = 0; shots.length = 0;
   reviveOffer = null;
-  addFloat(GAME_W / 2, ARENA_TOP + 60, '구역 ' + G.zone + ' 복귀', '#D9A24B', 22);
+  addFloat(GAME_W / 2, ARENA_TOP + 60, '구역 ' + G.zone + ' 복귀', PALETTE.gold, 22);
   save();
   return true;
 }
@@ -1033,7 +1050,7 @@ function takeQuest(id) {
   const budget = dailyBudget();
   G.parts += budget * q.share;
   G.plans += budget * q.share * BP_RATIO;
-  addFloat(GAME_W / 2, ARENA_TOP + 120, q.name + ' 완료', '#D9A24B', 20);
+  addFloat(GAME_W / 2, ARENA_TOP + 120, q.name + ' 완료', PALETTE.gold, 20);
   save();
   return true;
 }
@@ -1046,7 +1063,7 @@ function openSupply() {
   const gain = budget * SUPPLY_SHARE / KEY_MAX;
   G.parts += gain;
   G.plans += gain * BP_RATIO;
-  addFloat(GAME_W / 2, ARENA_TOP + 120, '보급 상자 +' + fmt(gain), '#D9A24B', 20);
+  addFloat(GAME_W / 2, ARENA_TOP + 120, '보급 상자 +' + fmt(gain), PALETTE.gold, 20);
   save();
   return true;
 }
@@ -1061,7 +1078,7 @@ function adReward(kind) {
   adLog.push({ kind: kind, at: Date.now() });
   if (kind === 'boost') {
     G.boostUntil = Math.max(Date.now(), G.boostUntil || 0) + AD_BOOST_MIN * 60000;
-    addFloat(GAME_W / 2, ARENA_TOP + 90, '부품 2배 ' + AD_BOOST_MIN + '분', '#D9A24B', 22);
+    addFloat(GAME_W / 2, ARENA_TOP + 90, '부품 2배 ' + AD_BOOST_MIN + '분', PALETTE.gold, 22);
   } else if (kind === 'revive') {
     acceptRevive();
   } else if (kind === 'offline2x' && offlineReport && !offlineReport.doubled) {
@@ -1201,7 +1218,7 @@ function buildButtons() {
       putRow({ label: sl.name + ' · ' + (g ? gearName(g) : '비었다'),
                sub: g ? g.affixes.map((a) => affixText(a)).join('   ') : '장비가 떨어지면 자동으로 채워진다',
                cost: null, enabled: false, tone: g ? 'equipped' : 'ghost',
-               tint: g ? tierTint('#6E8B8D', g.tier) : null, onTap: () => false });
+               tint: g ? tierTint(PALETTE.gearTint, g.tier) : null, onTap: () => false });
     });
     const bag = (G.bag || []).slice().sort((a, b) => gearScore(b) - gearScore(a));
     if (!bag.length) {
@@ -1214,7 +1231,7 @@ function buildButtons() {
       putRow({ label: gearName(g) + (better ? '  ▲' : ''),
                sub: g.affixes.map((a) => affixText(a)).join('   ') + '   ·   팔면 ' + fmt(gearSellPrice(g)),
                cost: null, enabled: true, tone: better ? 'buy' : 'off',
-               tint: tierTint('#6E8B8D', g.tier),
+               tint: tierTint(PALETTE.gearTint, g.tier),
                onTap: () => equipGear(i) });
     });
   } else if (tab === 'daily') {
@@ -1280,7 +1297,7 @@ function buildButtons() {
                onTap: () => {
                  if (tier > 0 && G.weapon !== w.id) return equip(w.id);
                  if (!maxed && G.plans >= cost) return buyWeapon(w.id);
-                 if (!maxed) addFloat(GAME_W / 2, ARENA_TOP + 120, '설계도 부족 — ' + fmt(cost - G.plans) + ' 더', '#B8A15E', 20);   // 조용히 넘어가지 않는다
+                 if (!maxed) addFloat(GAME_W / 2, ARENA_TOP + 120, '설계도 부족 — ' + fmt(cost - G.plans) + ' 더', PALETTE.plans, 20);   // 조용히 넘어가지 않는다
                  return equip(w.id);
                } });
     });
@@ -1336,13 +1353,13 @@ function rr(x, y, w, h, r) {
 function draw() {
   ctx.save();
   if (shake > 0) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
-  ctx.fillStyle = '#0E1416';
+  ctx.fillStyle = PALETTE.sky;
   ctx.fillRect(-8, -8, GAME_W + 16, GAME_H + 16);
   drawArena();
   drawHUD();
   drawPanelBg();
   if (deathFlash > 0) {
-    ctx.fillStyle = 'rgba(180,40,40,' + (deathFlash * 0.35).toFixed(3) + ')';
+    ctx.fillStyle = 'rgba(' + PALETTE.deathRgb + ',' + (deathFlash * 0.35).toFixed(3) + ')';
     ctx.fillRect(0, 0, GAME_W, GAME_H);
   }
   if (offlineReport) drawOffline();
@@ -1380,12 +1397,12 @@ function drawArena() {
     }
   }
   // 바닥
-  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.fillStyle = PALETTE.shade30;
   ctx.fillRect(0, GROUND_Y, GAME_W, ARENA_BOT - GROUND_Y);
-  ctx.strokeStyle = 'rgba(127,176,178,0.28)';
+  ctx.strokeStyle = PALETTE.lineStrong;
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(0, GROUND_Y + .5); ctx.lineTo(GAME_W, GROUND_Y + .5); ctx.stroke();
-  ctx.strokeStyle = 'rgba(127,176,178,0.08)';
+  ctx.strokeStyle = PALETTE.lineFaint;
   for (let x = 0; x < GAME_W; x += 40) {
     ctx.beginPath(); ctx.moveTo(x + .5, GROUND_Y); ctx.lineTo(x - 14 + .5, ARENA_BOT); ctx.stroke();
   }
@@ -1395,27 +1412,27 @@ function drawArena() {
     const bob = zb.held ? Math.sin(zb.wob * 1.6) * 1.5 : Math.sin(zb.wob) * 2;
     const fy = zb.y;                       // 발이 닿는 y
     // 그림자
-    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.fillStyle = PALETTE.shade35;
     ctx.beginPath(); ctx.ellipse(zb.x, fy + 2, 14 * s, 4 * s, 0, 0, 6.284); ctx.fill();
-    const body = zb.flash > 0 ? '#F2F7F5'
-      : (zb.boss ? (zb.charge > 0 ? '#C4703A' : '#6B7F4E') : '#4E6B57');
+    const body = zb.flash > 0 ? PALETTE.flash
+      : (zb.boss ? (zb.charge > 0 ? PALETTE.bossCharge : PALETTE.boss) : PALETTE.zombie);
     if (zb.boss && zb.charge > 0) {          // 돌진 중에는 뒤로 잔상을 남긴다
-      ctx.fillStyle = 'rgba(196,112,58,.25)';
+      ctx.fillStyle = PALETTE.bossGlow;
       ctx.fillRect(zb.x + 8 * s, fy - 46 * s, 30 * s, 44 * s);
     }
     // 왼쪽으로 뻗은 팔 — 진행 방향을 알려준다
     ctx.fillStyle = body;
     ctx.fillRect(zb.x - 22 * s, fy - 34 * s + bob, 12 * s, 6 * s);
     rr(zb.x - 11 * s, fy - 40 * s + bob, 24 * s, 40 * s, 6 * s); ctx.fill();
-    ctx.fillStyle = zb.flash > 0 ? '#F2F7F5' : '#8FA88C';
+    ctx.fillStyle = zb.flash > 0 ? PALETTE.flash : PALETTE.zombieLimb;
     rr(zb.x - 11 * s, fy - 55 * s + bob, 19 * s, 16 * s, 5 * s); ctx.fill();
     // 눈 (왼쪽을 본다)
-    ctx.fillStyle = zb.flash > 0 ? '#4E6B57' : '#25311F';
+    ctx.fillStyle = zb.flash > 0 ? PALETTE.zombie : PALETTE.zombieDark;
     ctx.fillRect(zb.x - 8 * s, fy - 49 * s + bob, 4 * s, 3 * s);
     const w = 34 * s, pct = Math.max(0, zb.hp / zb.max);
-    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillStyle = PALETTE.shade55;
     ctx.fillRect(zb.x - w / 2, fy - 66 * s + bob, w, 4);
-    ctx.fillStyle = zb.boss ? '#D9A24B' : '#B2554E';
+    ctx.fillStyle = zb.boss ? PALETTE.gold : PALETTE.danger;
     ctx.fillRect(zb.x - w / 2, fy - 66 * s + bob, w * pct, 4);
   }
 
@@ -1438,14 +1455,14 @@ function drawArena() {
     const w = weaponOf(G.weapon);
     const wt = weaponTint(G.weapon);
     const x = SURVIVOR_X, fy = GROUND_Y;
-    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.fillStyle = PALETTE.shade35;
     ctx.beginPath(); ctx.ellipse(x, fy + 2, 15, 4, 0, 0, 6.284); ctx.fill();
-    ctx.fillStyle = '#2E3F44';
+    ctx.fillStyle = PALETTE.survivor;
     rr(x - 14, fy - 42, 28, 42, 7); ctx.fill();
-    ctx.fillStyle = '#C8D6D2';
+    ctx.fillStyle = PALETTE.survivorHead;
     rr(x - 11, fy - 58, 22, 17, 5); ctx.fill();
     // 오른쪽을 본다 — 눈과 무기가 모두 오른쪽
-    ctx.fillStyle = '#3A4A4E';
+    ctx.fillStyle = PALETTE.survivorArm;
     ctx.fillRect(x + 4, fy - 52, 5, 4);
     ctx.fillStyle = wt;
     if (w.shape === 'wide')      ctx.fillRect(x + 12, fy - 38, 26, 9);
@@ -1475,30 +1492,30 @@ function drawArena() {
 }
 
 function drawHUD() {
-  ctx.fillStyle = '#0A1012';
+  ctx.fillStyle = PALETTE.panel;
   ctx.fillRect(0, 0, GAME_W, ARENA_TOP);
-  ctx.strokeStyle = 'rgba(127,176,178,0.18)';
+  ctx.strokeStyle = PALETTE.line;
   ctx.beginPath(); ctx.moveTo(0, ARENA_TOP - .5); ctx.lineTo(GAME_W, ARENA_TOP - .5); ctx.stroke();
 
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#7FB0B2';
+  ctx.fillStyle = PALETTE.parts;
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText('부품', 24, 26);
-  ctx.fillStyle = '#E8F0EE';
+  ctx.fillStyle = PALETTE.ink;
   ctx.font = '600 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText(fmt(G.parts), 24, 54);
-  ctx.fillStyle = '#B8A15E';   // M3 5: 설계도 — 무기 전용 재화
+  ctx.fillStyle = PALETTE.plans;   // M3 5: 설계도 — 무기 전용 재화
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText('설계도 ' + fmt(G.plans), 24, 68);   /* 실기 2026-09-17: 단계 막대에 가려져 안 보였다 — 막대를 72 로 내리고 글씨를 68 로 */
 
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#7FB0B2';
+  ctx.fillStyle = PALETTE.parts;
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText('구역', GAME_W - 24, 26);
-  ctx.fillStyle = '#E8F0EE';
+  ctx.fillStyle = PALETTE.ink;
   ctx.font = '600 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText(G.zone + ' / ' + ZONE_COUNT, GAME_W - 24, 54);
-  ctx.fillStyle = '#7FB0B2';
+  ctx.fillStyle = PALETTE.parts;
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText(currentStage() + ' / ' + STAGES_PER_ZONE + ' 단계', GAME_W - 24, 68);
 
@@ -1508,22 +1525,22 @@ function drawHUD() {
   const stKills = stageKills(G.zone);
   for (let i = 0; i < STAGES_PER_ZONE; i++) {
     const x = px + i * (segW + 3);
-    ctx.fillStyle = 'rgba(255,255,255,.06)';
+    ctx.fillStyle = PALETTE.track;
     ctx.fillRect(x, 72, segW, 4);
     const doneInSeg = Math.max(0, Math.min(stKills, killIndex - i * stKills));
     if (doneInSeg > 0) {
-      ctx.fillStyle = '#7FB0B2';
+      ctx.fillStyle = PALETTE.parts;
       ctx.fillRect(x, 72, segW * (doneInSeg / stKills), 4);
     }
   }
 
   const hpPct = Math.max(0, G.hp / maxHP());
-  ctx.fillStyle = 'rgba(255,255,255,.06)';
+  ctx.fillStyle = PALETTE.track;
   ctx.fillRect(px, 79, pw, 8);
-  ctx.fillStyle = hpPct > .3 ? '#5E9A6B' : '#B2554E';
+  ctx.fillStyle = hpPct > .3 ? PALETTE.hpOk : PALETTE.danger;
   ctx.fillRect(px, 79, pw * hpPct, 8);
   ctx.textAlign = 'center';
-  ctx.fillStyle = (saveError || loadError) ? '#E08A7A' : '#9FB2B0';
+  ctx.fillStyle = (saveError || loadError) ? PALETTE.warn : PALETTE.ink2;
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   // maxWidth 를 줘서 긴 오류 문구가 화면 밖으로 넘치지 않게 한다
   ctx.fillText(saveError ? '저장 실패 — 진행이 남지 않는다'
@@ -1534,9 +1551,9 @@ function drawHUD() {
 }
 
 function drawPanelBg() {
-  ctx.fillStyle = '#0A1012';
+  ctx.fillStyle = PALETTE.panel;
   ctx.fillRect(0, ARENA_BOT, GAME_W, GAME_H - ARENA_BOT);
-  ctx.strokeStyle = 'rgba(127,176,178,0.18)';
+  ctx.strokeStyle = PALETTE.line;
   ctx.beginPath(); ctx.moveTo(0, ARENA_BOT + .5); ctx.lineTo(GAME_W, ARENA_BOT + .5); ctx.stroke();
 
   if (offlineReport) return;
@@ -1547,9 +1564,9 @@ function drawPanelBg() {
     const trackH = bot - top;
     const barH = Math.max(24, trackH * trackH / (trackH + listMax));
     const barY = top + (trackH - barH) * (listScroll / listMax);
-    ctx.fillStyle = 'rgba(127,176,178,0.10)';
+    ctx.fillStyle = PALETTE.scrollTrack;
     ctx.fillRect(GAME_W - 10, top, 4, trackH);
-    ctx.fillStyle = 'rgba(127,176,178,0.45)';
+    ctx.fillStyle = PALETTE.scrollThumb;
     ctx.fillRect(GAME_W - 10, barY, 4, barH);
   }
 }
@@ -1558,13 +1575,13 @@ function drawButtons() {
   for (const b of buttons) {
     if (b.tone === 'scrim') continue;   // 배경 닫기 영역은 그리지 않는다
     if (b.clip) { ctx.save(); ctx.beginPath(); ctx.rect(0, b.clip[0], GAME_W, b.clip[1] - b.clip[0]); ctx.clip(); }
-    let bg = 'rgba(255,255,255,.05)', fg = '#E8F0EE', bd = 'rgba(127,176,178,.20)';
-    if (b.tone === 'on') { bg = 'rgba(127,176,178,.18)'; bd = '#7FB0B2'; }
-    else if (b.tone === 'off') { fg = '#6F8180'; }
-    else if (b.tone === 'ad') { bg = 'rgba(217,162,75,.16)'; bd = '#D9A24B'; fg = '#F0D9AE'; }
-    else if (b.tone === 'equipped') { bg = 'rgba(127,176,178,.12)'; bd = '#7FB0B2'; }
-    else if (b.tone === 'ghost') { bg = 'rgba(255,255,255,.03)'; fg = '#9FB2B0'; }
-    if (b.enabled === false) { fg = '#556564'; bd = 'rgba(127,176,178,.10)'; bg = 'rgba(255,255,255,.02)'; }
+    let bg = PALETTE.rowBg, fg = PALETTE.ink, bd = PALETTE.btnLine;
+    if (b.tone === 'on') { bg = PALETTE.onBg; bd = PALETTE.parts; }
+    else if (b.tone === 'off') { fg = PALETTE.muted; }
+    else if (b.tone === 'ad') { bg = PALETTE.adBg; bd = PALETTE.gold; fg = PALETTE.goldInk; }
+    else if (b.tone === 'equipped') { bg = PALETTE.equippedBg; bd = PALETTE.parts; }
+    else if (b.tone === 'ghost') { bg = PALETTE.ghostBg; fg = PALETTE.ink2; }
+    if (b.enabled === false) { fg = PALETTE.dim; bd = PALETTE.btnLineDim; bg = PALETTE.disabledBg; }
 
     ctx.fillStyle = bg; rr(b.x, b.y, b.w, b.h, 8); ctx.fill();
     ctx.strokeStyle = bd; ctx.lineWidth = 1; rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 8); ctx.stroke();
@@ -1576,7 +1593,7 @@ function drawButtons() {
     if (b.sub) {
       ctx.textAlign = 'left';
       ctx.fillText(b.label, tx, b.y + b.h / 2 - 2);
-      ctx.fillStyle = b.enabled === false ? '#4A5857' : '#8FA5A3';
+      ctx.fillStyle = b.enabled === false ? PALETTE.dim2 : PALETTE.ink3;
       ctx.font = '400 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
       ctx.fillText(b.sub, tx, b.y + b.h / 2 + 15);
     } else {
@@ -1586,7 +1603,7 @@ function drawButtons() {
 
     if (b.cost != null) {
       ctx.textAlign = 'right';
-      ctx.fillStyle = b.enabled === false ? '#556564' : '#D9A24B';
+      ctx.fillStyle = b.enabled === false ? PALETTE.dim : PALETTE.gold;
       ctx.font = '600 14px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
       ctx.fillText(fmt(b.cost), b.x + b.w - 14, b.y + b.h / 2 + 5);
     }
@@ -1595,20 +1612,20 @@ function drawButtons() {
 }
 
 function drawOffline() {
-  ctx.fillStyle = 'rgba(5,8,10,.88)';
+  ctx.fillStyle = PALETTE.scrim;
   ctx.fillRect(0, 0, GAME_W, GAME_H);
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#E8F0EE';
+  ctx.fillStyle = PALETTE.ink;
   ctx.font = '700 26px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText('자리를 비운 동안', GAME_W / 2, GAME_H / 2 - 110);
-  ctx.fillStyle = '#8FA5A3';
+  ctx.fillStyle = PALETTE.ink3;
   ctx.font = '400 15px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText(fmtTime(offlineReport.capped) + ' 동안 모았다', GAME_W / 2, GAME_H / 2 - 78);
-  ctx.fillStyle = '#D9A24B';
+  ctx.fillStyle = PALETTE.gold;
   ctx.font = '700 40px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText('+' + fmt(offlineReport.gain * (offlineReport.doubled ? 2 : 1)), GAME_W / 2, GAME_H / 2 - 20);
   if (offlineReport.cappedHit) {
-    ctx.fillStyle = '#6F8180';
+    ctx.fillStyle = PALETTE.muted;
     ctx.font = '400 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
     ctx.fillText('최대 ' + OFFLINE_MAX_HOURS + '시간까지만 쌓인다', GAME_W / 2, GAME_H / 2 + 8);
   }
