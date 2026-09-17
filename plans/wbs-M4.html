@@ -1,7 +1,7 @@
 <title>좀비 RPG M4 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M4.md
-     source-sha256: 7f37d6bed5e1923080db7bd0321b6584bff4676af7a01418f7463b6898e741fc
+     source-sha256: bf372b8393e8fb56c503bb77f946a17cc36bcc0d3b2a987906d503d4d342e0d2
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -332,7 +332,7 @@
       <tr><td>전체</td><td>3단계 끝</td><td class="judge">4단계로 갔다</td></tr>
       <tr><td>4.1 판매</td><td>됨</td><td class="judge">판매가 계수 0.09. 20시드 <strong>판매 비중 84.9%</strong>(선 30% 이상) · 완주 20/20 · 구역 30 도달 <strong>155.5분</strong>. <span class="mono">sell-share-2026-09-17b.json</span></td></tr>
       <tr><td>4.2 자동 판매</td><td>됨</td><td class="judge">구역 3 부터 열린다(조사 약점 "온보딩" 대응). 기준 이하는 가방에 안 넣고 바로 판다. <strong>장착 중인 것은 안 판다</strong> — 그 경로로 안 온다. 가방이 넘치면 가장 값싼 것부터</td></tr>
-      <tr><td>4.3 축 흡수</td><td><strong>(a) 적용 · 됨</strong></td><td class="judge">hp·reg <span class="mono">gearOnly</span> — 능력치 탭에서 빠지고 <span class="mono">buyStat</span> 이 거부(브라우저 확인 <span class="mono">ui-check-2026-09-17.json</span> · <span class="mono">ui-check-2026-09-17b.json</span> · <span class="mono">ui-check-weapon-2026-09-17.json</span>). 20시드 <span class="mono">axis_value</span>: 기준 <strong>155.5분</strong> · atk·spd·inc 잠그면 <strong>셋 다 완주 0/20</strong> · 없어도 되는 축 <strong>0개</strong> — 완료 판정("남은 3축이 전부 잠그면 느려진다 · 두 축은 장비로만 오른다") 충족. 2026-09-15 되돌림과 게임 주석의 원인 분석은 고장 난 자로 낸 것(사례 23) — 주석 바로잡음. <span class="mono">axis-value-2026-09-17b.json</span></td></tr>
+      <tr><td>4.3 축 흡수</td><td><strong>(a) 적용 · 됨</strong></td><td class="judge">hp·reg <span class="mono">gearOnly</span> — 능력치 탭에서 빠지고 <span class="mono">buyStat</span> 이 거부(브라우저 확인 <span class="mono">ui-check-2026-09-17.json</span> · <span class="mono">ui-check-2026-09-17c.json</span>(HEAD 재확인) · <span class="mono">ui-check-weapon-2026-09-17.json</span>). 20시드 <span class="mono">axis_value</span>: 기준 <strong>155.5분</strong> · atk·spd·inc 잠그면 <strong>셋 다 완주 0/20</strong> · 없어도 되는 축 <strong>0개</strong> — 완료 판정("남은 3축이 전부 잠그면 느려진다 · 두 축은 장비로만 오른다") 충족. 2026-09-15 되돌림과 게임 주석의 원인 분석은 고장 난 자로 낸 것(사례 23) — 주석 바로잡음. <span class="mono">axis-value-2026-09-17b.json</span></td></tr>
       <tr><td><strong>M4-B5</strong></td><td><strong>성립 방향 — 사람이 판정한다</strong></td><td class="judge">장비 전용으로 옮긴 뒤 남은 3축은 잠그면 못 깬다(0/20), 없어도 되는 축 0. 반증 조건(잠금이 5%% 넘게 빠르면 실패)에 걸리는 축이 없다. <span class="mono">axis-value-2026-09-17b.json</span> ※ 첫 기록은 도구가 원본 gearOnly 를 지워 기준 228.9분으로 무효였다 — 사례 24, <span class="mono">c23</span> 이 잡는다</td></tr>
       <tr><td><strong>M4-B3</strong></td><td><strong>성립 방향 — 사람이 판정한다</strong></td><td class="judge">판매 비중 84.9% (선 30%)</td></tr>
       <tr><td><strong>5단계로 넘어가는 빚</strong></td><td>열림</td><td class="judge">장비가 들어오면서 <strong>도달 밖 3 → 20</strong>, <strong>간격 120초 초과 1개</strong>(구역 23, 362초)가 생겼다. 간격은 <strong>정본 상한 위반</strong>이라 5단계에서 반드시 잡는다</td></tr>
