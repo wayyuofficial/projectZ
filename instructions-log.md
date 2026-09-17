@@ -4666,3 +4666,11 @@ sell_share·focus_check·upgrade_cadence·daily_budget 이 cp949 콘솔에서 `�
 `python tools/judge_prediction.py M3-B5 반증` 을 사람이 tty 에서 직접 쳤다. 근거 `upgrade-cadence-m4-g-2026-09-17.json` 76.7% (선 90%).
 반증 조건의 처방 "배분을 다시 정한다" 는 **M5 후보**로 둔다 — 지금 상수를 만지면 그 판정이 내 것이 된다.
 남은 사람 몫: 6.2 본보기 "좋다" 하나.
+
+---
+
+## 지시 #109 — "현재까지의 작업상황 apk로 만들어줘"
+
+2026-09-17. HEAD `97d072c` 의 게임(도장 `260c066247c4ff71` — 결정 3건 적용 · 체력 1.63 · M3-B5 반증 판정 반영)으로
+`assembleDebug`. APK 안 `assets/index.html` 을 꺼내 `game/index.html` 과 **바이트 대조** 후 같을 때만 `zombie-survival-debug.apk` 로 복사했다(`measurements/apk-2026-09-17.json`).
+실기는 디자인 뒤 묶음(`plans/실기묶음.md` 실기-4)이 원칙이다 — 이 APK 로 보시는 것은 사람의 선택이고, 그 관측은 이 도장에서만 근거다(R005).

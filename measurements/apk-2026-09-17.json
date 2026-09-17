@@ -1,0 +1,10 @@
+{
+  "측정일": "2026-09-17",
+  "대상": "APK 빌드 — assets/index.html 이 저장소 게임 파일과 같은지",
+  "빌드도장": "260c066247c4ff71",
+  "APK": "zombie-survival-debug.apk",
+  "APK_바이트": 61393,
+  "assets_경로": "assets/index.html",
+  "방법": "zipfile 로 APK 안 index.html 을 꺼내 game/index.html 과 바이트 비교. 같을 때만 복사.",
+  "결과": "바이트 동일"
+}
