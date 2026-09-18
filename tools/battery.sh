@@ -17,6 +17,7 @@ for H in 8 16 0; do python tools/quest_pace.py --seeds 20 --start-hour $H --out 
 python tools/daily_budget.py             --out measurements/daily-budget-$D.json | tail -3
 python tools/gear_roll.py      --n 10000 --out measurements/gear-roll-$D.json | tail -2
 python tools/tap_check.py                --out measurements/tap-$D.json | tail -2
+python tools/gacha_check.py    --n 20000 --out measurements/gacha-$D.json | tail -3   # M6 4.3 — 확률표·무기 풀
 echo "=== 도장 ==="
 python -c "import hashlib,io;print(hashlib.sha256(io.open('game/index.html','rb').read()).hexdigest()[:16])"
 echo "저장 시험(test_storage.js)은 브라우저에서 — 파이썬으로 못 돈다."

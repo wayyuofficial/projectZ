@@ -1063,6 +1063,7 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
     zone_at, wall = {1: 0.0}, {}
     deaths, buyT, stuck_from, last_zone = 0, 0.0, 0.0, 1
     idle_buy = 0          # 살 수 있는데 안 산 매수 틱 (c22 가 읽는다)
+    idle_kind = {"parts": 0, "plans": 0, "up": 0}   # M6 4.1 — 어느 재화·행동에서 헛돌았는지 (c22 가 같이 읽는다)
     # 사망은 이제 Sim 안에서 처리된다(자동 후퇴). 여기서는 세기만 한다.
     off_t, off_n, off_gain = 0.0, 0, 0.0
     # stop_zone 을 주면 그 구역에 닿는 순간 멈추고 **Sim 을 그대로 돌려준다.**
@@ -1160,11 +1161,11 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
             if any(s.statCost(st["id"]) <= s.G["parts"]
                    for st in STATS if st["id"] not in GEAR_ONLY_STATS
                    and not (st.get("cap") is not None and s.statOf(st["id"]) >= st["cap"] - 1e-9)):
-                idle_buy += 1
+                idle_buy += 1; idle_kind["parts"] += 1
             elif s.G.get("plans", 0.0) >= s.gachaCost(1):       # M6: 뽑을 수 있는데 안 뽑았다
-                idle_buy += 1
+                idle_buy += 1; idle_kind["plans"] += 1
             elif s.G.get("gachaLv", 0) < GACHA_LV_MAX and s.G["parts"] >= s.gachaUpCost(s.G.get("gachaLv", 0)):   # M6 3.1: 강화할 수 있는데 안 했다
-                idle_buy += 1
+                idle_buy += 1; idle_kind["up"] += 1
         if s.G["zone"] != last_zone:
             if s.t - stuck_from > 600:
                 wall[last_zone] = round((s.t - stuck_from) / 60)
@@ -1176,7 +1177,7 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
     return dict(zone_min={z: round(v / 60, 1) for z, v in sorted(zone_at.items())},
                 wall=wall, deaths=deaths, total_min=round(s.t / 60, 1),
                 final_zone=s.G["zone"], offline_n=off_n, offline_gain=off_gain,
-                idle_buy=idle_buy, sim=s)
+                idle_buy=idle_buy, idle_kind=idle_kind, sim=s)
 
 
 # ── 자기 점검 ─────────────────────────────────────────────────────────

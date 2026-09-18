@@ -16,6 +16,8 @@
 ## 무엇을 보는가
 
 `auto_run` 은 매수를 끝낸 직후 **살 수 있는 게 남아 있는지** 스스로 센다(`idle_buy`).
+M6 4.1 (2026-09-18): 재화·행동이 셋이다 — 부품(능력치·뽑기 강화) · 설계도(뽑기) · 강화. `idle_kind` 로 어디서 헛돌았는지 같이 읽는다.
+2단계에서 상한(60%)에 닿은 치명타 확률이 후보에 남아 1121틱 헛돈 것을 이 검사가 잡았다 — 세는 자리가 도구 안에 있어서 새 재화가 생겨도 검사를 안 고쳤다.
 매수 루프는 "더 못 살 때까지" 도는 것이므로 그 수는 **언제나 0 이어야 한다.**
 0 이 아니면 고르는 줄과 결제하는 줄이 어긋난 것이다.
 
@@ -36,7 +38,7 @@ SNIPPET = (
     "sys.path.insert(0, sys.argv[1]);"
     "import sim_port as S;"
     "r = S.auto_run(seed=1, max_min=60);"
-    "print(json.dumps({'idle': r.get('idle_buy', -1), 'zone': r['final_zone']}))"
+    "print(json.dumps({'idle': r.get('idle_buy', -1), 'zone': r['final_zone'], 'kind': r.get('idle_kind', {})}))"
 )
 
 
@@ -64,10 +66,10 @@ def run(root):
 
     if out["idle"] > 0:
         return {"status": "fail",
-                "detail": ["매수를 끝낸 직후에 **살 수 있는 게 남은 틱이 %d회**다." % out["idle"],
+                "detail": ["매수를 끝낸 직후에 **살 수 있는 게 남은 틱이 %d회**다. 내역(부품·설계도·강화): %s" % (out["idle"], out.get("kind", {})),
                            "가짜 사람이 돈을 쥐고 안 쓴다 — 고르는 줄과 결제하는 줄이 어긋났다.",
                            "재화가 둘이면(부품·설계도) 값을 통화끼리 견주면 안 된다.",
                            "sim_port.auto_run 을 보라. 사례: cases/2026-09-16-22-자가고장난측정도구.md"]}
 
     return {"status": "ok",
-            "detail": ["60분 런에서 돈을 쥐고 안 산 틱 0회 (구역 %d 도달)" % out["zone"]]}
+            "detail": ["60분 런에서 돈을 쥐고 안 산 틱 0회 — 부품(능력치·강화)·설계도(뽑기) 전부 (구역 %d 도달)" % out["zone"]]}

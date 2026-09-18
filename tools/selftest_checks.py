@@ -134,8 +134,17 @@ def main():
             _g2 = io.open(gamep, encoding="utf-8-sig").read()
             _old = "function zoneReward(z) {"
             if _old in _g2:
-                io.open(gamep, "w", encoding="utf-8-sig").write(
-                    _g2.replace(_old, _old + " /*selftest*/", 1))
+                _g2 = _g2.replace(_old, _old + " /*selftest*/", 1)
+            # c24 (M6 4.2, 2026-09-18): 확률표 0단계 첫 칸을 1 줄여 합 99 로, drawOdds 에 퍼센트 리터럴 한 줄 — 둘 다 fail 이 나야 한다
+            if "const TIER_ODDS = [" in _g2 and "function drawOdds() {" in _g2:
+                _i = _g2.index("const TIER_ODDS = [") + len("const TIER_ODDS = [")
+                _j = _g2.index("]", _i)
+                _row = _g2[_i:_j]
+                import re as _re
+                _first = _re.search(r"-?[\d.]+", _row)
+                _g2 = _g2[:_i] + _row[:_first.start()] + ("%.1f" % (float(_first.group(0)) - 1.0)) + _row[_first.end():] + _g2[_j:]
+                _g2 = _g2.replace("function drawOdds() {", "function drawOdds() {" + chr(10) + "  ctx.fillText('99.9%', 0, 0);   /*selftest*/", 1)
+            io.open(gamep, "w", encoding="utf-8-sig").write(_g2)
 
         # c2 의 "없어도 되는 선언" 이 실제로 없어도 되는지 (M4 3.2, 2026-09-15).
         # 장비 상한 셋을 **필수**로 만들었다가 c17 이 잡았다 — 옛 본보기에는 그 선언이 없다.
@@ -150,7 +159,8 @@ def main():
         if os.path.exists(scope):
             shutil.copy2(scope, scope_backup); made.append(scope_backup)
             _sc = io.open(scope, encoding="utf-8").read()
-            w(scope, _sc.replace("SCOPE_MAX_STATS = 5", "SCOPE_MAX_STATS = 4"))
+            # M6 (2026-09-18): 정본 값이 5→7 로 바뀌어 글자 치환이 조용히 안 먹었다 — 숫자와 무관하게 4 로 내린다
+            w(scope, re.sub(r"SCOPE_MAX_STATS = \d+", "SCOPE_MAX_STATS = 4", _sc))
 
         # c18: 곡선 밖 기록을 가장 새 것으로 심는다 — 도달 밖 21개, 벽 비 9, 골짜기 0.1 이면 warn 이 나야 한다
         p = os.path.join(ROOT, "measurements", "balance-M3-_selftest.json")
@@ -193,10 +203,12 @@ def main():
         port_backup = port + ".selftest-backup"
         shutil.copy2(port, port_backup); made.append(port_backup)
         _pt = io.open(port, encoding="utf-8").read()
-        _bug_from = 'if c is not None and c <= s.G.get("plans", 0.0) and c < wcheap:'
-        _bug_to   = 'if c is not None and c <= s.G["parts"] and c < wcheap:'
+        # M6 (2026-09-18): 무기 상점이 없어져 같은 어긋남을 **뽑기 줄**에 심는다 — 뽑기 횟수를 설계도가 아니라 부품으로 고르면
+        # pullGacha(설계도로 결제)가 거부하고, 설계도를 쥔 채 지나간다. fail 이 나야 한다.
+        _bug_from = 'n = 10 if s.G.get("plans", 0.0) >= s.gachaCost(10) else (1 if s.G.get("plans", 0.0) >= s.gachaCost(1) else 0)'
+        _bug_to   = 'n = 10 if s.G["parts"] >= s.gachaCost(10) else (1 if s.G["parts"] >= s.gachaCost(1) else 0)'
         if _bug_from not in _pt:
-            raise SystemExit("자가진단: sim_port 의 무기 매수 줄을 못 찾았다 — c22 픽스처를 고쳐라")
+            raise SystemExit("자가진단: sim_port 의 뽑기 줄을 못 찾았다 — c22 픽스처를 고쳐라")
         w(port, _pt.replace(_bug_from, _bug_to))
 
         canon = os.path.join(ROOT, "canon", "00-identity.md")
@@ -229,6 +241,7 @@ def main():
             ("c21_upgrade_cadence.py", ("warn",)),
             ("c22_buyer_not_hoarding.py", ("fail",)),
             ("c23_baseline_agree.py", ("warn",)),
+            ("c24_gacha_table.py", ("fail",)),
         ]
 
         bad = []
