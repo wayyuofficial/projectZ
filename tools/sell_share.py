@@ -32,9 +32,8 @@ def main(argv):
 
     kill = sell = 0.0
     mins, done, idle = [], 0, 0
-    for sd in seeds:
-        r = S.auto_run(seed=sd, max_min=900)
-        inc = getattr(r["sim"], "income", {}) or {}
+    for r in S.run_many(seeds, kw={"max_min": 900}):   # 2026-09-18 병렬(지시 #130)
+        inc = r["income"] or {}
         kill += inc.get("kill", 0.0)
         sell += inc.get("sell", 0.0)
         idle += r["idle_buy"]

@@ -56,13 +56,8 @@ def target_arrive(z):
 
 
 def measure(seeds, wall=True, max_min=900):
-    keep = SP.WALL_KILL_MULT
-    if not wall:
-        SP.WALL_KILL_MULT = 1
-    try:
-        rows = [SP.auto_run(seed=s, max_min=max_min) for s in seeds]
-    finally:
-        SP.WALL_KILL_MULT = keep
+    # 2026-09-18 병렬(지시 #130): 벽 끄기는 자식 안에서 (overrides)
+    rows = SP.run_many(seeds, kw={"max_min": max_min}, overrides=({"WALL_KILL_MULT": 1} if not wall else None))
     stay = {}
     for z in range(1, SP.ZONE_COUNT):
         d = [r["zone_min"][z + 1] - r["zone_min"][z] for r in rows if z + 1 in r["zone_min"]]

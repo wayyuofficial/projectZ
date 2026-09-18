@@ -31,26 +31,11 @@ def measure(seeds, start_hour=None):
     `questProgress` 를 감싼다 — 매수 줄처럼 여기서 진행을 새로 짜면 자가 둘이 된다.
     `start_hour` 를 주면 그 시각(UTC, 포트 기준)에 런을 시작한다 — 시간대 셋을 각각 재려고 (30차 감사:
     "후보 문구조차 지금 도구로는 시간대 하나만 재진다")."""
-    orig = S.Sim.questProgress
-    rows = []
-    try:
-        for sd in seeds:
-            hit = {}
-
-            def qp(self, qid, n, _o=orig, _h=hit):
-                _o(self, qid, n)
-                if self.G["quest"].get(qid, 0) >= S.QUEST_NEEDS[qid] and qid not in _h:
-                    _h[qid] = self.t / 60.0
-
-            S.Sim.questProgress = qp
-            kw = {}
-            if start_hour is not None:
-                kw["now_ms"] = S.DEFAULT_NOW_MS - (S.DEFAULT_NOW_MS % S.DAY_MS) + int(start_hour) * 3600000
-            S.auto_run(seed=sd, max_min=900, **kw)
-            rows.append(dict(hit))
-    finally:
-        S.Sim.questProgress = orig        # 감싼 것은 반드시 벗긴다
-    return rows
+    # 2026-09-18 병렬(지시 #130): 감싸기는 자식 프로세스 안에서(sim_port._worker want_quest) — 같은 감싸기, 자리만 옮겼다
+    kw = {"max_min": 900}
+    if start_hour is not None:
+        kw["now_ms"] = S.DEFAULT_NOW_MS - (S.DEFAULT_NOW_MS % S.DAY_MS) + int(start_hour) * 3600000
+    return [dict(r["quest_hits"]) for r in S.run_many(seeds, kw=kw, want_quest=True)]
 
 
 def main(argv):

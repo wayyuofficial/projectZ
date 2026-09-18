@@ -1018,6 +1018,68 @@ class Sim(object):
 
 
 # ── 자동구매 1런 — 감사가 매번 다시 짜던 절차를 여기 고정한다 ────────
+# ---- 병렬 실행 (2026-09-18, 지시 #130) ----
+# 배터리가 1시간 30분 걸렸다 — 축 가치 하나가 51분(20시드×8구성=160판, 한 판 24초, 한 코어). 이 PC 는 12코어.
+# 시드마다 독립이므로 프로세스로 나눠 돈다. **결과는 순차와 같아야 한다** — tools/selftest_checks 가 아니라 measurements/parallel-eq-*.json 이 증명.
+# 도구가 쓰던 모듈 수준 덮어쓰기(WALL_KILL_MULT, STATS cost0 잠금)와 감싸기(on_buy, questProgress)는
+# 자식 프로세스에 안 옮겨가므로 여기서 인자로 받아 자식 안에서 적용한다.
+LOCKED_COST = 1e18
+
+
+def _worker(args):
+    seed, kw, overrides, lock_stat, want_buys, want_quest = args
+    import sys as _sys
+    S = _sys.modules[_worker.__module__]
+    # 덮어쓴 것은 반드시 되돌린다 — 풀의 자식은 여러 일을 이어 받고, workers=1 이면 이 프로세스다 (parallel_eq 가 잡았다: 잠금이 다음 경로로 샜다)
+    keep_over = {k: getattr(S, k) for k in (overrides or {})}
+    keep_cost = {st["id"]: st["cost0"] for st in S.STATS}
+    for k, v in (overrides or {}).items():
+        setattr(S, k, v)
+    if lock_stat:
+        for st in S.STATS:
+            if st["id"] == lock_stat:
+                st["cost0"] = LOCKED_COST
+    kw = dict(kw or {})
+    buys = []
+    if want_buys:
+        kw["on_buy"] = lambda t, z, bid, c: buys.append((t, z, bid, c))
+    hits = {}
+    orig = S.Sim.questProgress
+    if want_quest:
+        def qp(self, qid, n, _o=orig, _h=hits):
+            _o(self, qid, n)
+            if self.G["quest"].get(qid, 0) >= S.QUEST_NEEDS[qid] and qid not in _h:
+                _h[qid] = self.t / 60.0
+        S.Sim.questProgress = qp
+    try:
+        r = S.auto_run(seed=seed, **kw)
+    finally:
+        S.Sim.questProgress = orig
+        for k, v in keep_over.items():
+            setattr(S, k, v)
+        for st in S.STATS:
+            st["cost0"] = keep_cost[st["id"]]
+    s = r.pop("sim")
+    r["income"] = dict(getattr(s, "income", {}) or {})
+    r["G"] = s.G
+    r["buys"] = buys
+    r["quest_hits"] = hits
+    return r
+
+
+def run_many(seeds, kw=None, overrides=None, lock_stat=None, want_buys=False, want_quest=False, workers=None):
+    """seeds 를 프로세스로 나눠 auto_run 을 돈다. 순서는 seeds 그대로. `sim` 대신 income·G·buys·quest_hits 를 준다.
+    workers=1 이면 이 프로세스에서 순차로(비교·디버그용)."""
+    jobs = [(sd, kw, overrides, lock_stat, want_buys, want_quest) for sd in seeds]
+    if workers == 1:
+        return [_worker(j) for j in jobs]
+    import os as _os
+    from concurrent.futures import ProcessPoolExecutor
+    n = workers or max(1, min(len(jobs), (_os.cpu_count() or 2) - 1))
+    with ProcessPoolExecutor(max_workers=n) as ex:
+        return list(ex.map(_worker, jobs))
+
+
 def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
              offline_every_min=None, offline_hours=8, on_buy=None, focus_duty=None,
              stop_zone=None, now_ms=None):

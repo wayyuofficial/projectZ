@@ -26,9 +26,8 @@ def measure(seeds, max_min=900):
         return "무기" if bid.startswith("W:") else "뽑기" if bid.startswith("G:") else "강화" if bid.startswith("U:") else "능력치"
     spend = {}             # 축 -> 쓴 부품 합 (M3 3.2 / M3-B3)
     follow = [0, 0]        # [무기 구매 수, 그중 60초 안에 능력치 업그레이드가 뒤따른 수] (M3-B5)
-    for sd in seeds:
-        buys = []
-        S.auto_run(seed=sd, max_min=max_min, on_buy=lambda t, z, bid, c: buys.append((t, z, bid, c)))
+    for r in S.run_many(seeds, kw={"max_min": max_min}, want_buys=True):   # 2026-09-18 병렬(지시 #130)
+        buys = [tuple(b) for b in r["buys"]]
         by_zone = {}
         for t, z, bid, cost in buys:
             by_zone.setdefault(z, []).append(t)

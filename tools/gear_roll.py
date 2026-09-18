@@ -45,7 +45,8 @@ def main(argv):
                 lines[len(g.get("affixes") or [])] += 1
         tier_dist["구역 %d" % z] = dict(sorted(c.items()))
 
-    armor = {k: v for k, v in slots.items() if k != "weapon"}
+    # M6 (2026-09-18): 뽑기 풀은 5부위(무기 포함) — 무기를 빼고 4로 나누면 편차가 20% 로 잘못 나온다(-18e 배터리가 '미달' 을 냈다: 자 탓)
+    armor = dict(slots)
     design = float(a.n) / max(1, len(armor))
     dev = max(abs(v - design) / design * 100.0 for v in armor.values()) if armor else 0.0
     over = sum(v for k, v in lines.items() if k > S.GEAR_AFFIXES)

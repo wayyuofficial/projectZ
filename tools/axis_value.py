@@ -29,16 +29,8 @@ LOCKED = 1e18          # 이 비용이면 절대 못 산다 = 레벨 0 에 묶�
 
 
 def run_once(seeds, lock=None, max_min=400):   # 2026-09-18: 900 → 400. 잠근 축은 완주를 못 해 상한까지 돈다 — 8구성×20시드×900분이면 한 시간 넘게 걸렸다(지시 #128)
-    keep = {s["id"]: s["cost0"] for s in SP.STATS}
-    if lock:
-        for s in SP.STATS:
-            if s["id"] == lock:
-                s["cost0"] = LOCKED
-    try:
-        rows = [SP.auto_run(seed=sd, max_min=max_min) for sd in seeds]
-    finally:
-        for s in SP.STATS:
-            s["cost0"] = keep[s["id"]]
+    # 2026-09-18 병렬(지시 #130): 잠금은 자식 프로세스 안에서 건다 — 여기서 STATS 를 덮어쓰면 자식이 못 본다
+    rows = SP.run_many(seeds, kw={"max_min": max_min}, lock_stat=lock)
     reach = [r["zone_min"].get(SP.ZONE_COUNT) for r in rows]
     done = [x for x in reach if x is not None]
     return (statistics.median(done) if done else None,

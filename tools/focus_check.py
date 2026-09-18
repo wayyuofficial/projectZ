@@ -22,11 +22,8 @@ import sim_port as S
 
 def run_set(seeds, duty):
     """duty=None 이면 안 누름. (켜는 초, 주기 초) 면 그만큼 누른다."""
-    mins = []
-    for sd in seeds:
-        r = S.auto_run(seed=sd, max_min=900, focus_duty=duty)
-        mins.append(r["total_min"])
-    return statistics.median(mins)
+    rows = S.run_many(seeds, kw={"max_min": 900, "focus_duty": duty})   # 2026-09-18 병렬(지시 #130)
+    return statistics.median([r["total_min"] for r in rows])
 
 
 def main(argv):
