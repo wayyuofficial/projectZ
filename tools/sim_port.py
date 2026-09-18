@@ -99,8 +99,6 @@ FOCUS_MULT = num("FOCUS_MULT")
 TIER_MAX_PORT = int(num("TIER_MAX"))
 GEAR_SHAPES = int(num("GEAR_SHAPES"))
 GEAR_AFFIXES = int(num("GEAR_AFFIXES"))
-BAG_MAX = int(num("BAG_MAX"))
-AUTOSELL_ZONE = int(num("AUTOSELL_ZONE"))
 GEAR_SLOT_IDS = ["weapon", "head", "body", "hands", "feet"]
 AFFIX_DEFS = table("AFFIX_DEFS")            # M6 1.2 — 게임에서 읽는다 (전엔 손으로 적어 둬 어긋날 수 있었다)
 AFFIX_IDS = [a["id"] for a in AFFIX_DEFS]
@@ -123,7 +121,8 @@ BOSS_CHARGE_EVERY = num("BOSS_CHARGE_EVERY")
 BOSS_CHARGE_TIME = num("BOSS_CHARGE_TIME")
 BOSS_CHARGE_MULT = num("BOSS_CHARGE_MULT")
 TIER_COST_MULT = num("TIER_COST_MULT")
-TIER_POWER = num("TIER_POWER")
+TIER_POWER_MULT = num("TIER_POWER_MULT")     # M6 재설계 — 등급 위력 곱하기
+AFFIX_TIER_MULT = num("AFFIX_TIER_MULT")
 OFFLINE_MAX_HOURS = num("OFFLINE_MAX_HOURS")
 OFFLINE_RATE = num("OFFLINE_RATE")
 AD_BOOST_MIN = num("AD_BOOST_MIN")
@@ -201,20 +200,21 @@ MIRRORED = {
     "applyOffline": "7c67a2a215adcf54",
     "attacksPerSec": "62c1a324deffd5c2",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "34800dba1b2237bd",
+    "buildButtons": "b2282d203eb67b01",
     "buyStat": "66cfe1998f8e4376",
     "curWeapon": "1109c7c05ab58ece",
     "dailyBudget": "51f1b98162132ed0",
     "damageZombie": "de858f78fa27b6f3",
     "dayIndex": "e395fb011be7dfbc",
-    "dropGear": "d9527f4c3c9f0f35",
+    "equipNew": "8874ff771d18a647",
     "fitGame": "d526a00619b69c86",
+    "flushBag": "4feeb3d1a243c612",
     "freshState": "e3fdb0ec12e8d2c0",
     "gachaCost": "c40d912447e16c8b",
     "gachaRoll": "d099a142191cebbd",
     "gachaUpCost": "6834b9cc3bf320af",
     "gearMult": "c2392bb827fd20df",
-    "gearScore": "71468db296abf348",
+    "gearScore": "a3b816f8da80d6a2",
     "gearSellPrice": "81a178c6a44a414e",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "86e5dbdf14ea5395",
@@ -230,16 +230,17 @@ MIRRORED = {
     "openSupply": "ef504f009bbf894e",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "playerDPS": "06d866ae2129b84d",
-    "pullGacha": "8e4fff471bc05a57",
+    "pullGacha": "d025e163939f4776",
     "questBand": "47a268e16a55bfbd",
     "questOpen": "14e21773cabeb67b",
     "questReady": "d56a30909b205279",
     "regenPerSec": "73badd17c9fc2857",
     "rewardMult": "bff5bcb3e94a3395",
-    "rollGear": "2223fb98ac00634e",
+    "rollGear": "b7d88f684d0f1903",
     "rollTier": "802162caae06b933",
     "rollTierOdds": "ed4822ee0404a536",
     "rolloverDay": "431066c97502a0eb",
+    "sellGear": "36cf55b4c1d1a51b",
     "spawnZombie": "d4054c63f48a4d4a",
     "stageKills": "4cb2b09008d21635",
     "statCost": "3915c9b212b37571",
@@ -250,7 +251,7 @@ MIRRORED = {
     "takeQuest": "7e312c2c917dc686",
     "upgradeGacha": "fb0b2b84f8b27987",
     "weaponOf": "cd23351858d3c448",
-    "weaponPower": "70305017e850f8b7",
+    "weaponPower": "5ff1eee2d3a62b39",
     "zoneDPS": "9abab3ae0b004352",
     "zoneHP": "eafea50cbb2f5af6",
     "zoneReward": "1a11949b7141abd1",
@@ -432,7 +433,7 @@ class Sim(object):
     def weaponPower(self):
         cw = self.curWeapon()
         w = self.weaponOf(cw["type"])
-        return w["mult"] * (1 + TIER_POWER * (cw["tier"] - 1))
+        return w["mult"] * (TIER_POWER_MULT ** (cw["tier"] - 1))
 
     def hitDamage(self):
         # M6 1.2 — 원본은 한 발마다 굴린다(hitDamage). 자는 **기대값**(원본 expectedHit)으로 잰다 — 정본 '치명타' 행.
@@ -494,7 +495,7 @@ class Sim(object):
                 if not pool_a:
                     break
                 aid = pool_a.pop(int(self.rnd() * len(pool_a)))
-                aff_w.append({"id": aid, "mult": 1 + AFFIX_PER[aid] * tier * (0.7 + self.rnd() * 0.6)})
+                aff_w.append({"id": aid, "mult": 1 + AFFIX_PER[aid] * (AFFIX_TIER_MULT ** (tier - 1)) * (0.7 + self.rnd() * 0.6)})
             return {"slot": "weapon", "type": w["id"], "tier": tier, "affixes": aff_w, "zone": z}
         n_aff = min(GEAR_AFFIXES, 2 if self.rnd() < (tier - 1) / float(TIER_MAX_PORT - 1) else 1)
         pool = list(AFFIX_IDS)
@@ -504,7 +505,7 @@ class Sim(object):
                 break
             k = int(self.rnd() * len(pool))
             aid = pool.pop(k)
-            affixes.append({"id": aid, "mult": 1 + AFFIX_PER[aid] * tier * (0.7 + self.rnd() * 0.6)})
+            affixes.append({"id": aid, "mult": 1 + AFFIX_PER[aid] * (AFFIX_TIER_MULT ** (tier - 1)) * (0.7 + self.rnd() * 0.6)})
         return {"slot": slot, "shape": shape, "tier": tier, "affixes": affixes, "zone": z}
 
     @staticmethod
@@ -513,7 +514,7 @@ class Sim(object):
             return 0.0
         if g.get("slot") == "weapon":       # M6 2.3 — 무기 값어치 = 위력 (원본과 같이)
             w = next((x for x in WEAPON_TYPES if x["id"] == g.get("type")), WEAPON_TYPES[0])
-            v = w["mult"] * (1 + TIER_POWER * (g["tier"] - 1))
+            v = w["mult"] * (TIER_POWER_MULT ** (g["tier"] - 1))
         else:
             v = 2.1 ** (g["tier"] - 1)
         for a in g["affixes"]:
@@ -556,20 +557,35 @@ class Sim(object):
         one = self.zoneIncome(self.G.get("bestZone") or 1) * BP_RATIO * GACHA_COST_FRAC * self.statOf("inc")
         return math.ceil(one * 10 * GACHA_TEN_DISCOUNT if n == 10 else one * n)
 
+    def sellGear(self, g):
+        v = self.gearSellPrice(g)
+        self.G["parts"] += v
+        self._income("sell", v)
+        return v
+
+    def equipNew(self, g):
+        self.G.setdefault("gear", {})
+        old = self.G["gear"].get(g["slot"])
+        self.G["gear"][g["slot"]] = g
+        return self.sellGear(old) if old else 0.0
+
     def pullGacha(self, n):
+        # 원본: 1회는 사람이 장착/판매를 고른다 — 자는 **더 좋으면 낀다** 로 고른다(▲ 를 누르는 사람). 10회는 원본 그대로 자동.
         cost = self.gachaCost(n)
         if self.G.get("plans", 0.0) < cost:
             return False
         self.G["plans"] = self.G.get("plans", 0.0) - cost
-        items = []
+        self.questProgress("up", n)
+        items = []; gain = 0.0
         for _ in range(n):
             g = self.gachaRoll()
             cur = (self.G.get("gear") or {}).get(g["slot"])
-            better = self.gearScore(g) > self.gearScore(cur)
-            r = self.dropGear(g)
-            items.append({"g": g, "r": r, "better": better})
-        self.questProgress("up", n)
-        self.gachaResult = {"items": items}
+            if (not cur) or self.gearScore(g) > self.gearScore(cur):
+                v = self.equipNew(g); items.append({"g": g, "r": "equip", "gain": v})
+            else:
+                v = self.sellGear(g); items.append({"g": g, "r": "sell", "gain": v})
+            gain += v
+        self.gachaResult = {"mode": "one" if n == 1 else "ten", "items": items, "gain": gain}
         return True
 
     # ---- M6 3.1 뽑기 강화 (원본과 같은 구조) ----
@@ -588,41 +604,9 @@ class Sim(object):
         self.questProgress("up", 1)
         return True
 
-    def equipGear(self, i):
-        # 원본 equipGear — 가방의 장비를 낀다, 벗은 것은 가방으로 (거울엔 없었다: 자가 장착을 안 했다 — 지시 #115)
-        bag = self.G.get("bag") or []
-        if i < 0 or i >= len(bag):
-            return False
-        g = bag.pop(i)
-        old = (self.G.get("gear") or {}).get(g["slot"])
-        self.G.setdefault("gear", {})[g["slot"]] = g
-        if old:
-            bag.append(old)
-        return True
-
     def gearSellPrice(self, g):
         return (self.zoneIncome(g.get("zone") or self.G["zone"]) * 0.09
                 * math.pow(1.55, g["tier"] - 1) * self.statOf("inc"))
-
-    def dropGear(self, g):
-        self.G.setdefault("gear", {})
-        self.G.setdefault("bag", [])
-        if not self.G["gear"].get(g["slot"]):
-            self.G["gear"][g["slot"]] = g
-            return "equip"
-        if ((self.G.get("bestZone") or 1) >= AUTOSELL_ZONE
-                and g["tier"] <= max(0, min(TIER_MAX_PORT - 1, self.G.get("autoSell") or 0))):
-            v = self.gearSellPrice(g)
-            self.G["parts"] += v
-            self._income("sell", v)                     # M4 4.2
-            return "autosell"
-        self.G["bag"].append(g)
-        if len(self.G["bag"]) > BAG_MAX:
-            self.G["bag"].sort(key=lambda x: self.gearSellPrice(x))   # M6 2.3: 판매가 기준
-            v = self.gearSellPrice(self.G["bag"].pop(0))
-            self.G["parts"] += v
-            self._income("sell", v)
-        return "bag"
 
     @staticmethod
     def stageBlueprint(z):
@@ -799,14 +783,7 @@ class Sim(object):
             lv = self.G.get("gachaLv", 0); maxed = lv >= GACHA_LV_MAX     # M6 3.1·3.2
             put_row("gacha_up", "buy", (not maxed) and self.G["parts"] >= self.gachaUpCost(lv), None)
             put_row("odds_view", "off", True, None)
-            auto_on = (self.G.get("bestZone") or 1) >= AUTOSELL_ZONE
-            put_row("autosell", "off", auto_on, None)
-            bag = self.G.get("bag") or []
-            put_row("bag_head", "ghost", False, None)
-            for g in sorted(bag, key=lambda x: -self.gearScore(x)):
-                cur = (self.G.get("gear") or {}).get(g["slot"])
-                better = self.gearScore(g) > self.gearScore(cur)
-                put_row("bag_item", "buy" if better else "off", True, g["slot"])
+            # M6 재설계 — 가방·자동 판매 줄 없음
         elif self.tab == "daily":
             # M4 1 — 접속 1줄 + 과제 3줄 + 보급 상자 1줄
             put_row("login", "ghost", False, None)
@@ -827,14 +804,8 @@ class Sim(object):
             # M6 2.3 — 낀 무기 1줄 · 가방의 무기(값비싼 것부터) · 다음 풀 종류 1줄
             cw = self.curWeapon()
             put_row("weapon_cur", "equipped", False, cw["type"])
-            wbag = sorted([g for g in (self.G.get("bag") or []) if g["slot"] == "weapon"], key=lambda x: -self.gearScore(x))
-            if not wbag:
-                put_row("weapon_none", "ghost", False, None)
-            for g in wbag:
-                put_row("weapon_bag", "buy" if self.gearScore(g) > self.gearScore(cw) else "off", True, g["type"])
-            nxt = next((w for w in WEAPON_TYPES if not self.weaponUnlocked(w)), None)
-            if nxt:
-                put_row("weapon_locked", "ghost", False, nxt["id"])
+            for w in WEAPON_TYPES:                              # M6 재설계 — 종류 10줄(풀/잠금), 누르는 줄 아님
+                put_row("weapon_type", "ghost", False, w["id"])
         self.listMax = max(0.0, cy[0] - (bot - top))
         self.listScroll = min(max(0.0, self.listScroll), self.listMax)
 
@@ -1140,18 +1111,7 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
                     s.gachaResult = None
                     if on_buy:
                         on_buy(s.t, s.G["zone"], "G:%d" % n, s.gachaCost(n))
-                    # ▲ 장착 — 부위마다 가방에서 가장 좋은 것이 낀 것보다 좋으면 낀다 (사람이 ▲ 를 누르는 것)
-                    changed = True
-                    while changed:
-                        changed = False
-                        for sl in GEAR_SLOT_IDS:
-                            cur = (s.G.get("gear") or {}).get(sl)
-                            best = None
-                            for gi, g in enumerate(s.G.get("bag") or []):
-                                if g["slot"] == sl and (best is None or s.gearScore(g) > s.gearScore(s.G["bag"][best])):
-                                    best = gi
-                            if best is not None and s.gearScore(s.G["bag"][best]) > s.gearScore(cur):
-                                s.equipGear(best); changed = True
+
 
             # **자가 고장 났는지 자기가 센다.** 매수를 끝낸 직후에는 살 수 있는 게
             # 하나도 남아 있으면 안 된다 — 남았다면 이 가짜 사람이 돈을 쥐고 안 쓴 것이다.

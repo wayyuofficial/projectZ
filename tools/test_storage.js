@@ -66,8 +66,8 @@
   loadError = null;
   load();
   chk('v4 저장본이 최신으로 이어진다 (무기 → 장비)', G.v === SAVE_VERSION && G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 3
-      && G.bag.filter((g) => g.slot === 'weapon').length === 2 && G.owned === undefined && G.gachaLv === 0 && loadError === null,
-      G.gear.weapon.type + '/' + G.gear.weapon.tier + '/' + G.bag.length);
+      && G.bag.length === 0 && G.parts > 1234.5 && G.owned === undefined && G.gachaLv === 0 && loadError === null,   // M6 재설계: 가방은 없다 — 옛 무기는 팔려 부품이 된다
+      G.gear.weapon.type + '/' + G.gear.weapon.tier + '/' + G.bag.length + '/' + Math.round(G.parts));
 
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();
