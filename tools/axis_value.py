@@ -28,7 +28,7 @@ import sim_port as SP
 LOCKED = 1e18          # 이 비용이면 절대 못 산다 = 레벨 0 에 묶인다
 
 
-def run_once(seeds, lock=None, max_min=900):
+def run_once(seeds, lock=None, max_min=400):   # 2026-09-18: 900 → 400. 잠근 축은 완주를 못 해 상한까지 돈다 — 8구성×20시드×900분이면 한 시간 넘게 걸렸다(지시 #128)
     keep = {s["id"]: s["cost0"] for s in SP.STATS}
     if lock:
         for s in SP.STATS:
@@ -54,6 +54,7 @@ def main(argv):
     # 2026-09-15 실험은 일회용 스크립트였고, 그때 auto_run 이 이 축을 후보에서 안 빼서
     # "진행이 통째로 막혔다" 가 나왔다. 저장소 스크립트로 재현 가능하게 여기 둔다 (R005 1항).
     ap.add_argument("--gear-only", default="", help="쉼표로 나눈 축 id — 장비 전용으로 두고 잰다 (예: hp,reg)")
+    ap.add_argument("--max-min", type=int, default=400, help="한 런의 상한(시뮬 분). 잠근 축은 완주를 못 하므로 여기까지만 돈다 — 기준(구역 30 도달 중앙)의 3배면 '느려짐' 판정에 충분하다")
     a = ap.parse_args(argv[1:])
     seeds = list(range(1, a.seeds + 1))
     gear_only = {x.strip() for x in a.gear_only.split(",") if x.strip()}
@@ -64,7 +65,7 @@ def main(argv):
     if gear_only:
         print("장비 전용 축: %s (능력치 탭에서 못 산다)" % sorted(gear_only))
 
-    base, bn, bd, bz = run_once(seeds)
+    base, bn, bd, bz = run_once(seeds, max_min=a.max_min)
     print("기준(전부 사용) : 구역 30 도달 %s · 완주 %d/%d · 사망 %.0f회"
           % (("%.1f분" % base) if base else "못함", bn, len(seeds), bd))
     rows, dead = [], []
@@ -73,7 +74,7 @@ def main(argv):
             rows.append({"축": s["id"], "이름": s["name"], "장비_전용": True})
             print("%-4s %-8s 장비 전용 — 잠금 대상 아님" % (s["id"], s["name"]))
             continue
-        m, n, d, z = run_once(seeds, lock=s["id"])
+        m, n, d, z = run_once(seeds, lock=s["id"], max_min=a.max_min)
         if base and m:
             delta = (m - base) / base * 100
         else:

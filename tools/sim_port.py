@@ -369,7 +369,8 @@ class Sim(object):
     # ---- 저장 ----
     def freshState(self):
         return dict(v=SAVE_VERSION, parts=0.0, plans=0.0, zone=1, kills=0,
-                    gear=dict(weapon=dict(slot="weapon", type="pipe", tier=1, affixes=[], zone=1)), bag=[],   # M6 2.3 day=0, maxDay=0, quest=dict(zone=0, up=0, stage=0), questTaken={},
+                    gear=dict(weapon=dict(slot="weapon", type="pipe", tier=1, affixes=[], zone=1)), bag=[],   # M6 2.3
+                    day=0, maxDay=0, quest=dict(zone=0, up=0, stage=0), questTaken={},
                     login=dict(streak=0, lastDay=-1), keys=KEY_MAX,
                     lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0),
                     hp=100.0, bestZone=1, totalKills=0, gachaLv=0,

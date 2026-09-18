@@ -20,7 +20,10 @@ import sim_port as S
 def measure(seeds, max_min=900):
     per_zone = {}          # 구역 -> [간격(초), ...]
     counts = {}            # 구역 -> [시드별 매수 횟수]
-    kinds = {"능력치": 0, "무기": 0}
+    # M6 (2026-09-18): 무기 상점이 없어지고 뽑기(G:n, 설계도)·뽑기 강화(U:lv, 부품)가 생겼다. 능력치 축 배분은 STATS 만 센다.
+    kinds = {"능력치": 0, "무기": 0, "뽑기": 0, "강화": 0}
+    def kind_of(bid):
+        return "무기" if bid.startswith("W:") else "뽑기" if bid.startswith("G:") else "강화" if bid.startswith("U:") else "능력치"
     spend = {}             # 축 -> 쓴 부품 합 (M3 3.2 / M3-B3)
     follow = [0, 0]        # [무기 구매 수, 그중 60초 안에 능력치 업그레이드가 뒤따른 수] (M3-B5)
     for sd in seeds:
@@ -29,15 +32,15 @@ def measure(seeds, max_min=900):
         by_zone = {}
         for t, z, bid, cost in buys:
             by_zone.setdefault(z, []).append(t)
-            kinds["무기" if bid.startswith("W:") else "능력치"] += 1
-            key = "무기" if bid.startswith("W:") else bid
+            kd = kind_of(bid); kinds[kd] += 1
+            key = bid if kd == "능력치" else kd          # 뽑기·강화·무기는 축이 아니라 묶음
             spend[key] = spend.get(key, 0.0) + cost
-        # M3-B5 — 무기를 산 뒤 60초 안에 능력치 업그레이드가 일어나는가 (재화를 나눈 효과)
+        # M3-B5 — 무기(M6 부터는 뽑기)를 산 뒤 60초 안에 능력치 업그레이드가 일어나는가 (재화를 나눈 효과)
         for i, (t, z, bid, cost) in enumerate(buys):
-            if not bid.startswith("W:"):
+            if kind_of(bid) not in ("무기", "뽑기"):
                 continue
             follow[0] += 1
-            if any(t2 - t <= 60 and not b2.startswith("W:") for t2, z2, b2, c2 in buys[i + 1:]
+            if any(t2 - t <= 60 and kind_of(b2) == "능력치" for t2, z2, b2, c2 in buys[i + 1:]
                    if t2 - t <= 60):
                 follow[1] += 1
         for z, ts in by_zone.items():
@@ -75,15 +78,15 @@ def main(argv):
     print("매수가 3회 미만인 구역: %d개 %s   ← 정본 하한 (지시 #102)" % (len(thin), thin))
     print("산 것: 능력치 %d · 무기 %d" % (kinds["능력치"], kinds["무기"]))
     # M3 5 — 재화가 둘이다. 능력치는 부품, 무기는 설계도. 섞어서 비율을 내면 뜻이 없다.
-    parts_spend = {k: v for k, v in spend.items() if k != "무기"}
+    parts_spend = {k: v for k, v in spend.items() if k not in ("무기", "뽑기", "강화")}   # 능력치 축만 (강화도 부품이지만 축이 아니다 — 따로 찍는다)
     tot = sum(parts_spend.values()) or 1.0
     share = {k: round(v / tot * 100, 1) for k, v in sorted(parts_spend.items(), key=lambda x: -x[1])}
     print("부품 배분(%%, 능력치만 — 무기는 설계도라 섞지 않는다): %s" % share)
-    print("설계도로 산 무기: %d회" % kinds["무기"])
-    thin_axis = [k for k, v in share.items() if k != "무기" and v < 10.0]
+    print("설계도로 산 무기: %d회 · 뽑기 %d회 · 뽑기 강화 %d회 (부품 %.0f)" % (kinds["무기"], kinds["뽑기"], kinds["강화"], spend.get("강화", 0.0)))
+    thin_axis = [k for k, v in share.items() if v < 10.0]
     print("10%% 미만인 능력치 축: %d개 %s (M3-B3: 0개여야 한다)" % (len(thin_axis), thin_axis))
     pct = (follow[1] / follow[0] * 100) if follow[0] else 0.0
-    print("무기 구매 %d회 중 60초 안에 능력치 업그레이드가 뒤따른 비율: %.1f%% (M3-B5: 90%% 이상)" % (follow[0], pct))
+    print("무기·뽑기 %d회 중 60초 안에 능력치 업그레이드가 뒤따른 비율: %.1f%% (M3-B5: 90%% 이상 — 2026-09-17 반증 판정된 예측, 정보로 찍는다)" % (follow[0], pct))
 
     if a.out:
         stamp = hashlib.sha256(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),

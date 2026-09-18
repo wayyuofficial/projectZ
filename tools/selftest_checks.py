@@ -209,7 +209,11 @@ def main():
         _bug_to   = 'n = 10 if s.G["parts"] >= s.gachaCost(10) else (1 if s.G["parts"] >= s.gachaCost(1) else 0)'
         if _bug_from not in _pt:
             raise SystemExit("자가진단: sim_port 의 뽑기 줄을 못 찾았다 — c22 픽스처를 고쳐라")
-        w(port, _pt.replace(_bug_from, _bug_to))
+        # c25 (사례 26, 2026-09-18): 거울 freshState 에서 게임 저장 칸 하나(boostUntil)를 빼면 fail 이 나야 한다 — 다른 도구는 .get 으로 읽어 안 죽는다
+        _pt2 = _pt.replace(_bug_from, _bug_to)
+        if "lastSeen=self.now_ms, boostUntil=0)" not in _pt2:
+            raise SystemExit("자가진단: sim_port freshState 의 boostUntil 을 못 찾았다 — c25 픽스처를 고쳐라")
+        w(port, _pt2.replace("lastSeen=self.now_ms, boostUntil=0)", "lastSeen=self.now_ms)"))
 
         canon = os.path.join(ROOT, "canon", "00-identity.md")
         backup = canon + ".selftest-backup"
@@ -242,6 +246,7 @@ def main():
             ("c22_buyer_not_hoarding.py", ("fail",)),
             ("c23_baseline_agree.py", ("warn",)),
             ("c24_gacha_table.py", ("fail",)),
+            ("c25_port_state_keys.py", ("fail",)),
         ]
 
         bad = []

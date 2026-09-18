@@ -9,7 +9,7 @@ D="${1:?기록 접미사(YYYY-MM-DD 또는 YYYY-MM-DDx)를 줘라}"
 python tools/gen_balance_csv.py | tail -1
 python tools/curve_check.py    --seeds 20 --out measurements/balance-M4-curve-g-$D.json | tail -2
 python tools/upgrade_cadence.py --seeds 20 --out measurements/upgrade-cadence-m4-g-$D.json | tail -3
-python tools/axis_value.py     --seeds 20 --out measurements/axis-value-$D.json | tail -4
+python tools/axis_value.py     --seeds 20 --max-min 400 --out measurements/axis-value-$D.json | tail -4   # 2026-09-18: 상한 900 이면 한 시간 넘게 걸린다 (지시 #128)
 python tools/focus_check.py    --seeds 20 --out measurements/focus-$D.json | tail -3
 python tools/sell_share.py     --seeds 20 --out measurements/sell-share-$D.json | tail -2
 python tools/quest_pace.py     --seeds 20 --out measurements/quest-pace-$D.json | tail -6
