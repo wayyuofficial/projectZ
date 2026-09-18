@@ -215,7 +215,7 @@ MIRRORED = {
     "gachaUpCost": "6834b9cc3bf320af",
     "gearMult": "c2392bb827fd20df",
     "gearScore": "a3b816f8da80d6a2",
-    "gearSellPrice": "81a178c6a44a414e",
+    "gearSellPrice": "6553206afef791c3",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "86e5dbdf14ea5395",
     "isBossKill": "e461a4a51bbb69c5",

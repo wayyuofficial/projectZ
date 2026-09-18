@@ -21,9 +21,10 @@ TOOLS = os.path.join(ROOT, "tools")
 SNIP = ("import sys, json;"
         "sys.path.insert(0, sys.argv[1]);"
         "import sim_port as S;"
-        "rows=[S.auto_run(seed=sd, max_min=900) for sd in range(1, int(sys.argv[2]) + 1)];"
+        "rows=S.run_many(list(range(1, int(sys.argv[2]) + 1)), kw={'max_min': 900});"   # 2026-09-18 병렬(지시 #130)
         "print(json.dumps({'tot':[r['total_min'] for r in rows],'z':[r['final_zone'] for r in rows],"
-        "'idle':sum(r['idle_buy'] for r in rows),'zm':[r['zone_min'] for r in rows]}))")
+        "'idle':sum(r['idle_buy'] for r in rows),'zm':[r['zone_min'] for r in rows],"
+        "'parts':[r['G']['parts'] for r in rows],'deaths':[r['deaths'] for r in rows]}))")
 
 
 def stamp():
@@ -48,14 +49,16 @@ def score(d, target0=0.6, growth=1.12, tol=0.20):
     for z in range(1, 30):
         if z not in stays:
             continue
-        r = statistics.median(stays[z]) / (target0 * growth ** (z - 1))
+        r = statistics.median(stays[z]) / (target0 * growth ** (z - 1) * (2.0 if (z >= 10 and z % 5 == 0) else 1))   # 2026-09-18: 벽 ×2 — curve_check.target 과 같게 (전엔 벽 구역이 늘 '느림' 으로 셌다)
         if abs(r - 1) > tol:
             out += 1
             lo += r < 1
             hi += r >= 1
         worst = max(worst, abs(r - 1))
+    ratio = {z: round(statistics.median(v) / (target0 * growth ** (z - 1) * (2.0 if (z >= 10 and z % 5 == 0) else 1)), 2) for z, v in sorted(stays.items())}   # 2026-09-18: 구역별 체류/목표 비도 남긴다 — 모양을 봐야 다음 후보를 고른다
     return dict(체류밖=out, 빠름=lo, 느림=hi, 총분=round(statistics.median(d["tot"]), 1),
-                최대이탈=round(worst, 2), 완주=sum(1 for z in d["z"] if z >= 30), 헛돈틱=d["idle"])
+                최대이탈=round(worst, 2), 완주=sum(1 for z in d["z"] if z >= 30), 헛돈틱=d["idle"],
+                체류비=ratio, 끝부품중앙=round(statistics.median(d.get("parts", [0])), 1), 사망중앙=statistics.median(d.get("deaths", [0])))
 
 
 def main(argv):

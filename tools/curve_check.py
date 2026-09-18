@@ -55,6 +55,9 @@ def target_arrive(z):
     return sum(target(k) for k in range(CURVE_FROM, z))
 
 
+END_PARTS, DEATHS = None, None
+
+
 def measure(seeds, wall=True, max_min=900):
     # 2026-09-18 병렬(지시 #130): 벽 끄기는 자식 안에서 (overrides)
     rows = SP.run_many(seeds, kw={"max_min": max_min}, overrides=({"WALL_KILL_MULT": 1} if not wall else None))
@@ -65,6 +68,9 @@ def measure(seeds, wall=True, max_min=900):
             stay[z] = (statistics.median(d), len(d))
     reach = {z: statistics.median([r["zone_min"][z] for r in rows if z in r["zone_min"]])
              for z in range(1, SP.ZONE_COUNT + 1) if any(z in r["zone_min"] for r in rows)}
+    global END_PARTS, DEATHS
+    END_PARTS = round(statistics.median([r["G"]["parts"] for r in rows]), 1)   # M6 5.2 / M6-B2 — 끝 시점 부품 잔액
+    DEATHS = statistics.median([r["deaths"] for r in rows])
     return stay, reach
 
 
@@ -136,6 +142,7 @@ def main(argv):
     print("곡선 밖: %d개 %s · 30 도달(중앙) %s분" % (len(outside), outside, ("%.1f" % reach[30]) if 30 in reach else "-"))
     if a.out:
         json.dump({"측정일": datetime.date.today().isoformat(), "도구": "tools/curve_check.py", "시드": seeds, "벽": not a.no_wall, "새무기": not a.no_new_weapons,
+                   "끝_부품_중앙": END_PARTS, "사망_중앙": DEATHS,     # M6 5.2 / M6-B2
                    "목표": "%.2f x %.2f^(z-1)" % (TARGET_BASE, TARGET_G), "목표_출처": "canon/10-scope.md", "허용": TOL, "구간": [Z_FROM, Z_TO],
                    "구역별": {str(z): {"체류": round(m, 3) if m is not None else None, "목표": round(t, 3), "비율": round(r, 4) if r is not None else None} for z, m, t, r, n in rows},
                    "곡선밖": outside, "벽비": {str(z): round(v, 4) for z, v in walls.items()}, "골짜기": {str(z): v for z, v in trough.items()},
