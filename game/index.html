@@ -123,7 +123,7 @@ setTimeout(function () {
    검사 c2_scope.py 가 이 선언들을 읽어 canon/10-scope.md 의 상한과 대조한다.
    ========================================================================= */
 
-const SAVE_VERSION = 4;   // M4 1: 일일 리듬(day·quest·login·keys). v1~v3 은 migrate() 가 끌어올린다   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
+const SAVE_VERSION = 5;   // M6 2.3: 무기가 장비가 됐다(gear.weapon). v4 는 migrate() 가 끌어올린다   // M4 1: 일일 리듬(day·quest·login·keys). v1~v3 은 migrate() 가 끌어올린다   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
 const ZONE_COUNT   = 30;   // M2 (지시 #60·#61). M1 은 10
 const TIER_MAX     = 8;   // M4 3: 정본 개정(지시 #96). 색만 바꾼다 — 모양은 안 늘린다
 const MAX_ONSCREEN_ZOMBIES = 8;
@@ -320,6 +320,28 @@ const BOSS_CHARGE_TIME = 0.8;
 const BOSS_CHARGE_MULT = 3;
 const TIER_COST_MULT = 1.5;
 const TIER_POWER = 0.5;
+/* ── M6 2.2 장비 뽑기 (정본 '장비 뽑기'·'뽑기 강화' 행, 지시 #120·#121) ──
+   설계도로 뽑는다. 부위는 5부위(무기 포함) 중 랜덤, 무기 종류는 **해금된 것 중** 랜덤, 등급은 아래 확률표.
+   TIER_ODDS[뽑기 강화 단계][등급-1] = 퍼센트. **이 표가 코드가 쓰는 값이고, 확률 팝업은 이 표를 읽어 그린다** — 따로 적지 않는다.
+   0단계: 일반 40 · 고급 28 · 희귀 16 · 에픽 9 · 영웅 4 · 전설 2 · 초월 0.8 · 영원 0.2. 10단계로 갈수록 위 등급으로 옮겨 간다.
+   값은 5단계(밸런스)에서 배터리로 맞춘다. 천장 없음(답 5). */
+const GACHA_LV_MAX = 10;
+const TIER_ODDS = [
+  [ 40.0,  28.0,  16.0,   9.0,   4.0,   2.0,   0.8,   0.2],   // Lv 0
+  [ 36.8,  26.6,  16.4,  10.3,   5.4,   2.9,   1.2,   0.4],   // Lv 1
+  [ 33.6,  25.2,  16.8,  11.6,   6.8,   3.8,   1.6,   0.6],   // Lv 2
+  [ 30.4,  23.8,  17.2,  12.9,   8.2,   4.7,   2.1,   0.7],   // Lv 3
+  [ 27.2,  22.4,  17.6,  14.2,   9.6,   5.6,   2.5,   0.9],   // Lv 4
+  [ 24.0,  21.0,  18.0,  15.5,  11.0,   6.5,   2.9,   1.1],   // Lv 5
+  [ 20.8,  19.6,  18.4,  16.8,  12.4,   7.4,   3.3,   1.3],   // Lv 6
+  [ 17.6,  18.2,  18.8,  18.1,  13.8,   8.3,   3.7,   1.5],   // Lv 7
+  [ 14.4,  16.8,  19.2,  19.4,  15.2,   9.2,   4.2,   1.6],   // Lv 8
+  [ 11.2,  15.4,  19.6,  20.7,  16.6,  10.1,   4.6,   1.8],   // Lv 9
+  [  8.0,  14.0,  20.0,  22.0,  18.0,  11.0,   5.0,   2.0]   // Lv 10
+];
+/* 뽑기 값 — 그 구역의 설계도 수입에 비례한다(설계도가 zoneIncome×BP_RATIO 로 크므로 값도 같이 커야 후반에 무한 뽑기가 안 된다).
+   1회 = 최고 구역 한 구역의 설계도 수입 × GACHA_COST_FRAC. 10회는 10% 싸다. */
+const GACHA_COST_FRAC = 0.2, GACHA_TEN_DISCOUNT = 0.9;
 const OFFLINE_MAX_HOURS = 8;
 const OFFLINE_RATE = 0.5;
 const AD_BOOST_MIN = 10;
@@ -398,14 +420,13 @@ function freshState() {
     v: SAVE_VERSION,
     parts: 0, plans: 0, zone: 1, kills: 0,
     lv: { atk: 0, spd: 0, hp: 0, reg: 0, inc: 0 },
-    weapon: 'pipe',
-    owned: { pipe: 1 },
     hp: 100,
+    gachaLv: 0,                                // M6 3.1: 뽑기 강화 단계 (0~GACHA_LV_MAX)
     bestZone: 1, totalKills: 0,
     lastSeen: Date.now(),
     boostUntil: 0,
     /* M4 1 — 일일. day 는 "오늘" 의 날짜 번호, maxDay 는 본 적 있는 가장 큰 날짜(시계 되돌리기 방지) */
-    gear: {},                                  // M4 3: 부위 -> 장비. 없으면 빈칸
+    gear: { weapon: { slot: 'weapon', type: 'pipe', tier: 1, affixes: [], zone: 1 } },   // M4 3: 부위 -> 장비. M6 2.3: 무기도 여기(처음은 쇠파이프)
     bag: [],                                   // M4 4: 아직 안 판 장비
     day: 0, maxDay: 0,
     quest: { zone: 0, up: 0, stage: 0 }, questTaken: {},
@@ -430,12 +451,24 @@ function migrate(raw) {
       quest: { zone: 0, up: 0, stage: 0 }, questTaken: {},
       login: { streak: 0, lastDay: -1 }, keys: KEY_MAX });
   }
+  /* v4 (M4·M5) → v5 (M6): 무기가 장비가 됐다. owned/weapon 을 gear.weapon 과 가방으로 옮긴다 — 가진 무기를 하나도 안 잃는다.
+     ★등급은 장비 등급으로 그대로 간다. */
+  if (raw.v === 4) {
+    const owned = raw.owned || { pipe: 1 }, cur = raw.weapon || 'pipe';
+    const gear = Object.assign({}, raw.gear || {});
+    const bag = (raw.bag || []).slice();
+    if (!gear.weapon) gear.weapon = { slot: 'weapon', type: cur, tier: owned[cur] || 1, affixes: [], zone: raw.bestZone || 1 };   // 이미 장비 무기가 있으면 그대로
+    for (const id of Object.keys(owned)) if (id !== cur && owned[id] > 0 && weaponOf(id))
+      bag.push({ slot: 'weapon', type: id, tier: owned[id], affixes: [], zone: raw.bestZone || 1 });
+    raw = Object.assign({}, raw, { v: 5, gear: gear, bag: bag, gachaLv: 0 });
+    delete raw.owned; delete raw.weapon;
+  }
   if (raw.v !== SAVE_VERSION) return freshState();
   const s = freshState();
   for (const k of Object.keys(s)) if (k in raw) s[k] = raw[k];
+  if (!s.gear || !s.gear.weapon) s.gear = Object.assign({}, s.gear || {}, freshState().gear);   // 무기 칸은 비지 않는다
   /* 옛 저장본에는 inc 가 없다. 0 으로 채운다 — 그래서 SAVE_VERSION 을 올리지 않는다. */
   s.lv = Object.assign({ atk: 0, spd: 0, hp: 0, reg: 0, inc: 0 }, raw.lv || {});
-  s.owned = Object.assign({ pipe: 1 }, raw.owned || {});
   return s;
 }
 
@@ -462,7 +495,7 @@ function load() {
        지금은 SAVE_VERSION 이 1뿐이라 안 터질 뿐이다. */
     /* M2: v1 은 migrate() 가 v2 로 끌어올린다 — 초기화가 아니므로 문구를 띄우지 않는다.
        (브라우저 시험에서 v1 저장본이 진행은 그대로인데 "처음부터 시작한다" 를 띄웠다 — 거짓 경고) */
-    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION && raw.v !== 1 && raw.v !== 2 && raw.v !== 3) {
+    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION && raw.v !== 1 && raw.v !== 2 && raw.v !== 3 && raw.v !== 4) {
       loadError = '저장 형식이 바뀌어 처음부터 시작한다';
     }
     G = migrate(raw);
@@ -489,10 +522,11 @@ function statNext(id) {   // 한 레벨 뒤 값 (줄 부제용)
 function statText(id, v) { const s = statDef(id); return s.pct ? Math.round(v * 100) + '%' : fmt(v) + s.unit; }
 function statCost(id) { const s = statDef(id); return Math.ceil(s.cost0 * Math.pow(s.costG, G.lv[id] || 0)); }
 function weaponOf(id) { return WEAPON_TYPES.find(w => w.id === id); }
+/* M6 2.3 — 낀 무기는 장비다(G.gear.weapon). 없을 수는 없지만(freshState·migrate 가 채운다) 방어한다. */
+function curWeapon() { return (G.gear && G.gear.weapon) || { slot: 'weapon', type: 'pipe', tier: 1, affixes: [], zone: 1 }; }
 function weaponPower() {
-  const w = weaponOf(G.weapon);
-  const tier = G.owned[G.weapon] || 1;
-  return w.mult * (1 + TIER_POWER * (tier - 1));
+  const cw = curWeapon(), w = weaponOf(cw.type) || WEAPON_TYPES[0];
+  return w.mult * (1 + TIER_POWER * (cw.tier - 1));
 }
 let lastHitCrit = false;   // M6 1.2 — 마지막 hitDamage 가 치명타였는지 (피해 글자 크기용)
 function hitDamage() {
@@ -527,12 +561,24 @@ function rollTier(z) {
 }
 
 /* 장비 하나를 뽑는다. slot 을 안 주면 부위도 뽑는다(무기 부위 제외 — 무기는 상점에서 산다). */
-function rollGear(z, slotId) {
-  const armor = GEAR_SLOTS.filter((s) => s.shapes);
+function rollGear(z, slotId, tierGiven) {
+  /* M6 2.2 — slotId 없으면 5부위 중 랜덤(무기 포함). tierGiven 이 있으면(뽑기) 그 등급, 없으면 구역 기준 rollTier. */
   const slot = slotId ? GEAR_SLOTS.find((s) => s.id === slotId)
-                      : armor[Math.floor(Math.random() * armor.length)];
-  const tier = rollTier(z);
+                      : GEAR_SLOTS[Math.floor(Math.random() * GEAR_SLOTS.length)];
+  const tier = tierGiven || rollTier(z);
   const shape = Math.floor(Math.random() * GEAR_SHAPES);
+  if (slot.id === 'weapon') {
+    // 무기 종류는 **해금된 것 중** 랜덤 — 해금 구역은 "뽑기 풀에 들어오는 구역" (정본 무기 종류 행)
+    const pool = WEAPON_TYPES.filter(weaponUnlocked);
+    const w = pool[Math.floor(Math.random() * pool.length)];
+    const nAffW = Math.min(GEAR_AFFIXES, Math.random() < (tier - 1) / (TIER_MAX - 1) ? 2 : 1);
+    const poolA = AFFIX_DEFS.slice(), affW = [];
+    for (let i = 0; i < nAffW && poolA.length; i++) {
+      const d = poolA.splice(Math.floor(Math.random() * poolA.length), 1)[0];
+      affW.push({ id: d.id, mult: 1 + d.per * tier * (0.7 + Math.random() * 0.6) });
+    }
+    return { slot: 'weapon', type: w.id, tier: tier, affixes: affW, zone: z };
+  }
   /* 옵션 줄 수 — 등급이 높을수록 두 줄이 잘 붙는다. 상한은 정본의 GEAR_AFFIXES. */
   const nAff = Math.min(GEAR_AFFIXES, Math.random() < (tier - 1) / (TIER_MAX - 1) ? 2 : 1);
   const pool = AFFIX_DEFS.slice();
@@ -548,7 +594,9 @@ function rollGear(z, slotId) {
 /* 장비의 값어치 — 판매가와 비교에 쓴다. 등급이 지배하고 옵션이 보탠다. */
 function gearScore(g) {
   if (!g) return 0;
-  let v = Math.pow(2.1, g.tier - 1);
+  /* M6 2.3 — 무기의 값어치는 **위력**(종류 배수 × 등급 배수)이다. 등급만 보면 영웅 쇠파이프(×3.0)가 일반 지뢰(×4.5)보다 "좋다" 고 잘못 말한다
+     (브라우저에서 그렇게 나왔다, 2026-09-18). 방어구는 등급이 곧 값어치(2.1^(등급-1)). 같은 부위끼리만 견준다. 팔 값은 gearSellPrice 가 따로. */
+  let v = g.slot === 'weapon' ? (weaponOf(g.type) || WEAPON_TYPES[0]).mult * (1 + TIER_POWER * (g.tier - 1)) : Math.pow(2.1, g.tier - 1);
   for (const a of g.affixes) v *= a.mult;
   return v;
 }
@@ -589,7 +637,7 @@ function dropGear(g) {
   if (autoSellOn() && g.tier <= autoSellTier()) { sellGear(g); return 'autosell'; }
   G.bag.push(g);
   if (G.bag.length > BAG_MAX) {
-    G.bag.sort((a, b) => gearScore(a) - gearScore(b));
+    G.bag.sort((a, b) => gearSellPrice(a) - gearSellPrice(b));   // M6 2.3: '가장 값싼 것' 은 판매가로 — 부위가 달라도 견줄 수 있다
     sellGear(G.bag.shift());                 // 가장 값싼 것부터 판다
   }
   return 'bag';
@@ -621,10 +669,40 @@ function affixText(a) {
 
 function gearName(g) {
   const slot = GEAR_SLOTS.find((s) => s.id === g.slot);
-  const nm = slot && slot.shapes ? slot.shapes[g.shape % GEAR_SHAPES] : (slot ? slot.name : '장비');
+  const nm = g.slot === 'weapon' ? ((weaponOf(g.type) || WEAPON_TYPES[0]).name)
+           : (slot && slot.shapes ? slot.shapes[g.shape % GEAR_SHAPES] : (slot ? slot.name : '장비'));
   return tierName(g.tier) + ' ' + nm;
 }
 
+/* ── M6 2.2 뽑기 ── */
+function rollTierOdds(lv) {
+  const row = TIER_ODDS[Math.max(0, Math.min(GACHA_LV_MAX, lv || 0))];
+  let r = Math.random() * 100;
+  for (let i = 0; i < row.length; i++) { r -= row[i]; if (r < 0) return i + 1; }
+  return row.length;
+}
+function gachaRoll() { return rollGear(G.bestZone || 1, null, rollTierOdds(G.gachaLv)); }
+function gachaCost(n) {
+  const one = zoneIncome(G.bestZone || 1) * BP_RATIO * GACHA_COST_FRAC * statOf('inc');
+  return Math.ceil(n === 10 ? one * 10 * GACHA_TEN_DISCOUNT : one * n);
+}
+let gachaResult = null;   // { items: [{ g, r, better }] } — 결과 팝업. 떠 있으면 다른 버튼은 없다(지시 #19 규칙)
+function pullGacha(n) {
+  const cost = gachaCost(n);
+  if ((G.plans || 0) < cost) return false;
+  G.plans -= cost;
+  const items = [];
+  for (let i = 0; i < n; i++) {
+    const g = gachaRoll();
+    const cur = (G.gear || {})[g.slot];
+    const better = gearScore(g) > gearScore(cur);
+    const r = dropGear(g);                      // 빈 부위 장착 · 자동 판매 · 가방·넘침 — 규칙은 하나
+    items.push({ g: g, r: r, better: better });
+  }
+  questProgress('up', n);                       // M4 1.2 과제 '업그레이드' — 무기 구매가 세던 자리를 뽑기가 잇는다
+  gachaResult = { items: items };
+  return true;
+}
 function stageKills(z) { return Math.max(1, Math.round(zoneKills(z) / STAGES_PER_ZONE)); }
 function killReward(z) { return zoneReward(z); }   // M3 5: 단계 보상이 설계도로 옮겨가 부품은 분할 전 그대로
 function zoneIncome(z) { return zoneReward(z) * zoneKills(z); }
@@ -633,14 +711,7 @@ function bossBlueprint(z) { return zoneIncome(z) * BP_RATIO * BP_BOSS_SHARE; }
 function currentStage() { return Math.min(STAGES_PER_ZONE, Math.floor(killIndex / stageKills(G.zone)) + 1); }
 function isBossKill(z, idx) { return (z % BOSS_EVERY === 0) && idx === zoneKills(z) - 1; }
 function weaponUnlocked(w) { return (w.unlock || 1) <= (G.bestZone || 1); }   // M2: 해금 구역은 최고 도달 구역 기준
-function weaponUpgradeCost(id) {
-  const w = weaponOf(id);
-  const tier = G.owned[id] || 0;
-  if (!weaponUnlocked(w)) return null;       // 해금 전엔 값이 없다 = 못 산다
-  if (tier === 0) return w.cost;
-  if (tier >= TIER_MAX) return null;
-  return Math.ceil(Math.max(w.cost, 400) * Math.pow(TIER_COST_MULT, tier));
-}
+/* M6 2.3 — weaponUpgradeCost·buyWeapon·equip 은 없어졌다. 무기는 뽑기에서 나오고 가방에서 낀다(equipGear). */
 /* 무기 등급을 색으로 보인다. 정본: "등급은 색만 바꾼다 (recolor)".
    등급이 오를수록 밝고 진해진다. 스프라이트를 3배로 그리지 않는다.
    2026-09-08 검증자 적발: tier 가 색 계산에 쓰이는 곳이 0곳이었다. */
@@ -663,7 +734,7 @@ const TIER_NAMES = ['일반', '고급', '희귀', '에픽', '영웅', '전설', 
 /* M5 2.5 — 목록·띠·알림의 등급 색. 전투 화면의 무기 모양은 weaponTint(무기 고유색+밝기)를 그대로 쓴다 — 무기마다 다른 색이 무기를 알아보는 단서라서. */
 function tierColor(t) { return PALETTE.tier[Math.max(1, Math.min(TIER_MAX, t || 1)) - 1]; }
 function tierName(t) { return TIER_NAMES[Math.max(1, Math.min(TIER_MAX, t)) - 1] || ('등급 ' + t); }
-function weaponTint(id) { return tierTint(weaponOf(id).tint, G.owned[id] || 1); }
+function weaponTint() { const cw = curWeapon(); return tierTint((weaponOf(cw.type) || WEAPON_TYPES[0]).tint, cw.tier); }   // M6 2.3: 낀 무기 기준
 
 function boostActive() { return Date.now() < (G.boostUntil || 0); }
 function rewardMult() { return boostActive() ? 2 : 1; }
@@ -839,15 +910,7 @@ function killZombie(z) {
        설계도만 안 커지면 무기가 영영 안 잡힌다 — 3시드 격자에서 BP_RATIO 를 0.08→1.5 로 올려도
        구역 30 을 못 깼다(최고 구역 18→27). 양의 문제가 아니라 **성장률**의 문제였다. */
     questProgress('stage', 1);             // M4 1.2
-    /* M4 3.4 — 단계 클리어마다 장비 하나가 떨어진다. 4단계에서 만든 자리를 그대로 쓴다.
-       가방이 차면 **가장 값싼 것을 자동으로 판다** — 조사 ④ "버리는 것이 자원". */
-    {   // M5 2.4 — 떨어진 장비가 어디로 갔는지 말해 준다 (사람 제보: "어떤 식으로 도는지 모르겠다"). 규칙은 dropGear 그대로.
-      const g = rollGear(G.zone), nb = (G.bag || []).length, r = dropGear(g);
-      const sl = GEAR_SLOTS.find((s) => s.id === g.slot), nm = (sl ? sl.name : '') + ' · ' + gearName(g);
-      const msg = r === 'equip' ? nm + ' → 바로 낌' : r === 'autosell' ? nm + ' → 자동 판매'
-                : (G.bag.length === nb ? nm + ' → 가방 넘침, 싼 것 팔림' : nm + ' → 가방');
-      addFloat(GAME_W / 2, ARENA_TOP + 124, msg, tierColor(g.tier), 14);
-    }
+    /* M6 2.1 — 단계 드랍은 없앴다(정본 '장비 드랍 없음', 지시 #121). 장비는 뽑기로만. */
     const bp = stageBlueprint(G.zone) * rewardMult() * statOf('inc');
     G.plans += bp;
     addFloat(GAME_W / 2, ARENA_TOP + 100, '단계 ' + currentStage() + ' / ' + STAGES_PER_ZONE
@@ -1016,9 +1079,8 @@ function applyOffline() {
   G.parts += gain;
   /* M3 5 — 설계도도 같이 쌓인다. 안 주면 자리를 비운 사이 무기만 멈춘다.
      비율은 부품 수입 대비 BP_RATIO 중 오프라인 몫(BP_OFFLINE_SHARE). */
-  const bp = gain * BP_RATIO * BP_OFFLINE_SHARE;
-  G.plans += bp;
-  return { elapsed: elapsed, capped: capped, gain: gain, plans: bp, cappedHit: elapsed > capped + 1, doubled: false };
+  /* M6 2.1 — 오프라인 설계도는 없앴다(정본 '설계도 쓰임·출처': 단계 클리어·일일 과제에서만). plans 칸은 0 으로 남긴다(팝업 호환). */
+  return { elapsed: elapsed, capped: capped, gain: gain, plans: 0, cappedHit: elapsed > capped + 1, doubled: false };
 }
 
 /* =========================================================================
@@ -1056,8 +1118,7 @@ function rolloverDay() {
   /* 접속 보상 — 7일째가 가장 크다. 총량은 하루 예산 안에서 준다. */
   const w = LOGIN_SHARES[G.login.streak - 1] || LOGIN_SHARES[0];
   const gain = dailyBudget() * w;
-  G.parts += gain;
-  G.plans += gain * BP_RATIO;
+  G.parts += gain;                              // M6 2.1: 접속 보상은 부품만 — 설계도는 과제·단계에서만
   save();
   return { kind: 'login', day: G.login.streak, gain: gain };
 }
@@ -1107,8 +1168,7 @@ function openSupply() {
   G.keys -= 1;
   const budget = dailyBudget();
   const gain = budget * SUPPLY_SHARE / KEY_MAX;
-  G.parts += gain;
-  G.plans += gain * BP_RATIO;
+  G.parts += gain;                              // M6 2.1: 상자도 부품만
   addFloat(GAME_W / 2, ARENA_TOP + 120, '보급 상자 +' + fmt(gain), PALETTE.gold, 20);
   save();
   return true;
@@ -1200,17 +1260,7 @@ function buyStat(id) {
   return true;
 }
 
-function buyWeapon(id) {
-  const cost = weaponUpgradeCost(id);
-  if (cost === null || G.plans < cost) return false;   // M3 5: 무기는 **설계도**로만 산다
-  G.plans -= cost;
-  G.owned[id] = (G.owned[id] || 0) + 1;
-  G.weapon = id;
-  questProgress('up', 1);                  // M4 1.2
-  return true;
-}
 
-function equip(id) { if (G.owned[id]) { G.weapon = id; return true; } return false; }
 
 function buildButtons() {
   buttons.length = 0;
@@ -1218,6 +1268,12 @@ function buildButtons() {
   /* 오프라인 팝업이 떠 있으면 팝업 버튼만 만든다.
      뒤의 업그레이드 버튼을 살려두면 화면에 안 보이는 채로 눌려 몰래 구매된다.
      2026-09-08 실기 제보: "다른 곳을 아무리 터치해도 안 꺼지고 게임은 계속 진행된다" */
+  /* M6 2.4 — 뽑기 결과 팝업. 오프라인 팝업과 같은 규칙: 떠 있으면 이 버튼들뿐이다 (뒤 버튼이 몰래 눌리면 안 된다, 지시 #19). */
+  if (gachaResult) {
+    btn({ x: 0, y: 0, w: GAME_W, h: GAME_H, label: '', enabled: true, tone: 'scrim', onTap: () => { gachaResult = null; save(); return true; } });
+    btn({ x: 150, y: GAME_H / 2 + 200, w: 240, h: ROW_H, label: '닫기', enabled: true, tone: 'ghost', onTap: () => { gachaResult = null; save(); return true; } });
+    return;
+  }
   if (offlineReport) {
     // 어두운 배경 아무 데나 눌러도 닫힌다 (사람이 가장 먼저 하는 행동이다)
     btn({ x: 0, y: 0, w: GAME_W, h: GAME_H, label: '', enabled: true, tone: 'scrim',
@@ -1262,6 +1318,13 @@ function buildButtons() {
       .map((p) => p[0] + ' +' + Math.round((p[1] - 1) * 100) + '%');
     putRow({ label: '장비 효과 합계', sub: sums.length ? sums.join('   ') : '낀 장비의 옵션이 여기 더해진다',
              cost: null, enabled: false, tone: 'ghost', icon: 'gear', onTap: () => false });
+    /* M6 2.2 — 뽑기 줄. 값은 설계도. 10회는 10% 싸다. */
+    [1, 10].forEach((n) => {
+      const c = gachaCost(n);
+      putRow({ label: '뽑기 ' + n + '회', sub: n === 1 ? '설계도로 5부위 중 하나 · 등급은 확률표' : '10개 한 번에 · 10% 싸다',
+               cost: c, enabled: (G.plans || 0) >= c, tone: 'buy', icon: 'd:supply', costKind: 'plans',
+               onTap: () => { if (!pullGacha(n)) { addFloat(GAME_W / 2, ARENA_TOP + 120, '설계도 부족 — ' + fmt(c - (G.plans || 0)) + ' 더', PALETTE.plans, 20); return false; } return true; } });
+    });
     const asT = autoSellTier();
     putRow({ label: '자동 판매 · ' + (asT ? tierName(asT) + ' 이하' : '끔'),
              sub: autoSellOn() ? '탭할 때마다 기준이 한 등급 오른다 · 끝에서 끔 · 낀 것은 안 판다' : '구역 ' + AUTOSELL_ZONE + ' 부터 열린다',
@@ -1269,7 +1332,7 @@ function buildButtons() {
              onTap: () => { G.autoSell = (autoSellTier() + 1) % TIER_MAX; return true; } });
     const bag = (G.bag || []).slice().sort((a, b) => gearScore(b) - gearScore(a));
     putRow({ label: '가방 ' + bag.length + ' / ' + BAG_MAX,
-             sub: bag.length ? '탭하면 낀다 · ▲ 지금 것보다 좋다 · 넘치면 싼 것부터 팔린다' : '단계를 깨면 장비가 떨어진다',
+             sub: bag.length ? '탭하면 낀다 · ▲ 지금 것보다 좋다 · 넘치면 싼 것부터 팔린다' : '뽑은 것이 여기 온다 (빈 부위면 바로 낀다)',   // M6 2.1: 드랍 없음
              cost: null, enabled: false, tone: 'ghost', icon: 'd:supply', onTap: () => false });
     bag.forEach((g) => {
       const i = G.bag.indexOf(g);
@@ -1278,7 +1341,7 @@ function buildButtons() {
       const sl = GEAR_SLOTS.find((s) => s.id === g.slot);
       putRow({ label: gearName(g) + (better ? '  ▲ 더 좋다' : ''),
                sub: (sl ? sl.name + ' · ' : '') + g.affixes.map((a) => affixText(a)).join('   ') + '   ·   팔면 ' + fmt(gearSellPrice(g)),
-               cost: null, enabled: true, tone: better ? 'buy' : 'off', icon: 'g:' + g.slot,
+               cost: null, enabled: true, tone: better ? 'buy' : 'off', icon: g.slot === 'weapon' ? 'w:' + (weaponOf(g.type) || WEAPON_TYPES[0]).shape : 'g:' + g.slot,
                tint: tierColor(g.tier),            // M5 2.5 등급 색
                onTap: () => equipGear(i) });
     });
@@ -1315,41 +1378,24 @@ function buildButtons() {
                onTap: () => buyStat(s.id) });
     });
   } else {
-    let lockedShown = false;
-    WEAPON_TYPES.forEach((w) => {
-      if (!weaponUnlocked(w)) {
-        // 다음 해금 무기 하나만 잠긴 줄로 보여 준다 — 눌리지 않는다 (enabled false)
-        if (!lockedShown) { lockedShown = true;
-          putRow({ label: '???', sub: '구역 ' + w.unlock + ' 도달 시 해금', cost: null, enabled: false, tone: 'ghost', wid: w.id, icon: 'lock', onTap: () => false }); }
-        return;
-      }
-      const tier = G.owned[w.id] || 0;
-      const cost = weaponUpgradeCost(w.id);
-      const maxed = tier >= TIER_MAX;
-      putRow({ label: w.name + (tier ? '  ★' + tier : ''),
-               /* 2026-09-17 폰 제보 "이미 산 무기는 재화가 모여도 선택만 된다": 브라우저에서 규칙 #72 는 그대로 도는데
-                  (장착 → 한 번 더 → 강화), 그걸 알려 주는 게 부제 한 단어뿐이었고, 무기 값이 **설계도**인 것과
-                  설계도가 모자라면 탭이 조용히 재장착으로 떨어지는 것을 화면이 말해 주지 않았다. 여기서 말한다. */
-               sub: maxed ? '최대 등급 · 위력 ×' + (w.mult * (1 + TIER_POWER * (TIER_MAX - 1))).toFixed(2)
-                    : (tier ? (G.weapon === w.id
-                                 ? (G.plans >= cost ? '강화 · 설계도 ' + fmt(cost) : '강화 — 설계도 ' + fmt(cost - G.plans) + ' 더 필요')
-                                 : '장착 · 한 번 더 누르면 강화')
-                            : (G.plans >= cost ? '해금 · 설계도 ' + fmt(cost) : '해금 — 설계도 ' + fmt(cost - G.plans) + ' 더 필요')),
-               cost: maxed ? null : cost, icon: 'w:' + w.shape, costKind: 'plans',   // M5 2.1·2.2: 무기 값은 설계도
-               /* 가진 무기는 언제나 눌린다 — 장착 전환. 지시 #70 실기: 다음 등급을 못 사면 줄이 죽어서
-                  실수로 약한 무기를 고르면 돈이 모일 때까지 되돌릴 수 없었다. */
-               enabled: tier > 0 || (!maxed && G.plans >= cost),
-               tone: G.weapon === w.id ? 'equipped' : 'buy',
-               tint: tier > 0 ? tierColor(tier) : null, wid: w.id,   // M5 2.5 — 띠는 등급 색, 해금 전은 없음
-               /* 장착 규칙 (지시 #72): 장착 중이 아닌 소유 무기 탭 = **장착만**. 장착 중인 무기(또는 미소유) 탭 = 강화·해금.
-                  24차 지적: 예전엔 돈이 있으면 되돌리려는 탭이 2,400 을 쓰고 강화해 버렸다. */
-               onTap: () => {
-                 if (tier > 0 && G.weapon !== w.id) return equip(w.id);
-                 if (!maxed && G.plans >= cost) return buyWeapon(w.id);
-                 if (!maxed) addFloat(GAME_W / 2, ARENA_TOP + 120, '설계도 부족 — ' + fmt(cost - G.plans) + ' 더', PALETTE.plans, 20);   // 조용히 넘어가지 않는다
-                 return equip(w.id);
-               } });
+    /* M6 2.3 — 무기 탭은 상점이 아니다. 낀 무기 한 줄 · 가방의 무기(값비싼 것부터, 탭하면 낀다) · 다음에 풀에 들어올 종류 한 줄.
+       ★ 강화·해금 구매는 없어졌다 — 무기는 장비 탭에서 뽑는다. */
+    const cw = curWeapon(), cwt = weaponOf(cw.type) || WEAPON_TYPES[0];
+    putRow({ label: '낀 무기 · ' + gearName(cw), sub: '위력 ×' + weaponPower().toFixed(2) + (cw.affixes.length ? '   ' + cw.affixes.map((a) => affixText(a)).join('   ') : ''),
+             cost: null, enabled: false, tone: 'equipped', icon: 'w:' + cwt.shape, tint: tierColor(cw.tier), wid: cwt.id, onTap: () => false });
+    const wbag = (G.bag || []).filter((g) => g.slot === 'weapon').sort((a, b) => gearScore(b) - gearScore(a));
+    if (!wbag.length) {
+      putRow({ label: '가방에 무기 없음', sub: '장비 탭에서 뽑는다 — 무기도 뽑기에서 나온다', cost: null, enabled: false, tone: 'ghost', icon: 'd:supply', onTap: () => false });
+    }
+    wbag.forEach((g) => {
+      const i = G.bag.indexOf(g), better = gearScore(g) > gearScore(cw), wt = weaponOf(g.type) || WEAPON_TYPES[0];
+      putRow({ label: gearName(g) + (better ? '  ▲ 더 좋다' : ''),
+               sub: '위력 ×' + (wt.mult * (1 + TIER_POWER * (g.tier - 1))).toFixed(2) + (g.affixes.length ? '   ' + g.affixes.map((a) => affixText(a)).join('   ') : '') + '   ·   팔면 ' + fmt(gearSellPrice(g)),
+               cost: null, enabled: true, tone: better ? 'buy' : 'off', icon: 'w:' + wt.shape, tint: tierColor(g.tier), wid: wt.id,
+               onTap: () => equipGear(i) });
     });
+    const nextW = WEAPON_TYPES.find((w) => !weaponUnlocked(w));
+    if (nextW) putRow({ label: '???', sub: '구역 ' + nextW.unlock + ' 부터 뽑기에 나온다', cost: null, enabled: false, tone: 'ghost', wid: nextW.id, icon: 'lock', onTap: () => false });
   }
 
   listMax = Math.max(0, cy - (bot - top));
@@ -1407,12 +1453,13 @@ function draw() {
   drawArena();
   drawHUD();
   drawPanelBg();
-  if (tab === 'gear' && !offlineReport) drawEquipStrip();   // M5 2.4
+  if (tab === 'gear' && !offlineReport && !gachaResult) drawEquipStrip();   // M5 2.4
   if (deathFlash > 0) {
     ctx.fillStyle = 'rgba(' + PALETTE.deathRgb + ',' + (deathFlash * 0.35).toFixed(3) + ')';
     ctx.fillRect(0, 0, GAME_W, GAME_H);
   }
   if (offlineReport) drawOffline();
+  if (gachaResult) drawGachaResult();   // M6 2.4
   // 버튼은 언제나 맨 위에 그린다. 오버레이가 자기 버튼을 덮으면 누를 수가 없다 (2026-09-08)
   drawButtons();
   ctx.restore();
@@ -1499,7 +1546,7 @@ function drawArena() {
     ctx.fillRect(zb.x - w / 2, fy - 66 * s + bob, w * pct, 4);
   }
 
-  ctx.strokeStyle = weaponTint(G.weapon);
+  ctx.strokeStyle = weaponTint();
   ctx.lineWidth = 2;
   for (const s of shots) {
     ctx.globalAlpha = Math.max(0, 1 - s.t / 0.09);
@@ -1515,8 +1562,8 @@ function drawArena() {
   ctx.globalAlpha = 1;
 
   {
-    const w = weaponOf(G.weapon);
-    const wt = weaponTint(G.weapon);
+    const w = weaponOf(curWeapon().type) || WEAPON_TYPES[0];
+    const wt = weaponTint();
     const x = SURVIVOR_X, fy = GROUND_Y;
     ctx.fillStyle = PALETTE.shade35;
     ctx.beginPath(); ctx.ellipse(x, fy + 2, 15, 4, 0, 0, 6.284); ctx.fill();
@@ -1627,7 +1674,7 @@ function drawPanelBg() {
   ctx.strokeStyle = PALETTE.rustSoft;      // M5 3.2 — 전투와 패널의 경계도 녹 빛
   ctx.beginPath(); ctx.moveTo(0, ARENA_BOT + .5); ctx.lineTo(GAME_W, ARENA_BOT + .5); ctx.stroke();
 
-  if (offlineReport) return;
+  if (offlineReport || gachaResult) return;
   const top = listTopY(), bot = listBotY();
 
   /* M5 1.2 — 영역이 어디서 시작하고 끝나는지 보이게 (사람 제보 2026-09-17: "메뉴 간 분간이 안 된다").
@@ -1751,9 +1798,9 @@ function drawEquipStrip() {
   GEAR_SLOTS.forEach((sl, i) => {
     const x = 24 + i * (w + gap), isW = sl.id === 'weapon';
     const g = isW ? null : (G.gear || {})[sl.id];
-    const wp = isW ? weaponOf(G.weapon) : null;
+    const wp = isW ? weaponOf(curWeapon().type) : null;
     const has = isW ? !!wp : !!g;
-    const tint = !has ? PALETTE.dim2 : tierColor(isW ? (G.owned[wp.id] || 1) : g.tier);   // M5 2.5 — 등급 색 (무기는 ★레벨)
+    const tint = !has ? PALETTE.dim2 : tierColor(isW ? curWeapon().tier : g.tier);   // M5 2.5 — 등급 색 (M6 2.3: 무기도 장비 등급)
     ctx.fillStyle = has ? PALETTE.equippedBg : PALETTE.ghostBg; rr(x, y, w, h, 8); ctx.fill();
     ctx.strokeStyle = has ? tint : PALETTE.edgeSoft; ctx.lineWidth = has ? 1.5 : 1;
     if (!has) ctx.setLineDash([4, 4]);
@@ -1762,11 +1809,12 @@ function drawEquipStrip() {
     ctx.textAlign = 'center';
     ctx.font = '600 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
     ctx.fillStyle = has ? tint : PALETTE.dim;
-    ctx.fillText(!has ? '비었다' : (isW ? '★' + (G.owned[wp.id] || 1) : tierName(g.tier)), x + w / 2, y + 64);
+    ctx.fillText(!has ? '비었다' : tierName(isW ? curWeapon().tier : g.tier), x + w / 2, y + 64);
     ctx.font = '400 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
     ctx.fillStyle = PALETTE.ink3;
     ctx.fillText(isW ? (wp ? wp.name : '무기') : sl.name, x + w / 2, y + 82);
-    if (g && bag.some((b) => b.slot === sl.id && gearScore(b) > gearScore(g))) {
+    const mine = isW ? curWeapon() : g;
+    if (mine && bag.some((b) => b.slot === sl.id && gearScore(b) > gearScore(mine))) {
       ctx.fillStyle = PALETTE.parts; ctx.font = '700 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
       ctx.textAlign = 'right'; ctx.fillText('▲', x + w - 6, y + 15);
     }
@@ -1831,6 +1879,35 @@ function drawButtons() {
     }
     if (b.clip) ctx.restore();
   }
+}
+
+/* M6 2.4 — 뽑기 결과. 한 줄에 하나: 등급 색 이름 · 어디로 갔나 · 더 좋으면 ▲. 10줄이면 촘촘히. */
+function drawGachaResult() {
+  ctx.fillStyle = PALETTE.scrim;
+  ctx.fillRect(0, 0, GAME_W, GAME_H);
+  const items = gachaResult.items, n = items.length;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = PALETTE.ink;
+  ctx.font = '700 24px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('뽑기 결과  ' + n + '개', GAME_W / 2, GAME_H / 2 - 220);
+  const lh = n > 5 ? 30 : 40, y0 = GAME_H / 2 - 180;
+  ctx.font = '600 ' + (n > 5 ? 14 : 16) + 'px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  items.forEach((it, i) => {
+    const y = y0 + i * lh;
+    const sl = GEAR_SLOTS.find((s) => s.id === it.g.slot);
+    const where = it.r === 'equip' ? '바로 낌' : it.r === 'autosell' ? '자동 판매' : '가방';
+    ctx.textAlign = 'left';
+    drawIcon(it.g.slot === 'weapon' ? 'w:' + (weaponOf(it.g.type) || WEAPON_TYPES[0]).shape : 'g:' + it.g.slot, 84, y - 5, 20, tierColor(it.g.tier));
+    ctx.fillStyle = tierColor(it.g.tier);
+    ctx.fillText(gearName(it.g), 104, y);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = it.better ? PALETTE.parts : PALETTE.ink3;
+    ctx.fillText((sl ? sl.name + ' · ' : '') + where + (it.better ? '   ▲ 더 좋다' : ''), GAME_W - 84, y);
+  });
+  ctx.textAlign = 'center';
+  ctx.fillStyle = PALETTE.ink3;
+  ctx.font = '400 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('▲ 는 가방에서 탭해 낀다 · 확률은 장비 탭 "확률 보기"', GAME_W / 2, GAME_H / 2 + 170);
 }
 
 function drawOffline() {
@@ -1930,7 +2007,7 @@ canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   const p = toCanvas(e.clientX, e.clientY);
   const b = hitButton(p);
-  const inList = p.y >= listTopY() && p.y <= listBotY() && !offlineReport;
+  const inList = p.y >= listTopY() && p.y <= listBotY() && !offlineReport && !gachaResult;
 
   if (inList) {
     listVel = 0;                       // 미끄러지는 중에 짚으면 그 자리에 선다
@@ -1943,7 +2020,7 @@ canvas.addEventListener('pointerdown', (e) => {
   }
 
   /* M4 2 — 버튼이 아닌 전투 영역을 탭하면 집중 사격. 팝업이 떠 있으면 안 한다. */
-  if (!b && !offlineReport && !reviveOffer && p.y >= ARENA_TOP && p.y <= ARENA_BOT) {
+  if (!b && !offlineReport && !gachaResult && !reviveOffer && p.y >= ARENA_TOP && p.y <= ARENA_BOT) {
     if (triggerFocus()) buildButtons();
     return;
   }

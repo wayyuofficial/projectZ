@@ -25,7 +25,7 @@
 
   // --- 저장과 복원 ---
   G = freshState();
-  G.parts = 1234.5; G.zone = 4; G.lv.atk = 7; G.owned.rifle = 2; G.weapon = 'rifle';
+  G.parts = 1234.5; G.zone = 4; G.lv.atk = 7; G.gear.weapon = { slot: 'weapon', type: 'rifle', tier: 2, affixes: [], zone: 4 };   // M6 2.3: 무기는 장비
   saveError = null; save();
   chk('save() 오류 없음', saveError === null, String(saveError));
   chk('저장 키 생성', !!store[SAVE_KEY], SAVE_KEY);
@@ -36,7 +36,7 @@
   chk('부품 복원 (소수점까지)', G.parts === 1234.5, G.parts);
   chk('구역 복원', G.zone === 4, G.zone);
   chk('능력치 레벨 복원', G.lv.atk === 7, G.lv.atk);
-  chk('무기 등급 복원', G.owned.rifle === 2 && G.weapon === 'rifle', JSON.stringify(G.owned));
+  chk('무기 등급 복원', G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 2, JSON.stringify(G.gear.weapon));
 
   // --- 망가진 저장 ---
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 999 }));
@@ -47,13 +47,13 @@
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 1, bestZone: undefined }));
   loadError = null;                       // 앞 항목의 실패 문구가 남지 않게 (24차 부수 지적 3: load() 는 loadError 를 스스로 비우지 않는다)
   load();
-  chk('v1 저장본이 최신으로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.owned.rifle === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.bestZone + '/' + loadError);
+  chk('v1 저장본이 최신으로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.bestZone + '/' + loadError);
 
   // M3 5 — v2 (M2 저장본) 도 설계도 0 으로 이어져야 한다. 무기는 이미 가진 것을 잃지 않는다.
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 2, plans: undefined }));
   loadError = null;
   load();
-  chk('v2 저장본이 최신으로 이어진다 (설계도 0)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 0 && G.owned.rifle === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + loadError);
+  chk('v2 저장본이 최신으로 이어진다 (설계도 0)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 0 && G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + loadError);
 
   // M4 1 — v3 (M3 저장본) 도 일일 상태가 붙어 이어져야 한다.
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 3, plans: 77, day: undefined, keys: undefined }));
@@ -61,9 +61,17 @@
   load();
   chk('v3 저장본이 최신으로 이어진다 (일일 붙음)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 77 && G.keys === KEY_MAX && G.login.streak === 0 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + G.keys + '/' + loadError);
 
+  // M6 2.3 — v4 (M4·M5 저장본) 의 owned/weapon 은 gear.weapon 과 가방으로 옮겨진다. 가진 무기를 하나도 안 잃는다.
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 4, gear: {}, bag: [], owned: { pipe: 1, rifle: 3, shotgun: 1 }, weapon: 'rifle', gachaLv: undefined }));
+  loadError = null;
+  load();
+  chk('v4 저장본이 최신으로 이어진다 (무기 → 장비)', G.v === SAVE_VERSION && G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 3
+      && G.bag.filter((g) => g.slot === 'weapon').length === 2 && G.owned === undefined && G.gachaLv === 0 && loadError === null,
+      G.gear.weapon.type + '/' + G.gear.weapon.tier + '/' + G.bag.length);
+
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();
-  chk('항목이 빠진 저장 보정', G.zone === 1 && G.lv.reg === 0 && G.owned.pipe === 1, JSON.stringify(G.lv));
+  chk('항목이 빠진 저장 보정', G.zone === 1 && G.lv.reg === 0 && G.gear.weapon.type === 'pipe', JSON.stringify(G.lv));
 
   store[SAVE_KEY] = '{{{깨진';
   loadError = null;                       // 불러오기 실패는 saveError 가 아니라 loadError 다 (11차 감사 뒤)
