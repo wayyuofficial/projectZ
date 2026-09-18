@@ -84,6 +84,8 @@ TIER_ODDS = matrix("TIER_ODDS")
 GACHA_LV_MAX = int(num("GACHA_LV_MAX"))
 GACHA_COST_FRAC = num("GACHA_COST_FRAC")
 GACHA_TEN_DISCOUNT = num("GACHA_TEN_DISCOUNT")
+GACHA_UP_FRAC = num("GACHA_UP_FRAC")          # M6 3.1
+GACHA_UP_G = num("GACHA_UP_G")
 ZONE_COUNT = int(num("ZONE_COUNT"))
 TIER_MAX = int(num("TIER_MAX"))
 MAX_ONSCREEN_ZOMBIES = int(num("MAX_ONSCREEN_ZOMBIES"))
@@ -199,7 +201,7 @@ MIRRORED = {
     "applyOffline": "7c67a2a215adcf54",
     "attacksPerSec": "62c1a324deffd5c2",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "92a8b32e2a47c8b8",
+    "buildButtons": "34800dba1b2237bd",
     "buyStat": "66cfe1998f8e4376",
     "curWeapon": "1109c7c05ab58ece",
     "dailyBudget": "51f1b98162132ed0",
@@ -210,6 +212,7 @@ MIRRORED = {
     "freshState": "e3fdb0ec12e8d2c0",
     "gachaCost": "c40d912447e16c8b",
     "gachaRoll": "d099a142191cebbd",
+    "gachaUpCost": "6834b9cc3bf320af",
     "gearMult": "c2392bb827fd20df",
     "gearScore": "71468db296abf348",
     "gearSellPrice": "81a178c6a44a414e",
@@ -245,6 +248,7 @@ MIRRORED = {
     "stepCombat": "477e00f37b335b3e",
     "tabRowY": "d001ac81a8afa161",
     "takeQuest": "7e312c2c917dc686",
+    "upgradeGacha": "fb0b2b84f8b27987",
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "70305017e850f8b7",
     "zoneDPS": "9abab3ae0b004352",
@@ -568,6 +572,22 @@ class Sim(object):
         self.gachaResult = {"items": items}
         return True
 
+    # ---- M6 3.1 뽑기 강화 (원본과 같은 구조) ----
+    def gachaUpCost(self, lv):
+        return math.ceil(self.zoneIncome(self.G.get("bestZone") or 1) * GACHA_UP_FRAC * (GACHA_UP_G ** lv) * self.statOf("inc"))
+
+    def upgradeGacha(self):
+        lv = self.G.get("gachaLv", 0)
+        if lv >= GACHA_LV_MAX:
+            return False
+        c = self.gachaUpCost(lv)
+        if self.G["parts"] < c:
+            return False
+        self.G["parts"] -= c
+        self.G["gachaLv"] = lv + 1
+        self.questProgress("up", 1)
+        return True
+
     def equipGear(self, i):
         # 원본 equipGear — 가방의 장비를 낀다, 벗은 것은 가방으로 (거울엔 없었다: 자가 장착을 안 했다 — 지시 #115)
         bag = self.G.get("bag") or []
@@ -776,6 +796,9 @@ class Sim(object):
             put_row("gear_sum", "ghost", False, None)
             for n in (1, 10):                                   # M6 2.2 뽑기 줄
                 put_row("gacha_%d" % n, "buy", self.G.get("plans", 0.0) >= self.gachaCost(n), None)
+            lv = self.G.get("gachaLv", 0); maxed = lv >= GACHA_LV_MAX     # M6 3.1·3.2
+            put_row("gacha_up", "buy", (not maxed) and self.G["parts"] >= self.gachaUpCost(lv), None)
+            put_row("odds_view", "off", True, None)
             auto_on = (self.G.get("bestZone") or 1) >= AUTOSELL_ZONE
             put_row("autosell", "off", auto_on, None)
             bag = self.G.get("bag") or []
@@ -1103,6 +1126,12 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
                     if on_buy:
                         on_buy(s.t, s.G["zone"], bid, cheap)
 
+                # M6 3.1 — 뽑기 강화(부품). 능력치를 다 산 뒤 남은 부품으로 한 단계씩. 사람이 부품 줄이 다 꺼졌을 때 누르는 것.
+                lvg = s.G.get("gachaLv", 0)
+                if lvg < GACHA_LV_MAX and s.G["parts"] >= s.gachaUpCost(lvg) and s.upgradeGacha():
+                    bought = True
+                    if on_buy:
+                        on_buy(s.t, s.G["zone"], "U:%d" % (lvg + 1), s.gachaUpCost(lvg))
                 # M6 2.2/4.1 — 설계도는 뽑기에 쓴다. 10회가 되면 10회, 아니면 1회. 뽑은 뒤 ▲(더 좋은 것)를 낀다.
                 n = 10 if s.G.get("plans", 0.0) >= s.gachaCost(10) else (1 if s.G.get("plans", 0.0) >= s.gachaCost(1) else 0)
                 if n and s.pullGacha(n):
@@ -1133,6 +1162,8 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
                    and not (st.get("cap") is not None and s.statOf(st["id"]) >= st["cap"] - 1e-9)):
                 idle_buy += 1
             elif s.G.get("plans", 0.0) >= s.gachaCost(1):       # M6: 뽑을 수 있는데 안 뽑았다
+                idle_buy += 1
+            elif s.G.get("gachaLv", 0) < GACHA_LV_MAX and s.G["parts"] >= s.gachaUpCost(s.G.get("gachaLv", 0)):   # M6 3.1: 강화할 수 있는데 안 했다
                 idle_buy += 1
         if s.G["zone"] != last_zone:
             if s.t - stuck_from > 600:

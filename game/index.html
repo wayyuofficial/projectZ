@@ -342,6 +342,9 @@ const TIER_ODDS = [
 /* 뽑기 값 — 그 구역의 설계도 수입에 비례한다(설계도가 zoneIncome×BP_RATIO 로 크므로 값도 같이 커야 후반에 무한 뽑기가 안 된다).
    1회 = 최고 구역 한 구역의 설계도 수입 × GACHA_COST_FRAC. 10회는 10% 싸다. */
 const GACHA_COST_FRAC = 0.2, GACHA_TEN_DISCOUNT = 0.9;
+/* M6 3.1 뽑기 강화 — **부품**으로 올린다(답 4: 후반에 남아도는 부품의 쓸 곳). 단계 lv 의 값 = 최고 구역 한 구역의 부품 수입 × GACHA_UP_FRAC × GACHA_UP_G^lv.
+   0~GACHA_LV_MAX(정본 '뽑기 강화' 행). 값은 5단계에서 배터리로 맞춘다(M6-B2: 후반 유휴 부품 절반 이하). */
+const GACHA_UP_FRAC = 0.5, GACHA_UP_G = 1.6;
 const OFFLINE_MAX_HOURS = 8;
 const OFFLINE_RATE = 0.5;
 const AD_BOOST_MIN = 10;
@@ -687,6 +690,18 @@ function gachaCost(n) {
   return Math.ceil(n === 10 ? one * 10 * GACHA_TEN_DISCOUNT : one * n);
 }
 let gachaResult = null;   // { items: [{ g, r, better }] } — 결과 팝업. 떠 있으면 다른 버튼은 없다(지시 #19 규칙)
+let oddsPopup = false;    // M6 3.2 — 확률 팝업. TIER_ODDS[G.gachaLv] 를 그대로 그린다
+function gachaUpCost(lv) { return Math.ceil(zoneIncome(G.bestZone || 1) * GACHA_UP_FRAC * Math.pow(GACHA_UP_G, lv) * statOf('inc')); }
+function upgradeGacha() {
+  const lv = G.gachaLv || 0;
+  if (lv >= GACHA_LV_MAX) return false;
+  const c = gachaUpCost(lv);
+  if (G.parts < c) return false;
+  G.parts -= c; G.gachaLv = lv + 1;
+  questProgress('up', 1);                       // M4 1.2 — 강화도 업그레이드다
+  return true;
+}
+function oddsTop(lv) { const r = TIER_ODDS[Math.max(0, Math.min(GACHA_LV_MAX, lv))]; return r[4] + r[5] + r[6] + r[7]; }   // 영웅~영원 합
 function pullGacha(n) {
   const cost = gachaCost(n);
   if ((G.plans || 0) < cost) return false;
@@ -1269,6 +1284,11 @@ function buildButtons() {
      뒤의 업그레이드 버튼을 살려두면 화면에 안 보이는 채로 눌려 몰래 구매된다.
      2026-09-08 실기 제보: "다른 곳을 아무리 터치해도 안 꺼지고 게임은 계속 진행된다" */
   /* M6 2.4 — 뽑기 결과 팝업. 오프라인 팝업과 같은 규칙: 떠 있으면 이 버튼들뿐이다 (뒤 버튼이 몰래 눌리면 안 된다, 지시 #19). */
+  if (oddsPopup) {   // M6 3.2 — 확률 팝업. 같은 규칙.
+    btn({ x: 0, y: 0, w: GAME_W, h: GAME_H, label: '', enabled: true, tone: 'scrim', onTap: () => { oddsPopup = false; return true; } });
+    btn({ x: 150, y: GAME_H / 2 + 200, w: 240, h: ROW_H, label: '닫기', enabled: true, tone: 'ghost', onTap: () => { oddsPopup = false; return true; } });
+    return;
+  }
   if (gachaResult) {
     btn({ x: 0, y: 0, w: GAME_W, h: GAME_H, label: '', enabled: true, tone: 'scrim', onTap: () => { gachaResult = null; save(); return true; } });
     btn({ x: 150, y: GAME_H / 2 + 200, w: 240, h: ROW_H, label: '닫기', enabled: true, tone: 'ghost', onTap: () => { gachaResult = null; save(); return true; } });
@@ -1325,6 +1345,16 @@ function buildButtons() {
                cost: c, enabled: (G.plans || 0) >= c, tone: 'buy', icon: 'd:supply', costKind: 'plans',
                onTap: () => { if (!pullGacha(n)) { addFloat(GAME_W / 2, ARENA_TOP + 120, '설계도 부족 — ' + fmt(c - (G.plans || 0)) + ' 더', PALETTE.plans, 20); return false; } return true; } });
     });
+    /* M6 3.1·3.2 — 뽑기 강화 줄(부품) · 확률 보기 줄(팝업) */
+    {
+      const lv = G.gachaLv || 0, maxed = lv >= GACHA_LV_MAX, uc = maxed ? null : gachaUpCost(lv);
+      putRow({ label: '뽑기 강화  Lv.' + lv + (maxed ? '  최대' : ''),
+               sub: maxed ? '영웅 이상 ' + oddsTop(lv).toFixed(1) + '%' : '영웅 이상 ' + oddsTop(lv).toFixed(1) + '%  ▸  ' + oddsTop(lv + 1).toFixed(1) + '%',
+               cost: uc, enabled: !maxed && G.parts >= uc, tone: 'buy', icon: 's:crit', costKind: 'parts',
+               onTap: () => upgradeGacha() });
+      putRow({ label: '확률 보기', sub: '등급별 확률 · 지금 Lv.' + lv + (maxed ? '' : ' 과 다음 Lv.' + (lv + 1)),
+               cost: null, enabled: true, tone: 'off', icon: 'd:quest', onTap: () => { oddsPopup = true; return true; } });
+    }
     const asT = autoSellTier();
     putRow({ label: '자동 판매 · ' + (asT ? tierName(asT) + ' 이하' : '끔'),
              sub: autoSellOn() ? '탭할 때마다 기준이 한 등급 오른다 · 끝에서 끔 · 낀 것은 안 판다' : '구역 ' + AUTOSELL_ZONE + ' 부터 열린다',
@@ -1453,13 +1483,14 @@ function draw() {
   drawArena();
   drawHUD();
   drawPanelBg();
-  if (tab === 'gear' && !offlineReport && !gachaResult) drawEquipStrip();   // M5 2.4
+  if (tab === 'gear' && !offlineReport && !gachaResult && !oddsPopup) drawEquipStrip();   // M5 2.4
   if (deathFlash > 0) {
     ctx.fillStyle = 'rgba(' + PALETTE.deathRgb + ',' + (deathFlash * 0.35).toFixed(3) + ')';
     ctx.fillRect(0, 0, GAME_W, GAME_H);
   }
   if (offlineReport) drawOffline();
   if (gachaResult) drawGachaResult();   // M6 2.4
+  if (oddsPopup) drawOdds();            // M6 3.2
   // 버튼은 언제나 맨 위에 그린다. 오버레이가 자기 버튼을 덮으면 누를 수가 없다 (2026-09-08)
   drawButtons();
   ctx.restore();
@@ -1674,7 +1705,7 @@ function drawPanelBg() {
   ctx.strokeStyle = PALETTE.rustSoft;      // M5 3.2 — 전투와 패널의 경계도 녹 빛
   ctx.beginPath(); ctx.moveTo(0, ARENA_BOT + .5); ctx.lineTo(GAME_W, ARENA_BOT + .5); ctx.stroke();
 
-  if (offlineReport || gachaResult) return;
+  if (offlineReport || gachaResult || oddsPopup) return;
   const top = listTopY(), bot = listBotY();
 
   /* M5 1.2 — 영역이 어디서 시작하고 끝나는지 보이게 (사람 제보 2026-09-17: "메뉴 간 분간이 안 된다").
@@ -1910,6 +1941,36 @@ function drawGachaResult() {
   ctx.fillText('▲ 는 가방에서 탭해 낀다 · 확률은 장비 탭 "확률 보기"', GAME_W / 2, GAME_H / 2 + 170);
 }
 
+/* M6 3.2 — 확률 팝업. **TIER_ODDS 를 읽어 그린다** — 숫자를 여기 따로 적지 않는다(표와 코드가 둘이면 안 된다, 정본 '장비 뽑기' 행). */
+function drawOdds() {
+  ctx.fillStyle = PALETTE.scrim;
+  ctx.fillRect(0, 0, GAME_W, GAME_H);
+  const lv = G.gachaLv || 0, maxed = lv >= GACHA_LV_MAX;
+  const cur = TIER_ODDS[lv], nxt = maxed ? null : TIER_ODDS[lv + 1];
+  ctx.textAlign = 'center';
+  ctx.fillStyle = PALETTE.ink;
+  ctx.font = '700 24px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('뽑기 확률', GAME_W / 2, GAME_H / 2 - 220);
+  ctx.font = '600 13px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillStyle = PALETTE.ink3;
+  ctx.textAlign = 'right'; ctx.fillText('지금 Lv.' + lv, GAME_W / 2 + 60, GAME_H / 2 - 186);
+  if (nxt) ctx.fillText('다음 Lv.' + (lv + 1), GAME_W / 2 + 170, GAME_H / 2 - 186);
+  ctx.font = '600 16px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  for (let i = 0; i < TIER_NAMES.length; i++) {
+    const y = GAME_H / 2 - 150 + i * 36;
+    drawIcon('gear', 96, y - 6, 18, tierColor(i + 1));
+    ctx.textAlign = 'left'; ctx.fillStyle = tierColor(i + 1);
+    ctx.fillText(tierName(i + 1), 116, y);
+    ctx.textAlign = 'right'; ctx.fillStyle = PALETTE.ink;
+    ctx.fillText(cur[i].toFixed(1) + '%', GAME_W / 2 + 60, y);
+    if (nxt) { ctx.fillStyle = nxt[i] > cur[i] ? PALETTE.parts : PALETTE.ink3; ctx.fillText(nxt[i].toFixed(1) + '%', GAME_W / 2 + 170, y); }
+  }
+  ctx.textAlign = 'center';
+  ctx.fillStyle = PALETTE.ink3;
+  ctx.font = '400 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+  ctx.fillText('부위 5개 중 랜덤 · 무기는 해금된 종류 중 · 천장 없음', GAME_W / 2, GAME_H / 2 + 160);
+}
+
 function drawOffline() {
   ctx.fillStyle = PALETTE.scrim;
   ctx.fillRect(0, 0, GAME_W, GAME_H);
@@ -2007,7 +2068,7 @@ canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   const p = toCanvas(e.clientX, e.clientY);
   const b = hitButton(p);
-  const inList = p.y >= listTopY() && p.y <= listBotY() && !offlineReport && !gachaResult;
+  const inList = p.y >= listTopY() && p.y <= listBotY() && !offlineReport && !gachaResult && !oddsPopup;
 
   if (inList) {
     listVel = 0;                       // 미끄러지는 중에 짚으면 그 자리에 선다
@@ -2020,7 +2081,7 @@ canvas.addEventListener('pointerdown', (e) => {
   }
 
   /* M4 2 — 버튼이 아닌 전투 영역을 탭하면 집중 사격. 팝업이 떠 있으면 안 한다. */
-  if (!b && !offlineReport && !gachaResult && !reviveOffer && p.y >= ARENA_TOP && p.y <= ARENA_BOT) {
+  if (!b && !offlineReport && !gachaResult && !oddsPopup && !reviveOffer && p.y >= ARENA_TOP && p.y <= ARENA_BOT) {
     if (triggerFocus()) buildButtons();
     return;
   }
