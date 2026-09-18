@@ -1,7 +1,7 @@
 <title>좀비 RPG M4 작업분해도</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@300;400;600;700&display=swap">
 <!-- 원본: plans/wbs-M4.md
-     source-sha256: bf372b8393e8fb56c503bb77f946a17cc36bcc0d3b2a987906d503d4d342e0d2
+     source-sha256: 9cd83e73b6d2d82c1574948ebf2a63f2c82c569f56142b427b68012c8fdc4242
      이 파일은 뷰다. 고칠 곳이 있으면 .md 를 고치고 이 파일을 다시 만든다.
      checks/c8_view_freshness.py 가 원본과 어긋나면 잡는다. -->
 <style>
@@ -220,13 +220,13 @@
   <header class="masthead"><div class="eyebrow">Milestone 4 · 작업분해도</div>
   <h1>장비와 리듬</h1><div class='rule'></div>
   <p class="lede">버섯커 키우기를 조사해 <strong>서버 없이 되는 것만</strong> 골랐다. 핵심은 <strong>장비를 쏟아내고 안 쓰는 것을 파는 루프</strong>다 — 조사에서 가장 많이 언급된 것이다. 그 앞에 <strong>일일 리듬</strong>과 <strong>수동 개입</strong>을 먼저 넣는다. 정본을 안 건드리고 폰에서 바로 체감되기 때문이다.</p></header>
-  <div class="status"><p><strong>조건부 마감 (2026-09-17).</strong> 사람이 디자인(M5)을 당기기로 정했다. 열린 것: <strong>6.2 본보기 "좋다"</strong>(M5 6.3 으로 이월) · <strong>실기-4</strong>(M5 6.1 에서 실기-1~4 와 한 번에). 31차 전수는 실기 직전에. 마지막 빌드 <span class="mono">8235657515a7ae6d</span> — 폰 제보 둘(HUD 겹침 · 무기 줄 안내) 반영, 근거 11종 <span class="mono">-b</span> 기록(값은 앞 도장과 전부 같다).</p></div>
+  <div class="status"><p><strong>착수.</strong> 사람이 2026-09-15 에 정했다 — <strong>서버가 필요한 것(가문·PvP·랭킹)은 안 한다</strong>(정본 금지 5). 대신 <strong>정본을 고쳐</strong> 무기·장비 등급을 3 → 8 로, 장비 부위를 5 로 연다. 정본 개정은 <strong>3단계에서</strong> 한다 — 고치는 순간 <span class="mono">c0</span> 이 차단을 내고 훅이 모든 커밋을 막기 때문이다(R007). 1·2단계는 정본을 안 건드린다. 예측 5개는 <strong>결과를 보기 전에 잠갔다</strong>.</p></div>
   <div class="tiles">
     <div class="tile"><div class="k">단계</div><div class="v">6</div></div>
     <div class="tile"><div class="k">작업</div><div class="v">19</div></div>
     <div class="tile"><div class="k">공수 추정</div><div class="v">11.0<small>일</small></div></div>
     <div class="tile"><div class="k">잠근 예측</div><div class="v">5</div></div>
-    <div class="tile"><div class="k">사람 몫 남음</div><div class="v">2<small>건</small></div></div>
+    <div class="tile"><div class="k">사람 승인 대기</div><div class="v">1<small>건</small></div></div>
   </div>
   <section><h2><span class="n">A</span>공수 — 단계별 추정</h2><div class="chart">
     <div class="bar-row"><div class="name"><em>1</em>일일 리듬</div><div class="track"><div class="fill" style="width:67%"></div></div><div class="num">2.0일</div></div>
@@ -241,14 +241,14 @@
     <div class="stage-head"><span class="idx">1</span><span class="title">일일 리듬</span><span class="days">2.0일</span></div>
     <div class="tablewrap"><table><thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>선행</th></tr></thead><tbody>
       <tr><td>1.1</td><td>날짜 경계와 리셋 — <span class="mono">G.day</span>, 자정 기준. <span class="mono">SAVE_VERSION</span> 4 + v1·v2·v3 이어받기</td><td class="judge"><span class="mono">tools/test_storage.js</span> 전부 통과. v1·v2·v3 저장본이 <strong>초기화 없이</strong> 이어진다</td><td class="dep"></td></tr>
-      <tr><td>1.2</td><td>일일 과제 3개 — 구역 올리기 · 업그레이드 횟수 · 단계 클리어. <strong>시간대</strong>(06–14 · 14–22 · 22–06)마다 하나, 열린 시간대에만 진행이 센다</td><td class="judge"><strong>20시드 1런에서, 시작 시각에 열린 시간대의 과제는 열린 뒤 30분 안에 채워지고, 닫힌 시간대의 과제는 채워지지 않는다(0/20).</strong> 시작 시각 셋을 각각 잰다 — <span class="mono">quest_pace --start-hour</span>. (사람이 2026-09-17 지시 #108 로 확정. 옛 문구는 (a) 뒤 항등식이라 폐기)</td><td class="dep">1.1</td></tr>
+      <tr><td>1.2</td><td>일일 과제 3개 — 구역 올리기 · 업그레이드 횟수 · 단계 클리어. <strong>시간대</strong>(06–14 · 14–22 · 22–06)마다 하나, 열린 시간대에만 진행이 센다</td><td class="judge"><strong>20시드 1런에서, 시작 시각에 열린 시간대의 과제는 열린 뒤 30분 안에 채워지고, 닫힌 시간대의 과제는 채워지지 않는다(0/20).</strong> 시작 시각 셋(시간대 0·1·2)을 각각 잰다 — <span class="mono">quest_pace --start-hour</span>. (사람이 2026-09-17 지시 #108 로 확정. 옛 문구 "연속 30분 안에 전부 채워지지 않는다" 는 (a) 뒤 항등식이라 폐기)</td><td class="dep">1.1</td></tr>
       <tr><td>1.3</td><td>접속 보상 7일 + 열쇠 보급 상자 (하루 3회 충전)</td><td class="judge">브라우저에서 날짜를 넘겨 7일치가 하루에 하나씩 들어온다. <strong>시계를 뒤로 돌리면 안 들어온다</strong></td><td class="dep">1.1</td></tr>
       <tr><td>1.4</td><td>일일 보상 총량을 하루 수입의 <strong>20% 안</strong>으로 묶는다</td><td class="judge">20시드 구역 30 도달이 일일 적용 전 대비 <strong>±5% 안</strong></td><td class="dep">1.2, 1.3</td></tr>
     </tbody></table></div></section>
   <section class="stage">
     <div class="stage-head"><span class="idx">2</span><span class="title">수동 개입</span><span class="days">1.0일</span></div>
     <div class="tablewrap"><table><thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>선행</th></tr></thead><tbody>
-      <tr><td>2.1</td><td>집중 사격 — 전투 화면 탭 시 3초간 공격속도 2배, 쿨 20초. 부품을 안 쓴다</td><td class="judge">브라우저에서 실제 포인터 입력으로 발동·쿨타임 확인. <strong>버튼 줄을 안 가린다</strong></td><td class="dep"></td></tr>
+      <tr><td>2.1</td><td>집중 사격 — 전투 화면 탭 시 3초간 공격속도 2배, 쿨 20초. 부품을 안 쓴다 (세울 때 문구 — 지금은 ×1.3 · 쿨 45초, 2.2 참조)</td><td class="judge">브라우저에서 실제 포인터 입력으로 발동·쿨타임 확인. <strong>버튼 줄을 안 가린다</strong></td><td class="dep"></td></tr>
       <tr><td>2.2</td><td>안 눌러도 손해가 없는지</td><td class="judge">20시드 구역 30 도달이 <strong>±5% 안</strong> (M4-B2 판정). 시뮬은 안 누르는 쪽이다</td><td class="dep">2.1</td></tr>
     </tbody></table></div></section>
   <section class="stage">
@@ -269,7 +269,7 @@
   <section class="stage">
     <div class="stage-head"><span class="idx">5</span><span class="title">밸런스 회복</span><span class="days">2.0일</span></div>
     <div class="tablewrap"><table><thead><tr><th>#</th><th>작업</th><th>완료 판정</th><th>선행</th></tr></thead><tbody>
-      <tr><td>5.1</td><td>곡선 재조정</td><td class="judge"><span class="mono">curve_check</span> 20시드에서 체류 밖이 <strong>M3 마지막(24개)보다 늘지 않는다</strong></td><td class="dep">4.3</td></tr>
+      <tr><td>5.1</td><td>곡선 재조정</td><td class="judge"><span class="mono">curve_check</span> 20시드에서 체류 밖이 <strong>M3 마지막(24개)보다 늘지 않는다</strong> ※ 24 는 <strong>고장 난 자</strong>(사례 22)로 잰 값이고 지금 포트로는 M3 빌드를 다시 못 잰다 — <strong>두 자로 잰 숫자를 견주는 판정</strong>이다. 사람이 2026-09-17 에 그대로 두기로 정했다(결정요청 3절 (b))</td><td class="dep">4.3</td></tr>
       <tr><td>5.2</td><td>템포 하한 회복</td><td class="judge">어느 구역이든 <strong>구역당 매수 3회 이상</strong> (정본 2026-09-16 개정, 지시 #102). <span class="mono">M4-B4</span> 는 옛 지표로 쓰여 있다 — <strong>사람이 판정하거나 문구를 정한다</strong></td><td class="dep">5.1</td></tr>
       <tr><td>5.3</td><td>포트·표·저장 동기화</td><td class="judge"><span class="mono">c16</span> 어긋남 0 · <span class="mono">c13</span> 30행 일치 · <span class="mono">test_storage.js</span> 전부 통과</td><td class="dep">5.2</td></tr>
     </tbody></table></div></section>
@@ -280,8 +280,8 @@
       <tr><td>6.2</td><td>본보기 등록</td><td class="judge"><span class="mono">exemplars/good/</span> 에 M4 빌드 등록, <span class="mono">c17</span> OK. <strong>사람의 "좋다" 가 필요하다</strong></td><td class="dep">6.1</td></tr>
       <tr><td>6.3</td><td>실기 묶음 갱신</td><td class="judge">M4 에서 생긴 실기 항목이 <span class="mono">plans/실기묶음.md</span> 에 판정 문구 원문과 함께 있다 (R006)</td><td class="dep">6.1</td></tr>
     </tbody></table></div></section>
-  <section><h2><span class="n">0</span>진행도 — 30차 감사 뒤 (2026-09-17)</h2>
-    <p class="note">통과 16 / 실패 3 은 <strong>검증자 판정</strong>이다(<span class="mono">verify-2026-09-17-30.json</span>). 실패 3 = 1.2(판정 문구 없음) · 6.1(회귀 1) · 6.2(본보기 없음). 셋 다 사람 몫이다.</p>
+  <section><h2><span class="n">0</span>진행도 — 만든 쪽 자기보고</h2>
+    <p class="note">검증자 판정이 <strong>아니다.</strong> 구현은 1~5단계가 끝났고, 6단계는 <strong>검증자 전수</strong>와 <strong>사람의 본보기 판정</strong>이라 만든 쪽이 못 닫는다.</p>
     <div class="chart">
     <div class="bar-row"><div class="name">1 일일 리듬</div><div class="track"><div class="fill" style="width:75%"></div></div><div class="num">3 / 4</div></div>
     <div class="bar-row"><div class="name">2 수동 개입</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="num">2 / 2</div></div>
@@ -312,7 +312,7 @@
   <section><h2><span class="n">V</span>진행 현황 — 만든 쪽 자기보고</h2>
     <p class="note">검증자 판정이 <strong>아니다.</strong> 감사 회차가 돌면 이 자리에 검증자 판정이 함께 선다.</p>
     <div class="tablewrap"><table><thead><tr><th>작업</th><th>상태</th><th>근거</th></tr></thead><tbody>
-      <tr><td>1.1 날짜·저장 v4</td><td>됨</td><td class="judge"><span class="mono">dayIndex</span> 는 <strong>로컬 자정</strong> 기준. 저장 <strong>19/19</strong>, v1·v2·v3 전부 초기화 없이 v4 (<span class="mono">storage-m4-2026-09-17b.json</span>). <strong>시계를 되돌리면 아무것도 안 준다</strong> — <span class="mono">maxDay</span> 보다 작은 날은 무시. 브라우저로 확인</td></tr>
+      <tr><td>1.1 날짜·저장 v4</td><td>됨</td><td class="judge"><span class="mono">dayIndex</span> 는 <strong>로컬 자정</strong> 기준. 저장 <strong>19/19</strong>, v1·v2·v3 전부 초기화 없이 v4 (<span class="mono">storage-m4-2026-09-17b.json</span> · 장착 띠 빌드 재확인 <span class="mono">storage-m4-2026-09-18.json</span> · 등급 색 빌드 <span class="mono">storage-m4-2026-09-18b.json</span> · 이름 바꾼 빌드 <span class="mono">storage-m4-2026-09-18c.json</span> 19/19). <strong>시계를 되돌리면 아무것도 안 준다</strong> — <span class="mono">maxDay</span> 보다 작은 날은 무시. 브라우저로 확인</td></tr>
       <tr><td>1.2 일일 과제 3</td><td><strong>됨</strong> (문구 확정 뒤)</td><td class="judge">사람이 후보 문구를 그대로 확정했다(지시 #108). 시작 시각 08·16·00시(UTC) 각 20시드: 열린 시간대 과제 <strong>20/20</strong>(zone 1.13분 · up 1.39분 · stage 3.34분, 모두 30분 안), 닫힌 시간대 과제 <strong>0/20</strong>. <span class="mono">quest-pace-h8-2026-09-17b.json</span> · <span class="mono">quest-pace-h16-2026-09-17b.json</span> · <span class="mono">quest-pace-h0-2026-09-17b.json</span>. 브라우저: 로컬 15시에 up 만 열림, 일일 탭 "06~14시 닫힘 / 14~22시 열림 / 22~06시 닫힘"(30차). 30차 시점엔 문구가 없어 실패였다 — 다음 회차가 이 문구로 본다</td></tr>
       <tr><td>1.3 접속 7일 · 열쇠</td><td>됨</td><td class="judge">연속이면 streak 증가(7 에서 멈춤), 하루 빠지면 1 로. 열쇠 3개 소진 확인. 실제 트러스티드 클릭으로 탭 이동·수령 확인</td></tr>
       <tr><td>1.4 일일 총량 묶기</td><td>됨</td><td class="judge"><span class="mono">tools/daily_budget.py</span> 가 실제로 받고 일부러 여러 번 시도한다. 구역 1~30 전부 <strong>17.1%</strong>(선 20%) · 과제 재수령 막힘 · 상자 3회(상한 3). <span class="mono">daily-budget-2026-09-17b.json</span></td></tr>
@@ -332,7 +332,7 @@
       <tr><td>전체</td><td>3단계 끝</td><td class="judge">4단계로 갔다</td></tr>
       <tr><td>4.1 판매</td><td>됨</td><td class="judge">판매가 계수 0.09. 20시드 <strong>판매 비중 84.9%</strong>(선 30% 이상) · 완주 20/20 · 구역 30 도달 <strong>155.5분</strong>. <span class="mono">sell-share-2026-09-17b.json</span></td></tr>
       <tr><td>4.2 자동 판매</td><td>됨</td><td class="judge">구역 3 부터 열린다(조사 약점 "온보딩" 대응). 기준 이하는 가방에 안 넣고 바로 판다. <strong>장착 중인 것은 안 판다</strong> — 그 경로로 안 온다. 가방이 넘치면 가장 값싼 것부터</td></tr>
-      <tr><td>4.3 축 흡수</td><td><strong>(a) 적용 · 됨</strong></td><td class="judge">hp·reg <span class="mono">gearOnly</span> — 능력치 탭에서 빠지고 <span class="mono">buyStat</span> 이 거부(브라우저 확인 <span class="mono">ui-check-2026-09-17.json</span> · <span class="mono">ui-check-2026-09-17c.json</span>(HEAD 재확인) · <span class="mono">ui-check-weapon-2026-09-17.json</span>). 20시드 <span class="mono">axis_value</span>: 기준 <strong>155.5분</strong> · atk·spd·inc 잠그면 <strong>셋 다 완주 0/20</strong> · 없어도 되는 축 <strong>0개</strong> — 완료 판정("남은 3축이 전부 잠그면 느려진다 · 두 축은 장비로만 오른다") 충족. 2026-09-15 되돌림과 게임 주석의 원인 분석은 고장 난 자로 낸 것(사례 23) — 주석 바로잡음. <span class="mono">axis-value-2026-09-17b.json</span></td></tr>
+      <tr><td>4.3 축 흡수</td><td><strong>(a) 적용 · 됨</strong></td><td class="judge">hp·reg <span class="mono">gearOnly</span> — 능력치 탭에서 빠지고 <span class="mono">buyStat</span> 이 거부(브라우저 확인 <span class="mono">ui-check-2026-09-17.json</span> · <span class="mono">ui-check-2026-09-17c.json</span>(HEAD 재확인) · <span class="mono">ui-check-2026-09-18.json</span>(장착 띠 빌드) · <span class="mono">ui-check-2026-09-18b.json</span>(등급 색 빌드) · <span class="mono">ui-check-2026-09-18c.json</span>(이름 바꾼 빌드) · <span class="mono">ui-check-weapon-2026-09-17.json</span>). 20시드 <span class="mono">axis_value</span>: 기준 <strong>155.5분</strong> · atk·spd·inc 잠그면 <strong>셋 다 완주 0/20</strong> · 없어도 되는 축 <strong>0개</strong> — 완료 판정("남은 3축이 전부 잠그면 느려진다 · 두 축은 장비로만 오른다") 충족. 2026-09-15 되돌림과 게임 주석의 원인 분석은 고장 난 자로 낸 것(사례 23) — 주석 바로잡음. <span class="mono">axis-value-2026-09-17b.json</span></td></tr>
       <tr><td><strong>M4-B5</strong></td><td><strong>성립 방향 — 사람이 판정한다</strong></td><td class="judge">장비 전용으로 옮긴 뒤 남은 3축은 잠그면 못 깬다(0/20), 없어도 되는 축 0. 반증 조건(잠금이 5%% 넘게 빠르면 실패)에 걸리는 축이 없다. <span class="mono">axis-value-2026-09-17b.json</span> ※ 첫 기록은 도구가 원본 gearOnly 를 지워 기준 228.9분으로 무효였다 — 사례 24, <span class="mono">c23</span> 이 잡는다</td></tr>
       <tr><td><strong>M4-B3</strong></td><td><strong>성립 방향 — 사람이 판정한다</strong></td><td class="judge">판매 비중 84.9% (선 30%)</td></tr>
       <tr><td><strong>5단계로 넘어가는 빚</strong></td><td>열림</td><td class="judge">장비가 들어오면서 <strong>도달 밖 3 → 20</strong>, <strong>간격 120초 초과 1개</strong>(구역 23, 362초)가 생겼다. 간격은 <strong>정본 상한 위반</strong>이라 5단계에서 반드시 잡는다</td></tr>

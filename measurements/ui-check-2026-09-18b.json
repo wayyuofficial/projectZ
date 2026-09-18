@@ -1,0 +1,19 @@
+{
+  "측정일": "2026-09-18",
+  "대상": "저장 지우기(두 번 탭) — 등급 색 빌드 재확인",
+  "빌드도장": "7a9766d2a599817a",
+  "방법": "로컬 HTTP 375x812. G.parts=777 저장 뒤 resetSave() 두 번 연속 호출 → 키 삭제·reload 확인.",
+  "결과": {
+    "keyBefore": true,
+    "keyAfterTwoTaps": null,
+    "resetting": true,
+    "confirmMs": 5000
+  },
+  "reload 뒤": {
+    "parts": 0,
+    "zone": 1,
+    "key": "exists"
+  },
+  "판정하지_않는다": "M4 4.3 판정은 검증자·사람 몫.",
+  "옛빌드_사유": "등급 색 빌드 7a9766d2a599817a 의 기록. 등급 이름을 바꾼 빌드 b503e5adadd6a324 에서 다시 쟀다 → ui-check-2026-09-18c.json (지시 #118). 그때의 근거로 남긴다."
+}

@@ -1,0 +1,150 @@
+{
+  "측정일": "2026-09-18",
+  "대상": "M5-B3 후속 — 등급 색·이름 빌드도 게임 로직을 안 건드렸으므로 근거를 다시 떠도 값이 같다",
+  "빌드도장": "b503e5adadd6a324",
+  "방법": "장착 띠 빌드 기록(-18, 502d272134d3ac20)과 등급명 빌드 기록(-18c, b503e5adadd6a324)을 설명 칸을 빼고 == 비교. 17종.",
+  "비교": [
+    {
+      "기록": "balance-M4-curve-g",
+      "전": "balance-M4-curve-g-2026-09-18.json",
+      "후": "balance-M4-curve-g-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "upgrade-cadence-m4-g",
+      "전": "upgrade-cadence-m4-g-2026-09-18.json",
+      "후": "upgrade-cadence-m4-g-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "axis-value",
+      "전": "axis-value-2026-09-18.json",
+      "후": "axis-value-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "focus",
+      "전": "focus-2026-09-18.json",
+      "후": "focus-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "sell-share",
+      "전": "sell-share-2026-09-18.json",
+      "후": "sell-share-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "quest-pace",
+      "전": "quest-pace-2026-09-18.json",
+      "후": "quest-pace-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "quest-pace-h8",
+      "전": "quest-pace-h8-2026-09-18.json",
+      "후": "quest-pace-h8-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "quest-pace-h16",
+      "전": "quest-pace-h16-2026-09-18.json",
+      "후": "quest-pace-h16-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "quest-pace-h0",
+      "전": "quest-pace-h0-2026-09-18.json",
+      "후": "quest-pace-h0-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "daily-budget",
+      "전": "daily-budget-2026-09-18.json",
+      "후": "daily-budget-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "gear-roll",
+      "전": "gear-roll-2026-09-18.json",
+      "후": "gear-roll-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "tap",
+      "전": "tap-2026-09-18.json",
+      "후": "tap-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "tap-m5",
+      "전": "tap-m5-2026-09-18.json",
+      "후": "tap-m5-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "palette",
+      "전": "palette-2026-09-18.json",
+      "후": "palette-2026-09-18c.json",
+      "판정 칸 동일": false,
+      "다른 칸": [
+        "결과",
+        "자리",
+        "직접_쓴_색",
+        "함수별"
+      ]
+    },
+    {
+      "기록": "storage-m4",
+      "전": "storage-m4-2026-09-18.json",
+      "후": "storage-m4-2026-09-18c.json",
+      "판정 칸 동일": true,
+      "다른 칸": []
+    },
+    {
+      "기록": "design-perf",
+      "전": "design-perf-2026-09-18.json",
+      "후": "design-perf-2026-09-18c.json",
+      "판정 칸 동일": false,
+      "다른 칸": [
+        "drawIconPath_등장",
+        "draw_300회_ms"
+      ]
+    },
+    {
+      "기록": "design-equip",
+      "전": "design-equip-2026-09-18.json",
+      "후": "design-equip-2026-09-18c.json",
+      "판정 칸 동일": false,
+      "다른 칸": [
+        "listTopY",
+        "가방 줄 클릭",
+        "거울",
+        "검사",
+        "결과",
+        "드랍 알림(addFloat)",
+        "자동 판매 손잡이",
+        "장비 탭 줄",
+        "장착 띠",
+        "합계 줄 예"
+      ]
+    }
+  ],
+  "전부 동일": false,
+  "판정하지_않는다": "M5-B3 판정은 사람 몫.",
+  "다른 3종 설명": "palette·design-perf·design-equip 은 브라우저/스캔 기록이라 자리(줄 번호)·ms 값·재확인 형식이 다르다. 밸런스 14종(배터리)은 판정 칸 전부 같다. palette-18c 는 '미달 1' 이라 따로 본다(아래 기록).",
+  "배터리 14종 동일": true
+}

@@ -1,0 +1,18 @@
+{
+  "측정일": "2026-09-18",
+  "도구": "tools/palette_check.py",
+  "빌드도장": "b503e5adadd6a324",
+  "직접_쓴_색": 0,
+  "함수별": {},
+  "자리": [],
+  "제외한_표": [
+    "WEAPON_TYPES",
+    "STATS",
+    "GEAR_SLOTS",
+    "AFFIX_DEFS",
+    "QUEST_DEFS",
+    "PALETTE"
+  ],
+  "결과": "통과",
+  "판정하지_않는다": "판정은 검증자·사람 몫이다."
+}

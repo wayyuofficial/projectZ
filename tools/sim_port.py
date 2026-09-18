@@ -87,8 +87,9 @@ GEAR_AFFIXES = int(num("GEAR_AFFIXES"))
 BAG_MAX = int(num("BAG_MAX"))
 AUTOSELL_ZONE = int(num("AUTOSELL_ZONE"))
 GEAR_SLOT_IDS = ["weapon", "head", "body", "hands", "feet"]
-AFFIX_IDS = ["hp", "reg", "atk", "spd", "inc"]
-AFFIX_PER = {"hp": 0.18, "reg": 0.15, "atk": 0.10, "spd": 0.08, "inc": 0.09}
+AFFIX_DEFS = table("AFFIX_DEFS")            # M6 1.2 — 게임에서 읽는다 (전엔 손으로 적어 둬 어긋날 수 있었다)
+AFFIX_IDS = [a["id"] for a in AFFIX_DEFS]
+AFFIX_PER = {a["id"]: a["per"] for a in AFFIX_DEFS}
 KEY_MAX = int(num("KEY_MAX"))
 SUPPLY_SHARE = num("SUPPLY_SHARE")
 LOGIN_DAYS = int(num("LOGIN_DAYS"))
@@ -134,6 +135,7 @@ REVIVE_OFFER_SEC = num("REVIVE_OFFER_SEC")
 ROW_H = num("ROW_H")
 ROW_GAP = num("ROW_GAP")
 ROW_PITCH = ROW_H + ROW_GAP
+EQUIP_STRIP_H = num("EQUIP_STRIP_H")     # M5 2.4 — 장비 탭 장착 띠
 MIN_TAP_CSS = num("MIN_TAP_CSS")
 
 STATS = table("STATS")
@@ -184,11 +186,11 @@ MIRRORED = {
     "applyOffline": "22e6b2208ac61edc",
     "attacksPerSec": "62c1a324deffd5c2",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "1ba5ec2273022262",
-    "buyStat": "55e7f37e19e75aee",
+    "buildButtons": "e3a82b44ffd9d54b",
+    "buyStat": "66cfe1998f8e4376",
     "buyWeapon": "e58bfe7e010aeddb",
     "dailyBudget": "51f1b98162132ed0",
-    "damageZombie": "0ae0c654be02b753",
+    "damageZombie": "de858f78fa27b6f3",
     "dayIndex": "e395fb011be7dfbc",
     "dropGear": "990bf216887801f8",
     "equip": "c815c6819c3b6edb",
@@ -198,19 +200,19 @@ MIRRORED = {
     "gearScore": "d7dd0e82bc73c578",
     "gearSellPrice": "81a178c6a44a414e",
     "hitButton": "8564f49dbd9cc319",
-    "hitDamage": "78764110ba1a3fdd",
+    "hitDamage": "86e5dbdf14ea5395",
     "isBossKill": "e461a4a51bbb69c5",
     "killReward": "0ef3ffe5d2eb73ba",
-    "killZombie": "67caf1b87f71a78f",
+    "killZombie": "90074676d5e682fe",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
-    "listTopY": "46bb14aa20673823",
+    "listTopY": "69408f80ab6e2751",
     "maxHP": "85e54826f897f7c7",
     "migrate": "edff5237d7500f64",
     "onDeath": "5396186cf0d759ae",
     "openSupply": "274c2d6d1f7afd06",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
-    "playerDPS": "6e388f9e36329ce1",
+    "playerDPS": "06d866ae2129b84d",
     "questBand": "47a268e16a55bfbd",
     "questOpen": "14e21773cabeb67b",
     "questReady": "d56a30909b205279",
@@ -223,7 +225,7 @@ MIRRORED = {
     "stageKills": "4cb2b09008d21635",
     "statCost": "3915c9b212b37571",
     "statDef": "e7ad6087978fd6ec",
-    "statOf": "ce944d01f686e148",
+    "statOf": "4c9956bbe1b533e2",
     "stepCombat": "477e00f37b335b3e",
     "tabRowY": "d001ac81a8afa161",
     "takeQuest": "7e312c2c917dc686",
@@ -384,8 +386,10 @@ class Sim(object):
         return next(s for s in STATS if s["id"] == i)
 
     def statOf(self, i):
-        s = self.statDef(i)
-        return s["base"] * (s["growth"] ** self.G["lv"].get(i, 0)) * self.gearMult(i)
+        s = self.statDef(i); lv = self.G["lv"].get(i, 0)
+        # M6 1.2 — add 면 더하기 성장, cap 은 최종 상한 (원본 statOf 와 같은 구조)
+        v = (s["base"] + s["add"] * lv if s.get("add") is not None else s["base"] * (s["growth"] ** lv)) * self.gearMult(i)
+        return min(s["cap"], v) if s.get("cap") is not None else v
 
     def statCost(self, i):
         s = self.statDef(i)
@@ -400,7 +404,9 @@ class Sim(object):
         return w["mult"] * (1 + TIER_POWER * (tier - 1))
 
     def hitDamage(self):
-        return self.statOf("atk") * self.weaponPower()
+        # M6 1.2 — 원본은 한 발마다 굴린다(hitDamage). 자는 **기대값**(원본 expectedHit)으로 잰다 — 정본 '치명타' 행.
+        p = min(1.0, self.statOf("crit"))
+        return self.statOf("atk") * self.weaponPower() * (1 + p * (self.statOf("cdmg") - 1))
 
     def attacksPerSec(self):
         """M4 2 — 원본과 **같은 구조**로 옮긴다: 집중 사격 중이면 x FOCUS_MULT.
@@ -624,7 +630,10 @@ class Sim(object):
         return self.grant(self.dailyBudget() * SUPPLY_SHARE / KEY_MAX)
 
     def buyStat(self, i):
-        if i in GEAR_ONLY_STATS:                 # M4 4.3
+        if i in GEAR_ONLY_STATS:                 # M4 4.3 (M6 1.1 부터 빈 집합)
+            return False
+        s = self.statDef(i)
+        if s.get("cap") is not None and self.statOf(i) >= s["cap"] - 1e-9:   # M6 1.2 상한
             return False
         c = self.statCost(i)
         if self.G["parts"] < c:
@@ -655,7 +664,7 @@ class Sim(object):
         return L["PANEL_TOP"]
 
     def listTopY(self):
-        return L["PANEL_TOP"] + ROW_H + 8
+        return L["PANEL_TOP"] + ROW_H + 8 + (EQUIP_STRIP_H + 8 if self.tab == "gear" else 0)   # M5 2.4
 
     def adRowY(self):
         return L["GAME_H"] - ROW_H - 10
@@ -701,11 +710,12 @@ class Sim(object):
             b(kind, 24, y, GAME_W - 48, ROW_H, tone, enabled, wid, clip)
 
         if self.tab == "gear":
-            for sl in GEAR_SLOT_IDS:
-                put_row("gear_slot", "ghost", False, sl)
+            # M5 2.4 — 부위 줄 5개 대신: 합계 · 자동 판매 기준 · 가방 머리 줄. 장착 띠는 버튼이 아니라 여기 없다.
+            put_row("gear_sum", "ghost", False, None)
+            auto_on = (self.G.get("bestZone") or 1) >= AUTOSELL_ZONE
+            put_row("autosell", "off", auto_on, None)
             bag = self.G.get("bag") or []
-            if not bag:
-                put_row("bag_empty", "ghost", False, None)
+            put_row("bag_head", "ghost", False, None)
             for g in sorted(bag, key=lambda x: -self.gearScore(x)):
                 cur = (self.G.get("gear") or {}).get(g["slot"])
                 better = self.gearScore(g) > self.gearScore(cur)

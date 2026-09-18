@@ -40,6 +40,8 @@ def scan():
         # 주석 줄의 색은 안 센다 (설명용)
         if line.strip().startswith(("//", "/*", "*")):
             continue
+        # 줄 끝 주석(// ...)도 안 센다 — 2026-09-18 오탐: "// 지시 #118" 의 '#118' 이 3자리 hex 로 잡혔다 (등급명 빌드 b503e5adadd6a324)
+        line = line.split("//")[0] if "//" in line and "://" not in line else line
         for c in COLOR.finditer(line):
             hits.append({"줄": n, "함수": fn, "색": line[c.start():c.start() + 24].split(")")[0] + (")" if "(" in line[c.start():c.start() + 6] else ""), "본문": line.strip()[:80]})
     return hits
