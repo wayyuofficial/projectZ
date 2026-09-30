@@ -70,6 +70,18 @@ const PALETTE = {
      전엔 tierTint 가 한 색을 밝기만 올려 등급끼리 색상이 같았다. 순서: 일반 회백 · 고급 초록 · 희귀 파랑 · 에픽 보라 · 영웅 주황 · 전설 빨강 · 초월 분홍 · 영원 흰빛 (이름은 TIER_NAMES).
      재화 색(부품 청록·설계도 금)과 겹치지 않게 청록·금은 뺐다. 값은 사람이 바꿀 수 있다 — 여기 한 곳. */
   tier: ['#A9B4B8', '#7BC96F', '#5E9CF5', '#B48CF5', '#F5A742', '#F25C5C', '#F06AC8', '#F2F7F5'],
+  /* M7 1.1 (2026-09-30, 지시 #132) — 도트 공유 램프. 7계열 × 4단(하이라이트·베이스·섀도·아웃라인).
+     모든 도트 자산은 이 28색에서만 찍는다. 아웃라인은 순검정이 아니라 올리브·녹이 섞인 어두운 색 — 그래야 배경과 한 세계.
+     광원은 위·왼쪽(하이라이트 위, 섀도 아래·오른쪽). 값은 사람이 바꿀 수 있다 — 여기 한 곳. */
+  ramp: {
+    rust:     ['#D98A4A', '#A85A2A', '#6B3A1C', '#2E1A10'],
+    olive:    ['#9EAA5A', '#6B7A36', '#414A22', '#1E2312'],
+    concrete: ['#B8BDB2', '#7E857C', '#4E544C', '#22261F'],
+    bone:     ['#F0E8D0', '#CFC4A4', '#8E8564', '#3A3626'],
+    blood:    ['#E85A4A', '#B23A2E', '#6E221C', '#2C100E'],
+    brass:    ['#F2D36A', '#C9A93A', '#7E6820', '#332A0E'],
+    teal:     ['#8CD4D6', '#5FA8AA', '#356A6C', '#162E2F']
+  },
   deathRgb: '180,40,40', fatalBg: '#7A2E28', fatalInk: '#FFE6E2'
 };
 /* =========================================================================
@@ -290,7 +302,7 @@ const AFFIX_DEFS = [
 
    1.3/45s 를 골랐다. 1.2/30s 와 숫자는 비슷하지만 **눌렀을 때 체감이 크고 누르는 횟수가 적다** —
    방치형에서 수동 개입은 '가끔 눌러 볼 만한 것' 이어야지 '계속 눌러야 하는 것' 이면 안 된다. */
-const FOCUS_SEC = 3, FOCUS_MULT = 1.15, FOCUS_COOL_SEC = 45;   /* 2x·20초는 재보니 -11.5% 였다 (선 ±5%). M4-B2 의 반증 조건이 적어 둔 대로 배수·쿨타임을 줄였다 */
+const FOCUS_SEC = 3, FOCUS_MULT = 1.12, FOCUS_COOL_SEC = 45;   /* 2x·20초는 재보니 -11.5% 였다 (선 ±5%). M4-B2 의 반증 조건이 적어 둔 대로 배수·쿨타임을 줄였다 */
 const DAY_MS = 86400000;
 /* 몫은 **합이 1.0 을 안 넘게** 나눈다 — 과제 0.55 + 상자 0.20 + 접속 최대 0.25 = 1.00.
    그래야 하루 일일 보상 총량이 dailyBudget() 안에 들어간다 (WBS 1.4).
@@ -407,6 +419,7 @@ function fitGame() {
   backH = Math.round(cssH * dpr);
   canvas.width = backW; canvas.height = backH;
   ctx.setTransform(backW / GAME_W, 0, 0, backH / GAME_H, 0, 0);
+  ctx.imageSmoothingEnabled = false;   // M7 1.2 — 도트가 뭉개지지 않게. 크기가 바뀌면 기본값으로 돌아가므로 여기서
 }
 
 function toCanvas(clientX, clientY) {
@@ -622,9 +635,11 @@ function gearMult(statId) {
 
 /* M6 재설계 (지시 #127, 버섯커식) — **가방이 없다.** 뽑은 것은 낀 것과 견줘 낀다(벗은 것은 판다) 아니면 판다.
    M4 4.2 의 자동 판매 기준·가방 넘침 규칙은 여기서 끝났다(그 손잡이는 M5 2.4 에서 처음 생겼다가 하루 만에 사라졌다 — 로그 #127). */
-/* 판매가 — 부품. 그 구역 총수입에 견줘 매긴다. 등급이 높을수록 값이 뛴다. */
+/* 판매가 — 부품. 그 구역 총수입에 견줘 매긴다. 등급이 높을수록 값이 뛴다.
+   M6 5.3 (지시 #132): 계수를 상수로 뺐다 — 거울이 이 값을 읽는다. 전엔 거울 파이썬에 0.09 가 따로 적혀 있어 0.10·0.11 로 올린 것이 측정에 안 들어갔다(사례 27). */
+const SELL_PRICE_FRAC = 0.11;   // 0.09 → 판매 비중 14.1% (선 15%)
 function gearSellPrice(g) {
-  return zoneIncome(g.zone || G.zone) * 0.10 * Math.pow(1.55, g.tier - 1) * statOf('inc');   // M6 5.1: 0.09 는 판매 비중 29.8% (선 30)   // M4 4.1: 0.05 는 판매 비중이 21.8% 였다 (선 30%)
+  return zoneIncome(g.zone || G.zone) * SELL_PRICE_FRAC * Math.pow(1.55, g.tier - 1) * statOf('inc');   // M4 4.1: 0.05 는 판매 비중이 21.8% 였다 (선 30%)
 }
 function sellGear(g) { const v = gearSellPrice(g); G.parts += v; return v; }
 /* 새 장비를 낀다. 그 부위에 있던 것은 판다(부품). 판 값을 돌려준다(없었으면 0). */
@@ -1567,13 +1582,8 @@ function drawArena() {
     const x = SURVIVOR_X, fy = GROUND_Y;
     ctx.fillStyle = PALETTE.shade35;
     ctx.beginPath(); ctx.ellipse(x, fy + 2, 15, 4, 0, 0, 6.284); ctx.fill();
-    ctx.fillStyle = PALETTE.survivor;
-    rr(x - 14, fy - 42, 28, 42, 7); ctx.fill();
-    ctx.fillStyle = PALETTE.survivorHead;
-    rr(x - 11, fy - 58, 22, 17, 5); ctx.fill();
-    // 오른쪽을 본다 — 눈과 무기가 모두 오른쪽
-    ctx.fillStyle = PALETTE.survivorArm;
-    ctx.fillRect(x + 4, fy - 52, 5, 4);
+    // M7 2.1 — 생존자 도트(12×16, 픽셀 3px = 36×48). 숨 쉬기 2프레임. 오른쪽을 본다.
+    drawPx(sprite('survivor', (Math.floor(performance.now() / 500) % 2) ? 'idle2' : 'idle'), x - 6 * PX, fy - 16 * PX, false);
     ctx.fillStyle = wt;
     if (w.shape === 'wide')      ctx.fillRect(x + 12, fy - 38, 26, 9);
     else if (w.shape === 'long') ctx.fillRect(x + 12, fy - 36, 34, 5);
@@ -1707,6 +1717,81 @@ function drawPanelBg() {
 /* M5 4.1 — 아이콘 캐시. 한 프레임에 아이콘이 20개 넘게 그려지고 전부 경로(arc·stroke)라,
    폰(DPR 4)에서 매 프레임 다시 그리면 fps 가 샌다. (종류, 크기, 색, DPR) 마다 한 번만 그려 두고 drawImage 로 찍는다.
    본체 drawIconPath 는 그대로 — 캐시는 그 결과를 저장할 뿐 모양을 바꾸지 않는다. */
+/* ── M7 1.2 도트 그래픽 기반 (지시 #132) ──
+   격자 규격: 캐릭터 12×16 · 아이콘 8×8 · 타일 16×16 · 보스 24×32 · 무기 부품 4×8. 픽셀 한 칸 = 논리 PX(3)px — 자산마다 곱게/거칠게 그리지 않는다.
+   문자열 격자 → 1px=1칸 오프스크린 캔버스에 한 번 찍고(캐시), 그릴 때 PX 배로 늘린다(imageSmoothingEnabled=false → 계단이 살아 있다).
+   범례 색은 PALETTE.ramp 에서만(c26 이 본다). '.' 과 ' ' 은 빈칸. */
+const PX = 3;
+const PX_GRIDS = [[12, 16], [8, 8], [16, 16], [24, 32], [4, 8]];
+const pxCache = new Map();
+function pxSprite(name, rows, legend) {
+  let c = pxCache.get(name);
+  if (c) return c;
+  const h = rows.length, w = rows[0].length;
+  if (!PX_GRIDS.some((g) => g[0] === w && g[1] === h)) console.warn('도트 격자 규격 밖: ' + name + ' ' + w + 'x' + h);
+  c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const ch = rows[y][x]; if (ch === '.' || ch === ' ') continue;
+    const col = legend[ch]; if (!col) { console.warn('범례 없는 글자 ' + ch + ' in ' + name); continue; }
+    g.fillStyle = col; g.fillRect(x, y, 1, 1);
+  }
+  pxCache.set(name, c);
+  return c;
+}
+function drawPx(spr, x, y, flip) {   // (x, y) = 왼쪽 위 논리 좌표. flip 이면 좌우 반전
+  ctx.imageSmoothingEnabled = false;
+  const w = spr.width * PX, h = spr.height * PX;
+  if (flip) { ctx.save(); ctx.translate(x + w, y); ctx.scale(-1, 1); ctx.drawImage(spr, 0, 0, w, h); ctx.restore(); }
+  else ctx.drawImage(spr, x, y, w, h);
+}
+/* 도트 자산 표 — 범례는 PALETTE.ramp 참조만. 새 자산은 여기 줄을 더한다(코드가 아니라 데이터). */
+const R = PALETTE.ramp;
+const SPRITES = {
+  survivor: {
+    legend: { O: R.olive[3], H: R.rust[2], S: R.bone[1], s: R.bone[2], E: R.olive[3], J: R.olive[1], j: R.olive[0], k: R.olive[2], P: R.concrete[2], B: R.rust[2], G: R.concrete[1] },
+    frames: {
+      idle: [
+        '....OOOO....',
+        '...OHHHHO...',
+        '..OHHHHHHO..',
+        '..OSSSSSSO..',
+        '..OSSSESEO..',
+        '..OsSSSSsO..',
+        '...OSSSSO...',
+        '..OJJjjJJO..',
+        '.OJJJjjJJJO.',
+        '.OkJJJJJJkO.',
+        '.OkJJJJJJkO.',
+        '..OPPPPPPO..',
+        '..OPP..PPO..',
+        '..OPP..PPO..',
+        '..OBB..BBO..',
+        '..OOO..OOO..'],
+      idle2: [
+        '............',
+        '....OOOO....',
+        '...OHHHHO...',
+        '..OHHHHHHO..',
+        '..OSSSSSSO..',
+        '..OSSSESEO..',
+        '..OsSSSSsO..',
+        '...OSSSSO...',
+        '..OJJjjJJO..',
+        '.OJJJjjJJJO.',
+        '.OkJJJJJJkO.',
+        '..OPPPPPPO..',
+        '..OPP..PPO..',
+        '..OPP..PPO..',
+        '..OBB..BBO..',
+        '..OOO..OOO..']
+    }
+  }
+};
+function sprite(kind, frame) {
+  const d = SPRITES[kind]; return pxSprite(kind + ':' + frame, d.frames[frame], d.legend);
+}
+
 const iconCache = new Map();
 let vignetteCache = null;
 function drawIcon(kind, cx, cy, s, color) {

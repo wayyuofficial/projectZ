@@ -86,6 +86,7 @@ GACHA_COST_FRAC = num("GACHA_COST_FRAC")
 GACHA_TEN_DISCOUNT = num("GACHA_TEN_DISCOUNT")
 GACHA_UP_FRAC = num("GACHA_UP_FRAC")          # M6 3.1
 GACHA_UP_G = num("GACHA_UP_G")
+SELL_PRICE_FRAC = num("SELL_PRICE_FRAC")      # 사례 27 (2026-09-30)
 ZONE_COUNT = int(num("ZONE_COUNT"))
 TIER_MAX = int(num("TIER_MAX"))
 MAX_ONSCREEN_ZOMBIES = int(num("MAX_ONSCREEN_ZOMBIES"))
@@ -207,7 +208,7 @@ MIRRORED = {
     "damageZombie": "de858f78fa27b6f3",
     "dayIndex": "e395fb011be7dfbc",
     "equipNew": "8874ff771d18a647",
-    "fitGame": "d526a00619b69c86",
+    "fitGame": "c865c9f0968c6437",
     "flushBag": "4feeb3d1a243c612",
     "freshState": "e3fdb0ec12e8d2c0",
     "gachaCost": "c40d912447e16c8b",
@@ -215,7 +216,7 @@ MIRRORED = {
     "gachaUpCost": "6834b9cc3bf320af",
     "gearMult": "c2392bb827fd20df",
     "gearScore": "a3b816f8da80d6a2",
-    "gearSellPrice": "6553206afef791c3",
+    "gearSellPrice": "e690a029f9f04ded",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "86e5dbdf14ea5395",
     "isBossKill": "e461a4a51bbb69c5",
@@ -606,7 +607,7 @@ class Sim(object):
         return True
 
     def gearSellPrice(self, g):
-        return (self.zoneIncome(g.get("zone") or self.G["zone"]) * 0.09
+        return (self.zoneIncome(g.get("zone") or self.G["zone"]) * SELL_PRICE_FRAC   # 사례 27: 0.09 가 여기 손으로 적혀 있었다 — 게임에서 읽는다
                 * math.pow(1.55, g["tier"] - 1) * self.statOf("inc"))
 
     @staticmethod

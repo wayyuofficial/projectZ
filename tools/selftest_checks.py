@@ -144,6 +144,8 @@ def main():
                 _first = _re.search(r"-?[\d.]+", _row)
                 _g2 = _g2[:_i] + _row[:_first.start()] + ("%.1f" % (float(_first.group(0)) - 1.0)) + _row[_first.end():] + _g2[_j:]
                 _g2 = _g2.replace("function drawOdds() {", "function drawOdds() {" + chr(10) + "  ctx.fillText('99.9%', 0, 0);   /*selftest*/", 1)
+            # c26 (M7 1.3, 2026-09-30): 도트 범례에 직접 색 하나를 심으면 fail 이 나야 한다
+            _g2 = _g2.replace("legend: { O: R.olive[3],", "legend: { O: '#000000', Q: R.olive[3],", 1)
             io.open(gamep, "w", encoding="utf-8-sig").write(_g2)
 
         # c2 의 "없어도 되는 선언" 이 실제로 없어도 되는지 (M4 3.2, 2026-09-15).
@@ -247,6 +249,7 @@ def main():
             ("c23_baseline_agree.py", ("warn",)),
             ("c24_gacha_table.py", ("fail",)),
             ("c25_port_state_keys.py", ("fail",)),
+            ("c26_pixel_bible.py", ("fail",)),
         ]
 
         bad = []

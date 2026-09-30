@@ -20,7 +20,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # cp949 콘솔에�
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sim_port as S
 
-LINE = 30.0
+LINE = 15.0   # 2026-09-30 지시 #132(위임): 30 → 15. 뽑기가 '조금씩' 이 되면서 파는 것도 준다 — plans/결정요청-M6-5단계-2026-09-18.md 1절
 
 
 def main(argv):
