@@ -1888,7 +1888,59 @@ function bgLayers() {
 
 const iconCache = new Map();
 let vignetteCache = null;
+/* M7 4.1 (지시 #132) — 아이콘 37종 8×8 도트. 색은 호출자가 주던 그대로(단색), 셀 크기는 s/8 을 정수로. 시그니처 불변.
+   'X' = 색, '.' = 빈칸. 종류·크기·색·DPR 마다 한 번 굽는다(아래 캐시). 경로 그리기(drawIconPath)는 표에 없는 종류의 예비로 남긴다. */
+const ICON_PX = {
+  'stat': ['........', '......XX', '......XX', '...XX.XX', '...XX.XX', 'XX.XX.XX', 'XX.XX.XX', 'XX.XX.XX'],
+  'weapon': ['.......X', '......XX', '.....XX.', 'XXXXXX..', 'X..XX...', 'XXXX....', '.X......', '.X......'],
+  'gear': ['XXXXXXXX', 'X......X', 'X.XXXX.X', 'X.XXXX.X', 'X..XX..X', '.X.XX.X.', '..X..X..', '...XX...'],
+  'daily': ['...XX...', '.X.XX.X.', '..XXXX..', 'XXXXXXXX', 'XXXXXXXX', '..XXXX..', '.X.XX.X.', '...XX...'],
+  'c:parts': ['..X..X..', '.XXXXXX.', 'XXX..XXX', '.X....X.', '.X....X.', 'XXX..XXX', '.XXXXXX.', '..X..X..'],
+  'c:plans': ['.XXXXXX.', '.X....X.', '.X.XX.X.', '.X....X.', '.X.XXXX.', '.X....X.', '.X.XXX.X', '.XXXXXX.'],
+  's:atk': ['......XX', '.....XX.', '....XX..', '...XX...', 'XX.XX...', '.XXX....', '.XX.....', 'XXX.....'],
+  's:spd': ['X...X...', 'XX..XX..', '.XX..XX.', '..XX..XX', '..XX..XX', '.XX..XX.', 'XX..XX..', 'X...X...'],
+  's:hp': ['.XX..XX.', 'XXXXXXXX', 'XXXXXXXX', 'XXXXXXXX', '.XXXXXX.', '..XXXX..', '...XX...', '........'],
+  's:reg': ['...XX...', '...XX...', '...XX...', 'XXXXXXXX', 'XXXXXXXX', '...XX...', '...XX...', '...XX...'],
+  's:inc': ['.XXXXXX.', 'X......X', '.XXXXXX.', 'X......X', '.XXXXXX.', 'X......X', '.XXXXXX.', '........'],
+  's:crit': ['...X....', '...X....', 'X..X..X.', '.X.X.X..', 'XXXXXXX.', '.X.X.X..', 'X..X..X.', '...X....'],
+  's:cdmg': ['....XX..', '...XX...', '..XX....', '.XXXXX..', '...XX...', '..XX....', '.XX.....', 'X.......'],
+  'g:head': ['..XXXX..', '.XXXXXX.', 'XXXXXXXX', 'XXXXXXXX', 'X.XXXX.X', 'X.X..X.X', '.X....X.', '........'],
+  'g:body': ['XX....XX', 'XXXXXXXX', 'XXXXXXXX', '.XXXXXX.', '.XXXXXX.', '.XXXXXX.', '.XX..XX.', '..X..X..'],
+  'g:hands': ['..X.X.X.', '..X.X.X.', 'X.XXXXX.', '.XXXXXX.', '.XXXXXX.', '.XXXXXX.', '..XXXX..', '..XXXX..'],
+  'g:feet': ['..XX....', '..XX....', '..XX....', '..XXX...', '..XXXXX.', '.XXXXXXX', 'XXXXXXXX', 'XXXXXXXX'],
+  'g:weapon': ['X......X', '.X....X.', '..X..X..', '...XX...', '...XX...', '..X..X..', '.X....X.', 'X......X'],
+  'w:bar': ['......XX', '.....XX.', '....XX..', '...XX...', '..XX....', '.XX.....', 'XX......', '........'],
+  'w:long': ['........', '........', 'XXXXXXXX', 'X.XXXXXX', 'XX.X....', '...X....', '........', '........'],
+  'w:wide': ['........', '........', 'XXXXXXX.', 'XXXXXXXX', 'XX.XX...', '...XX...', '........', '........'],
+  'w:nozzle': ['........', '......XX', 'XXXXX.XX', 'XXXXXXXX', 'XX.XX.XX', '...XX...', '........', '........'],
+  'w:cross': ['...X....', '..XXX...', '.X.X.X..', 'X..X..X.', 'XXXXXXXX', '...X....', '...X....', '........'],
+  'w:disc': ['........', '..XXXX..', '.XXXXXX.', 'XXX..XXX', 'XXX..XXX', '.XXXXXX.', '..XXXX..', '........'],
+  'w:twin': ['........', 'XXXXXXXX', '........', 'XXXXXXXX', 'XX......', '.XX.....', '........', '........'],
+  'w:launcher': ['........', '.......X', 'XXXXXX.X', 'XXXXXXXX', 'XXXXXXXX', 'XX.X....', '..XX....', '........'],
+  'w:saw': ['.X.X.X..', 'XXXXXXX.', 'XXXXXXXX', 'XXXXXXX.', 'X.......', 'X.......', '........', '........'],
+  'w:rail': ['........', '...X..X.', 'XXXXXXXX', 'XXXXXXXX', '...X..X.', '..XX....', '........', '........'],
+  'd:login': ['XXXXXXXX', 'X.X..X.X', 'XXXXXXXX', 'X......X', 'X.X.X..X', 'X......X', 'X.X.X..X', 'XXXXXXXX'],
+  'd:quest': ['XXXXXXXX', 'X......X', 'X.....XX', 'X....XX.', 'XX..XX.X', 'X.XXX..X', 'X..X...X', 'XXXXXXXX'],
+  'd:supply': ['XXXXXXXX', 'X..XX..X', 'XXXXXXXX', 'X......X', 'X.XXXX.X', 'X......X', 'X......X', 'XXXXXXXX'],
+  'd:reset': ['..XXXX..', 'XXXXXXXX', '.XXXXXX.', '.X.XX.X.', '.X.XX.X.', '.X.XX.X.', '.X.XX.X.', '.XXXXXX.'],
+  'lock': ['..XXXX..', '.X....X.', '.X....X.', 'XXXXXXXX', 'XXXXXXXX', 'XXX..XXX', 'XXX..XXX', 'XXXXXXXX'],
+  'boost': ['...X....', '..XXX...', '.XXXXX..', '...X....', '...X....', '..XXX...', '.XXXXX..', '...X....'],
+  'boss': ['.XXXXXX.', 'XXXXXXXX', 'X.XXXX.X', 'X.XXXX.X', 'XXXXXXXX', '.XXXXXX.', '.X.XX.X.', '.X.XX.X.'],
+  'revive': ['.XX..XX.', 'XXXXXXXX', 'XXXXXXXX', '.XXXXXX.', '..XXXX..', '...XX...', '..XXXX..', '.XXXXXX.']
+};
 function drawIcon(kind, cx, cy, s, color) {
+  const rows = ICON_PX[kind];
+  if (rows) {
+    const cell = Math.max(1, Math.round(s / 8)), key = 'i|' + kind + '|' + color;
+    let c = pxCache.get(key);
+    if (!c) { c = pxSprite(key, rows, { X: color }); }
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(c, Math.round(cx - cell * 4), Math.round(cy - cell * 4), cell * 8, cell * 8);
+    return;
+  }
+  drawIconOld(kind, cx, cy, s, color);
+}
+function drawIconOld(kind, cx, cy, s, color) {
   const dpr = (typeof backW === 'number' && typeof cssW === 'number' && cssW > 0) ? backW / cssW : (window.devicePixelRatio || 1);
   const key = kind + '|' + s + '|' + color + '|' + dpr.toFixed(2);
   let c = iconCache.get(key);
@@ -2009,8 +2061,11 @@ function drawButtons() {
     if (b.tone === 'buy' && b.enabled !== false) { bg = PALETTE.buyBg; bd = PALETTE.buyBd; }
     if (b.enabled === false) { fg = PALETTE.dim; bd = PALETTE.btnLineDim; bg = PALETTE.disabledBg; }
 
-    ctx.fillStyle = bg; rr(b.x, b.y, b.w, b.h, 8); ctx.fill();
-    ctx.strokeStyle = bd; ctx.lineWidth = 1; rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 8); ctx.stroke();
+    // M7 4.2 — 도트 패널: 라운드 최소, 위 하이라이트·아래 섀도 1px(광원 위). 자리·크기는 그대로(c16·tap_check)
+    ctx.fillStyle = bg; rr(b.x, b.y, b.w, b.h, 2); ctx.fill();
+    ctx.strokeStyle = bd; ctx.lineWidth = 1; rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 2); ctx.stroke();
+    ctx.fillStyle = PALETTE.btnLine; ctx.fillRect(b.x + 2, b.y + 1, b.w - 4, 1);
+    ctx.fillStyle = PALETTE.shade55; ctx.fillRect(b.x + 2, b.y + b.h - 2, b.w - 4, 1);
     if (b.tint) { ctx.fillStyle = b.tint; rr(b.x + 8, b.y + 8, 6, b.h - 16, 3); ctx.fill(); }
 
     // M5 2.2 — 목록 줄(sub 가 있는 줄)은 왼쪽에 아이콘. 등급 띠(tint)가 있으면 그 오른쪽에.

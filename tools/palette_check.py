@@ -21,6 +21,7 @@ COLOR = re.compile(r"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{3}\b|rgba?\(\s*\d")   # rgba
 def scan():
     src = io.open(GAME, encoding="utf-8-sig").read().split("\n")
     hits, in_tbl, fn, in_script = [], None, "", False
+    in_block = False
     for n, line in enumerate(src, 1):
         # <script> 앞의 CSS·HTML 은 그리기 코드가 아니다 — JS 상수를 못 읽는 자리라 여기 색은 따로 둔다
         if "<script" in line:
@@ -37,8 +38,15 @@ def scan():
             if re.match(r"^[\]}];", line):
                 in_tbl = None
             continue
-        # 주석 줄의 색은 안 센다 (설명용)
-        if line.strip().startswith(("//", "/*", "*")):
+        # 주석 줄의 색은 안 센다 (설명용). 2026-09-30: 여러 줄 주석(/* ... */) 안의 이어지는 줄도 — 사례 25 와 같은 오탐('지시 #127' 의 #127)
+        st = line.strip()
+        if in_block:
+            if "*/" in st:
+                in_block = False
+            continue
+        if st.startswith("/*") and "*/" not in st:
+            in_block = True; continue
+        if st.startswith(("//", "/*", "*")):
             continue
         # 줄 끝 주석(// ...)도 안 센다 — 2026-09-18 오탐: "// 지시 #118" 의 '#118' 이 3자리 hex 로 잡혔다 (등급명 빌드 b503e5adadd6a324)
         line = line.split("//")[0] if "//" in line and "://" not in line else line
