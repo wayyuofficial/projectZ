@@ -10,7 +10,7 @@ python tools/gen_balance_csv.py | tail -1
 python tools/curve_check.py    --seeds 20 --out measurements/balance-M4-curve-g-$D.json | tail -2
 python tools/upgrade_cadence.py --seeds 20 --out measurements/upgrade-cadence-m4-g-$D.json | tail -3
 python tools/axis_value.py     --seeds 20 --max-min 400 --out measurements/axis-value-$D.json | tail -4   # 2026-09-18: 상한 900 이면 한 시간 넘게 걸린다 (지시 #128)
-python tools/focus_check.py    --seeds 20 --out measurements/focus-$D.json | tail -3
+python tools/focus_check.py    --seeds 60 --out measurements/focus-$D.json | tail -3   # 2026-09-30 지시 #132: 선이 60시드 ±5% (뽑기 잡음 ±7%)
 python tools/sell_share.py     --seeds 20 --out measurements/sell-share-$D.json | tail -2
 python tools/quest_pace.py     --seeds 20 --out measurements/quest-pace-$D.json | tail -6
 for H in 8 16 0; do python tools/quest_pace.py --seeds 20 --start-hour $H --out measurements/quest-pace-h$H-$D.json | tail -1; done

@@ -6,5 +6,6 @@
   "APK_바이트": 75680,
   "assets_경로": "assets/index.html",
   "방법": "zipfile 로 APK 안 index.html 을 꺼내 game/index.html 과 바이트 비교. 같을 때만 복사.",
-  "결과": "바이트 동일"
+  "결과": "바이트 동일",
+  "옛빌드_사유": "M6 5단계 빌드 5b5a06abf2580e4c 의 기록. 그 뒤 5.3(6b6ddfab)·M7 도트(그리기만, 로직·상수·버튼 자리 불변)로 도장이 바뀌었다. 밸런스 근거는 -30 배터리로 다시 떴다(balance/axis/sell/… -2026-09-30.json)."
 }

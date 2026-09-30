@@ -73,6 +73,7 @@ const PALETTE = {
   /* M7 1.1 (2026-09-30, 지시 #132) — 도트 공유 램프. 7계열 × 4단(하이라이트·베이스·섀도·아웃라인).
      모든 도트 자산은 이 28색에서만 찍는다. 아웃라인은 순검정이 아니라 올리브·녹이 섞인 어두운 색 — 그래야 배경과 한 세계.
      광원은 위·왼쪽(하이라이트 위, 섀도 아래·오른쪽). 값은 사람이 바꿀 수 있다 — 여기 한 곳. */
+  grade: 'rgba(120,96,40,.14)',   // M7 5.1 — 전투 영역 색보정(soft-light) 한 겹. 녹·올리브 무드
   ramp: {
     rust:     ['#D98A4A', '#A85A2A', '#6B3A1C', '#2E1A10'],
     olive:    ['#9EAA5A', '#6B7A36', '#414A22', '#1E2312'],
@@ -1512,6 +1513,8 @@ function drawArena() {
     vg.addColorStop(0, PALETTE.clear); vg.addColorStop(1, PALETTE.vignette);
     vignetteCache = { gy: GROUND_Y, vg: vg };
   }
+  // M7 5.1 — 전체 색보정 한 겹(soft-light, 알파 0.14): 출처가 다른 도트·그라데이션을 한 무드로 묶는다. 밝기는 보존(글자 대비 유지). 비네트 앞.
+  ctx.save(); ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = PALETTE.grade; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP); ctx.restore();
   ctx.fillStyle = vignetteCache.vg; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
   // M7 3.2 — 바닥 16×16 아스팔트 타일(맨 윗줄이 녹슨 바닥선). 캐시.
   { const bl = bgLayers(); ctx.imageSmoothingEnabled = false; ctx.drawImage(bl.ground, 0, GROUND_Y, GAME_W, bl.gh); }
