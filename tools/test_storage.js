@@ -59,15 +59,24 @@
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 3, plans: 77, day: undefined, keys: undefined }));
   loadError = null;
   load();
-  chk('v3 저장본이 최신으로 이어진다 (일일 붙음)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 77 && G.keys === KEY_MAX && G.login.streak === 0 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + G.keys + '/' + loadError);
+  // M6 7 — v3 의 설계도 77 은 '돈' 이라 v5→v6 에서 옛 1회 값으로 나눠 개수가 된다(수입 레벨 0). 시험도 같은 식으로 센다 — 게임 식을 베끼는 게 아니라 이전 규칙을 밝혀 둔다.
+  const plans77 = Math.min(50, Math.floor(77 / Math.max(1, zoneIncome(before.bestZone || 1) * LEGACY_BP_RATIO * LEGACY_GACHA_COST_FRAC)));   // 옛 1회 값은 최고 구역(before 는 1) 기준
+  chk('v3 저장본이 최신으로 이어진다 (일일 붙음)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === plans77 && G.keys === KEY_MAX && G.login.streak === 0 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + G.keys + '/' + loadError);
 
   // M6 2.3 — v4 (M4·M5 저장본) 의 owned/weapon 은 gear.weapon 과 가방으로 옮겨진다. 가진 무기를 하나도 안 잃는다.
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 4, gear: {}, bag: [], owned: { pipe: 1, rifle: 3, shotgun: 1 }, weapon: 'rifle', gachaLv: undefined }));
   loadError = null;
   load();
   chk('v4 저장본이 최신으로 이어진다 (무기 → 장비)', G.v === SAVE_VERSION && G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 3
-      && G.bag.length === 0 && G.parts > 1234.5 && G.owned === undefined && G.gachaLv === 0 && loadError === null,   // M6 재설계: 가방은 없다 — 옛 무기는 팔려 부품이 된다
+      && G.bag.length === 0 && G.parts > 1234.5 && G.owned === undefined && G.gachaXp === 0 && loadError === null,   // M6 7: gachaLv → gachaXp   // M6 재설계: 가방은 없다 — 옛 무기는 팔려 부품이 된다
       G.gear.weapon.type + '/' + G.gear.weapon.tier + '/' + G.bag.length + '/' + Math.round(G.parts));
+
+  // M6 7 — v5 (M6 2~6 저장본) 의 설계도 '돈' 은 옛 1회 값으로 나눠 개수가 되고(상한 50), 뽑기 강화 단계 3 은 입수 Lv3 문턱 경험치가 된다.
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 5, plans: 1e12, gachaLv: 3, gachaXp: undefined }));
+  loadError = null;
+  load();
+  chk('v5 저장본이 최신으로 이어진다 (설계도 개수·입수 레벨)', G.v === SAVE_VERSION && G.plans === 50 && G.gachaXp === GACHA_XP_NEEDS[2] && curGachaLv() === 3 && G.gachaLv === undefined && loadError === null,
+      G.v + '/' + G.plans + '/' + G.gachaXp + '/' + curGachaLv());
 
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();

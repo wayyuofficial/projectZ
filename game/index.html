@@ -83,6 +83,8 @@ const PALETTE = {
     brass:    ['#F2D36A', '#C9A93A', '#7E6820', '#332A0E'],
     teal:     ['#8CD4D6', '#5FA8AA', '#356A6C', '#162E2F']
   },
+  // M6 6.2 (지시 #138) — 뽑기 견줌 팝업: 옵션이 더 높으면 초록, 낮으면 빨강. 등급 색(고급 초록·전설 빨강)과 겹치지 않게 조금 다른 값.
+  better: '#6FD37A', worse: '#E85A4A',
   deathRgb: '180,40,40', fatalBg: '#7A2E28', fatalInk: '#FFE6E2'
 };
 /* =========================================================================
@@ -136,7 +138,7 @@ setTimeout(function () {
    검사 c2_scope.py 가 이 선언들을 읽어 canon/10-scope.md 의 상한과 대조한다.
    ========================================================================= */
 
-const SAVE_VERSION = 5;   // M6 2.3: 무기가 장비가 됐다(gear.weapon). v4 는 migrate() 가 끌어올린다   // M4 1: 일일 리듬(day·quest·login·keys). v1~v3 은 migrate() 가 끌어올린다   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
+const SAVE_VERSION = 6;   // M6 7: 설계도가 개수, 뽑기 강화 → 입수 레벨(gachaXp). v5 는 migrate() 가 끌어올린다   // M6 2.3: 무기가 장비가 됐다(gear.weapon). v4 는 migrate() 가 끌어올린다   // M4 1: 일일 리듬(day·quest·login·keys). v1~v3 은 migrate() 가 끌어올린다   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
 const ZONE_COUNT   = 30;   // M2 (지시 #60·#61). M1 은 10
 const TIER_MAX     = 8;   // M4 3: 정본 개정(지시 #96). 색만 바꾼다 — 모양은 안 늘린다
 const MAX_ONSCREEN_ZOMBIES = 8;
@@ -160,7 +162,7 @@ const STATS = [
   /* M6 1.2 (지시 #119·#120 결정 2 (a), 정본 '치명타' 행) — 더하기 성장(add), 상한(cap). 값은 비율(0.05 = 5%).
      치명타 확률: 기본 5% · 레벨당 +1%p · 상한 60%. 치명타 피해: 기본 150% · 레벨당 +5%p.
      hitDamage 는 한 발마다 굴리고, expectedHit 은 기대값 — 거울(자)은 기대값으로 잰다. */
-  { id: 'crit', name: '치명타 확률', base: 0.05, add: 0.01, cap: 0.60, cost0: 20, costG: 1.34, unit: '%', pct: true },
+  { id: 'crit', name: '치명타 확률', base: 0.05, add: 0.001, cap: 0.60, cost0: 20, costG: 1.34, unit: '%', pct: true },   // M6 6.2 (지시 #138): +1%p 는 폰에서 '너무 쉽게 오른다' → +0.1%p
   { id: 'cdmg', name: '치명타 피해', base: 1.50, add: 0.05,            cost0: 24, costG: 1.33, unit: '%', pct: true },
 ];
 
@@ -211,7 +213,8 @@ const WEAPON_TYPES = [
    8시드 격자: 1.58 95분 · 1.62 139분 · **1.63 156분(밖 20, 빠름 12/느림 8, 최대 이탈 1.10)** · 1.64 164분 · 1.66 201분.
    등급 값 배수를 같이 만진 조합(1.62/1.6, 1.63/1.4)도 밖 20 이지만 이탈이 더 크고 상수가 둘이라 안 골랐다.
    이 값은 **예민하다** — 0.01 에 10분 남짓 움직인다. 다음에 곡선을 만질 때 첫 손잡이다. */
-const ZONE_HP0 = 18,  ZONE_HP_G = 1.61;   /* M6 5.1 (2026-09-18, 격자 m6a~d): 15/1.63 → 18/1.61 — 초반이 목표의 0.3배로 빨랐다. 뽑기 값 0.2→0.5, 적 피해 0.14→0.2 와 함께 구역 30 175분(목표 180±20%) */
+const ZONE_HP0 = 18,  ZONE_HP_G = 1.7;   /* M6 5.1 (2026-09-18, 격자 m6a~d): 15/1.63 → 18/1.61 — 초반이 목표의 0.3배로 빨랐다. 뽑기 값 0.2→0.5, 적 피해 0.14→0.2 와 함께 구역 30 175분(목표 180±20%)
+                                            M6 7.4 (2026-09-30, 지시 #139 결정 b, 격자 grid7-G/H): 1.61 → 1.7 — 치명타 +0.1%p 를 두고 설계도 개수·입수 레벨 위에서 180분으로 되돌린다 */
 const ZONE_RW0 = 12,  ZONE_RW_G = 1.16;   /* M3: 정본이 목표 곡선을 0.6분 x 1.12^(z-1) · 구역 1~30 으로 바꿨다(2026-09-14 지시 #84).
      격자로 rw0 4->12, rwg 1.30->1.26, 능력치 costG 전부 -0.015 를 골랐다 (M3 1.3+2.2 합).
      정본은 두 줄을 들고 있다: 목표 체류 곡선과 **업그레이드 간격 상한 120초**. 둘은 서로 당긴다 —
@@ -325,7 +328,14 @@ const KEY_MAX = 3;                          // 보급 상자 열쇠. 하루에 K
 /* 일일 보상 총량은 **그날 수입의 이만큼 안**으로 묶는다 (WBS 1.4).
    4·5단계에서 쓴 "보상을 옮기지 늘리지 않는다" 와 같은 수법 — 곡선을 흔들지 않으려고. */
 const DAILY_BUDGET = 0.20;
-const BP_RATIO = 0.18, BP_STAGE_SHARE = 0.6, BP_BOSS_SHARE = 0.2, BP_OFFLINE_SHARE = 0.2;   /* 3시드 격자: 0.08 -> 233분, 0.15 -> 142분, 목표는 분할 전 130분 */
+/* M6 7.1 (지시 #139) — 설계도는 **개수**다. 장비 1개 = 설계도 1개(10회 = 10개, 할인 없음). 지급도 개수: 단계 클리어 · 보스 · 일일 과제. 오프라인·처치는 없음(M6 2.1).
+   전엔 설계도가 구역 부품 수입 × BP_RATIO 로 커지는 '돈' 이었다(M3 5) — 그 계수는 v5 저장본을 개수로 옮길 때만 쓴다(LEGACY_*, migrate). 지급량은 7.4 격자에서 맞춘다. */
+const GACHA_COST_PLANS = 1;
+const STAGE_PLANS = 2, BOSS_PLANS = 6, QUEST_PLANS = 3;
+/* 처음 깬 단계는 STAGE_PLANS, 죽어 내려갔다 **다시 깨는 단계는 RECLEAR_PLANS**(보스는 0). 0 이면 막힌 뒤 뽑기 수입이 끊겨 8시드 중 1~4개만 완주했고(격자 D),
+   첫 클리어와 같게 주면 죽을수록 뽑기가 불어 구역당 92~252회가 됐다(격자 C). 그 사이 값. */
+const RECLEAR_PLANS = 1;
+const LEGACY_BP_RATIO = 0.18, LEGACY_GACHA_COST_FRAC = 0.5;
 const BOSS_EVERY = 5;
 const BOSS_HP_MULT = 3;
 const BOSS_CHARGE_EVERY = 4.0;   // 보스는 4초마다 돌진한다 (패턴 1개)
@@ -356,12 +366,11 @@ const TIER_ODDS = [
   [ 29.7,  27.6,  19.8,  12.0,   6.5,   3.1,   1.0,   0.3],   // Lv 9
   [ 22.0,  28.0,  22.0,  14.0,   8.0,   4.0,   1.5,   0.5]   // Lv 10
 ];
-/* 뽑기 값 — 그 구역의 설계도 수입에 비례한다(설계도가 zoneIncome×BP_RATIO 로 크므로 값도 같이 커야 후반에 무한 뽑기가 안 된다).
-   1회 = 최고 구역 한 구역의 설계도 수입 × GACHA_COST_FRAC. 10회는 10% 싸다. */
-const GACHA_COST_FRAC = 0.5, GACHA_TEN_DISCOUNT = 0.9;
-/* M6 3.1 뽑기 강화 — **부품**으로 올린다(답 4: 후반에 남아도는 부품의 쓸 곳). 단계 lv 의 값 = 최고 구역 한 구역의 부품 수입 × GACHA_UP_FRAC × GACHA_UP_G^lv.
-   0~GACHA_LV_MAX(정본 '뽑기 강화' 행). 값은 5단계에서 배터리로 맞춘다(M6-B2: 후반 유휴 부품 절반 이하). */
-const GACHA_UP_FRAC = 0.5, GACHA_UP_G = 1.6;
+/* M6 7.2 입수 레벨 (지시 #139) — 설계도를 **쓴 누적 개수**(G.gachaXp)가 문턱을 넘으면 오른다. 0~GACHA_LV_MAX, 확률표(TIER_ODDS)의 행이 된다.
+   부품은 안 쓴다 — M6 3.1 '뽑기 강화(부품)' 를 대체한다(정본 '입수 레벨' 행). 문턱은 누적, 길이 = GACHA_LV_MAX. 값은 7.4 격자에서 맞춘다(M6-B5). */
+const GACHA_XP_NEEDS = [
+  40, 100, 180, 280, 400, 540, 700, 880, 1080, 1300   // 7.4 격자: ×1 이면 Lv10 이 구역 21 에 와 18분 만에 끝났다. ×5 → Lv10 구역 27~28, 180분
+];
 const OFFLINE_MAX_HOURS = 8;
 const OFFLINE_RATE = 0.5;
 const AD_BOOST_MIN = 10;
@@ -442,7 +451,8 @@ function freshState() {
     parts: 0, plans: 0, zone: 1, kills: 0,
     lv: { atk: 0, spd: 0, hp: 0, reg: 0, inc: 0 },
     hp: 100,
-    gachaLv: 0,                                // M6 3.1: 뽑기 강화 단계 (0~GACHA_LV_MAX)
+    gachaXp: 0,                                // M6 7.2: 설계도를 쓴 누적 개수 — 입수 레벨은 여기서 계산한다(gachaLevel)
+    clearBest: 0,                              // M6 7.1: 처음 깬 가장 높은 단계 번호(구역×STAGES_PER_ZONE+단계). 설계도는 이보다 높은 단계를 깰 때만
     bestZone: 1, totalKills: 0,
     lastSeen: Date.now(),
     boostUntil: 0,
@@ -484,6 +494,16 @@ function migrate(raw) {
     raw = Object.assign({}, raw, { v: 5, gear: gear, bag: bag, gachaLv: 0 });
     delete raw.owned; delete raw.weapon;
   }
+  /* v5 (M6 2~6) → v6 (M6 7): 설계도가 '돈' 에서 '개수' 가 됐고, 뽑기 강화(부품)가 입수 레벨(설계도 사용량)이 됐다.
+     설계도 잔액은 옛 1회 값으로 나눠 개수로(상한 50) — 잃지 않는다. 강화 단계는 같은 단계의 문턱 경험치로 옮긴다. */
+  if (raw.v === 5) {
+    const incS = statDef('inc'), incLv = (raw.lv && raw.lv.inc) || 0;
+    const legacyOne = zoneIncome(raw.bestZone || 1) * LEGACY_BP_RATIO * LEGACY_GACHA_COST_FRAC * incS.base * Math.pow(incS.growth, incLv);
+    const cnt = Math.min(50, Math.floor((raw.plans || 0) / Math.max(1, legacyOne)));
+    const lvOld = Math.max(0, Math.min(GACHA_LV_MAX, raw.gachaLv || 0));
+    raw = Object.assign({}, raw, { v: 6, plans: cnt, gachaXp: lvOld > 0 ? GACHA_XP_NEEDS[lvOld - 1] : 0, clearBest: (raw.bestZone || 1) * STAGES_PER_ZONE });   // 최고 구역까지는 깬 것으로
+    delete raw.gachaLv;
+  }
   if (raw.v !== SAVE_VERSION) return freshState();
   const s = freshState();
   for (const k of Object.keys(s)) if (k in raw) s[k] = raw[k];
@@ -516,7 +536,7 @@ function load() {
        지금은 SAVE_VERSION 이 1뿐이라 안 터질 뿐이다. */
     /* M2: v1 은 migrate() 가 v2 로 끌어올린다 — 초기화가 아니므로 문구를 띄우지 않는다.
        (브라우저 시험에서 v1 저장본이 진행은 그대로인데 "처음부터 시작한다" 를 띄웠다 — 거짓 경고) */
-    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION && raw.v !== 1 && raw.v !== 2 && raw.v !== 3 && raw.v !== 4) {
+    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION && raw.v !== 1 && raw.v !== 2 && raw.v !== 3 && raw.v !== 4 && raw.v !== 5) {
       loadError = '저장 형식이 바뀌어 처음부터 시작한다';
     }
     G = migrate(raw);
@@ -541,7 +561,7 @@ function statNext(id) {   // 한 레벨 뒤 값 (줄 부제용)
   const v = (s.add != null ? s.base + s.add * lv : s.base * Math.pow(s.growth, lv)) * gearMult(id);
   return s.cap != null ? Math.min(s.cap, v) : v;
 }
-function statText(id, v) { const s = statDef(id); return s.pct ? Math.round(v * 100) + '%' : fmt(v) + s.unit; }
+function statText(id, v) { const s = statDef(id); if (!s.pct) return fmt(v) + s.unit; return (s.add != null && s.add * 100 < 1 ? (v * 100).toFixed(1) : Math.round(v * 100)) + '%'; }   // M6 6.2: 증가분이 1%p 미만이면 소수 한 자리
 function statCost(id) { const s = statDef(id); return Math.ceil(s.cost0 * Math.pow(s.costG, G.lv[id] || 0)); }
 function weaponOf(id) { return WEAPON_TYPES.find(w => w.id === id); }
 /* M6 2.3 — 낀 무기는 장비다(G.gear.weapon). 없을 수는 없지만(freshState·migrate 가 채운다) 방어한다. */
@@ -638,7 +658,7 @@ function gearMult(statId) {
    M4 4.2 의 자동 판매 기준·가방 넘침 규칙은 여기서 끝났다(그 손잡이는 M5 2.4 에서 처음 생겼다가 하루 만에 사라졌다 — 로그 #127). */
 /* 판매가 — 부품. 그 구역 총수입에 견줘 매긴다. 등급이 높을수록 값이 뛴다.
    M6 5.3 (지시 #132): 계수를 상수로 뺐다 — 거울이 이 값을 읽는다. 전엔 거울 파이썬에 0.09 가 따로 적혀 있어 0.10·0.11 로 올린 것이 측정에 안 들어갔다(사례 27). */
-const SELL_PRICE_FRAC = 0.11;   // 0.09 → 판매 비중 14.1% (선 15%)
+const SELL_PRICE_FRAC = 0.015;  // M6 7.4 (지시 #139): 0.11 은 뽑기가 1개=1회가 되자 판매 수입이 52~63% 가 됐다(격자 E). 0.015 → 15.5% (선 15%)
 function gearSellPrice(g) {
   return zoneIncome(g.zone || G.zone) * SELL_PRICE_FRAC * Math.pow(1.55, g.tier - 1) * statOf('inc');   // M4 4.1: 0.05 는 판매 비중이 21.8% 였다 (선 30%)
 }
@@ -676,30 +696,22 @@ function rollTierOdds(lv) {
   for (let i = 0; i < row.length; i++) { r -= row[i]; if (r < 0) return i + 1; }
   return row.length;
 }
-function gachaRoll() { return rollGear(G.bestZone || 1, null, rollTierOdds(G.gachaLv)); }
-function gachaCost(n) {
-  const one = zoneIncome(G.bestZone || 1) * BP_RATIO * GACHA_COST_FRAC * statOf('inc');
-  return Math.ceil(n === 10 ? one * 10 * GACHA_TEN_DISCOUNT : one * n);
-}
+/* M6 7.2 — 입수 레벨: 누적 사용량이 문턱을 몇 개 넘었나. 저장하지 않는다(gachaXp 에서 계산). */
+function gachaLevel(xp) { let lv = 0; for (const n of GACHA_XP_NEEDS) if ((xp || 0) >= n) lv++; return Math.min(GACHA_LV_MAX, lv); }
+function curGachaLv() { return gachaLevel(G.gachaXp); }
+function gachaRoll() { return rollGear(G.bestZone || 1, null, rollTierOdds(curGachaLv())); }
+function gachaCost(n) { return n * GACHA_COST_PLANS; }   // M6 7.1 — 장비 1개 = 설계도 1개
 /* 결과 팝업.  1회: { mode:'one', g, cur, done:null|'equip'|'sell', sold }  — 사람이 장착/판매를 고른다 (빈 부위면 바로 낀다).
               10회: { mode:'ten', items:[{ g, r:'equip'|'sell', gain }], gain } — 더 좋으면 낀다(벗은 것은 판다), 아니면 판다. 버섯커의 10연 자동 처리. */
 let gachaResult = null;
-let oddsPopup = false;    // M6 3.2 — 확률 팝업. TIER_ODDS[G.gachaLv] 를 그대로 그린다
-function gachaUpCost(lv) { return Math.ceil(zoneIncome(G.bestZone || 1) * GACHA_UP_FRAC * Math.pow(GACHA_UP_G, lv) * statOf('inc')); }
-function upgradeGacha() {
-  const lv = G.gachaLv || 0;
-  if (lv >= GACHA_LV_MAX) return false;
-  const c = gachaUpCost(lv);
-  if (G.parts < c) return false;
-  G.parts -= c; G.gachaLv = lv + 1;
-  questProgress('up', 1);                       // M4 1.2 — 강화도 업그레이드다
-  return true;
-}
+let oddsPopup = false;    // M6 3.2 — 확률 팝업. TIER_ODDS[curGachaLv()] 를 그대로 그린다
+/* M6 7.2 — gachaUpCost·upgradeGacha(부품 강화)는 없어졌다. 레벨은 설계도를 쓴 만큼 오른다(pullGacha 가 gachaXp 를 올린다). */
 function oddsTop(lv) { const r = TIER_ODDS[Math.max(0, Math.min(GACHA_LV_MAX, lv))]; return r[4] + r[5] + r[6] + r[7]; }   // 영웅~영원 합
 function pullGacha(n) {
   const cost = gachaCost(n);
   if ((G.plans || 0) < cost) return false;
   G.plans -= cost;
+  G.gachaXp = (G.gachaXp || 0) + cost;          // M6 7.2 — 쓴 만큼 입수 레벨 경험치
   questProgress('up', n);                       // M4 1.2 과제 '업그레이드' — 무기 구매가 세던 자리를 뽑기가 잇는다
   if (n === 1) {
     const g = gachaRoll(), cur = (G.gear || {})[g.slot];
@@ -723,11 +735,11 @@ function gachaDecide(what) {
   r.done = what; save();
   return true;
 }
+/* M6 7.1 — 처음 깨는 단계인가. idx = 구역×STAGES_PER_ZONE + 단계(0~4, 보스=STAGES_PER_ZONE). 처음이면 기록하고 true. */
+function firstClear(idx) { if (idx <= (G.clearBest || 0)) return false; G.clearBest = idx; return true; }
 function stageKills(z) { return Math.max(1, Math.round(zoneKills(z) / STAGES_PER_ZONE)); }
 function killReward(z) { return zoneReward(z); }   // M3 5: 단계 보상이 설계도로 옮겨가 부품은 분할 전 그대로
 function zoneIncome(z) { return zoneReward(z) * zoneKills(z); }
-function stageBlueprint(z) { return zoneIncome(z) * BP_RATIO * BP_STAGE_SHARE / (STAGES_PER_ZONE - 1); }
-function bossBlueprint(z) { return zoneIncome(z) * BP_RATIO * BP_BOSS_SHARE; }
 function currentStage() { return Math.min(STAGES_PER_ZONE, Math.floor(killIndex / stageKills(G.zone)) + 1); }
 function isBossKill(z, idx) { return (z % BOSS_EVERY === 0) && idx === zoneKills(z) - 1; }
 function weaponUnlocked(w) { return (w.unlock || 1) <= (G.bestZone || 1); }   // M2: 해금 구역은 최고 도달 구역 기준
@@ -930,16 +942,18 @@ function killZombie(z) {
        설계도만 안 커지면 무기가 영영 안 잡힌다 — 3시드 격자에서 BP_RATIO 를 0.08→1.5 로 올려도
        구역 30 을 못 깼다(최고 구역 18→27). 양의 문제가 아니라 **성장률**의 문제였다. */
     questProgress('stage', 1);             // M4 1.2
-    /* M6 2.1 — 단계 드랍은 없앴다(정본 '장비 드랍 없음', 지시 #121). 장비는 뽑기로만. */
-    const bp = stageBlueprint(G.zone) * rewardMult() * statOf('inc');
+    /* M6 2.1 — 단계 드랍은 없앴다(정본 '장비 드랍 없음', 지시 #121). 장비는 뽑기로만.
+       M6 7.1 — 설계도는 개수. 광고 2배(rewardMult)·수입 능력치는 부품에만 — 설계도 개수엔 안 곱한다.
+       **처음 깰 때만** 준다(clearBest): 죽어서 한 구역 내려갔다 다시 깨는 건 안 센다 — 격자 C 에서 그 고리로 구역당 뽑기가 92~252회까지 불었다. */
+    const bp = firstClear(G.zone * STAGES_PER_ZONE + Math.floor(killIndex / stageKills(G.zone))) ? STAGE_PLANS : RECLEAR_PLANS;
     G.plans += bp;
     addFloat(GAME_W / 2, ARENA_TOP + 100, '단계 ' + currentStage() + ' / ' + STAGES_PER_ZONE
-      + '   설계도 +' + fmt(bp), PALETTE.plans, 18);
+      + (bp ? '   설계도 +' + fmt(bp) : ''), PALETTE.plans, 18);
   }
   if (z.boss) {
-    const bp = bossBlueprint(G.zone) * rewardMult() * statOf('inc');
+    const bp = firstClear(G.zone * STAGES_PER_ZONE + STAGES_PER_ZONE) ? BOSS_PLANS : 0;   // M6 7.1 — 개수, 처음 잡을 때만
     G.plans += bp;
-    addFloat(GAME_W / 2, ARENA_TOP + 130, '보스 · 설계도 +' + fmt(bp), PALETTE.plans, 18);
+    if (bp) addFloat(GAME_W / 2, ARENA_TOP + 130, '보스 · 설계도 +' + fmt(bp), PALETTE.plans, 18);
   }
   if (killIndex >= zoneKills(G.zone)) {   // M2: 벽 구역은 3배
     killIndex = 0;
@@ -1176,7 +1190,7 @@ function takeQuest(id) {
   G.questTaken[id] = 1;
   const budget = dailyBudget();
   G.parts += budget * q.share;
-  G.plans += budget * q.share * BP_RATIO;
+  G.plans += QUEST_PLANS;                    // M6 7.1 — 과제 하나에 설계도 QUEST_PLANS 개
   addFloat(GAME_W / 2, ARENA_TOP + 120, q.name + ' 완료', PALETTE.gold, 20);
   save();
   return true;
@@ -1350,20 +1364,20 @@ function buildButtons() {
       .map((p) => p[0] + ' +' + Math.round((p[1] - 1) * 100) + '%');
     putRow({ label: '장비 효과 합계', sub: sums.length ? sums.join('   ') : '낀 장비의 옵션이 여기 더해진다',
              cost: null, enabled: false, tone: 'ghost', icon: 'gear', onTap: () => false });
-    /* M6 2.2 — 뽑기 줄. 값은 설계도. 10회는 10% 싸다. */
+    /* M6 2.2 — 뽑기 줄. 값은 설계도 개수(7.1: 1개 = 1회). */
     [1, 10].forEach((n) => {
       const c = gachaCost(n);
-      putRow({ label: '뽑기 ' + n + '회', sub: n === 1 ? '설계도로 5부위 중 하나 · 등급은 확률표' : '10개 한 번에 · 10% 싸다',
+      putRow({ label: '뽑기 ' + n + '회', sub: n === 1 ? '설계도 1개 · 5부위 중 하나 · 등급은 확률표' : '설계도 10개 · 더 좋으면 끼고 아니면 판다',
                cost: c, enabled: (G.plans || 0) >= c, tone: 'buy', icon: 'd:supply', costKind: 'plans',
                onTap: () => { if (!pullGacha(n)) { addFloat(GAME_W / 2, ARENA_TOP + 120, '설계도 부족 — ' + fmt(c - (G.plans || 0)) + ' 더', PALETTE.plans, 20); return false; } return true; } });
     });
-    /* M6 3.1·3.2 — 뽑기 강화 줄(부품) · 확률 보기 줄(팝업) */
+    /* M6 7.2 — 입수 레벨 줄(누르는 줄이 아니다 — 설계도를 쓴 만큼 오른다) · 3.2 확률 보기 줄(팝업). 줄 수·자리는 3.1 과 같다(tap_check). */
     {
-      const lv = G.gachaLv || 0, maxed = lv >= GACHA_LV_MAX, uc = maxed ? null : gachaUpCost(lv);
-      putRow({ label: '뽑기 강화  Lv.' + lv + (maxed ? '  최대' : ''),
-               sub: maxed ? '영웅 이상 ' + oddsTop(lv).toFixed(1) + '%' : '영웅 이상 ' + oddsTop(lv).toFixed(1) + '%  ▸  ' + oddsTop(lv + 1).toFixed(1) + '%',
-               cost: uc, enabled: !maxed && G.parts >= uc, tone: 'buy', icon: 's:crit', costKind: 'parts',
-               onTap: () => upgradeGacha() });
+      const lv = curGachaLv(), maxed = lv >= GACHA_LV_MAX, xp = G.gachaXp || 0, need = maxed ? null : GACHA_XP_NEEDS[lv];
+      putRow({ label: '입수 Lv.' + lv + (maxed ? '  최대' : ''),
+               sub: (maxed ? '설계도 ' + xp + '개 씀' : '설계도 ' + xp + ' / ' + need + '개 쓰면 Lv.' + (lv + 1))
+                    + '  ·  영웅 이상 ' + oddsTop(lv).toFixed(1) + '%' + (maxed ? '' : '  ▸  ' + oddsTop(lv + 1).toFixed(1) + '%'),
+               cost: null, enabled: false, tone: 'ghost', icon: 'boost', onTap: () => false });
       putRow({ label: '확률 보기', sub: '등급별 확률 · 지금 Lv.' + lv + (maxed ? '' : ' 과 다음 Lv.' + (lv + 1)),
                cost: null, enabled: true, tone: 'off', icon: 'd:quest', onTap: () => { oddsPopup = true; return true; } });
     }
@@ -1403,7 +1417,8 @@ function buildButtons() {
     /* M6 2.3 — 무기 탭은 상점이 아니다. 낀 무기 한 줄 · 가방의 무기(값비싼 것부터, 탭하면 낀다) · 다음에 풀에 들어올 종류 한 줄.
        ★ 강화·해금 구매는 없어졌다 — 무기는 장비 탭에서 뽑는다. */
     const cw = curWeapon(), cwt = weaponOf(cw.type) || WEAPON_TYPES[0];
-    putRow({ label: '낀 무기 · ' + gearName(cw), sub: '위력 ×' + weaponPower().toFixed(2) + (cw.affixes.length ? '   ' + cw.affixes.map((a) => affixText(a)).join('   ') : '') + '   ·   장비 탭에서 뽑는다',
+    // M6 6.2 (지시 #138, 폰 제보 "'낀 무기' 같은 글자보다 테두리 강조로") — 글자를 뺐다. 장착 중은 등급 색 테두리 2px + 오른쪽 체크(equipped 톤)
+    putRow({ label: gearName(cw), sub: '위력 ×' + weaponPower().toFixed(2) + (cw.affixes.length ? '   ' + cw.affixes.map((a) => affixText(a)).join('   ') : '') + '   ·   장비 탭에서 뽑는다',
              cost: null, enabled: false, tone: 'equipped', icon: 'w:' + cwt.shape, tint: tierColor(cw.tier), wid: cwt.id, onTap: () => false });
     /* M6 재설계 — 가방이 없으니 종류 10줄: 풀에 있는 것은 위력 배수, 아닌 것은 들어오는 구역. 누르는 줄이 아니다. */
     WEAPON_TYPES.forEach((w) => {
@@ -1927,6 +1942,7 @@ const ICON_PX = {
   'd:supply': ['XXXXXXXX', 'X..XX..X', 'XXXXXXXX', 'X......X', 'X.XXXX.X', 'X......X', 'X......X', 'XXXXXXXX'],
   'd:reset': ['..XXXX..', 'XXXXXXXX', '.XXXXXX.', '.X.XX.X.', '.X.XX.X.', '.X.XX.X.', '.X.XX.X.', '.XXXXXX.'],
   'lock': ['..XXXX..', '.X....X.', '.X....X.', 'XXXXXXXX', 'XXXXXXXX', 'XXX..XXX', 'XXX..XXX', 'XXXXXXXX'],
+  'check': ['........', '.......X', '......XX', '.....XX.', 'X...XX..', 'XX.XX...', '.XXX....', '..X.....'],   // M6 6.2 — 장착 중 표시
   'boost': ['...X....', '..XXX...', '.XXXXX..', '...X....', '...X....', '..XXX...', '.XXXXX..', '...X....'],
   'boss': ['.XXXXXX.', 'XXXXXXXX', 'X.XXXX.X', 'X.XXXX.X', 'XXXXXXXX', '.XXXXXX.', '.X.XX.X.', '.X.XX.X.'],
   'revive': ['.XX..XX.', 'XXXXXXXX', 'XXXXXXXX', '.XXXXXX.', '..XXXX..', '...XX...', '..XXXX..', '.XXXXXX.']
@@ -2062,13 +2078,17 @@ function drawButtons() {
     else if (b.tone === 'ghost') { bg = PALETTE.ghostBg; fg = PALETTE.ink2; }
     // M5 2.3 — 살 수 있는 줄(buy, 눌림)은 청록 테두리·살짝 밝은 바탕. 탭은 위에서 따로.
     if (b.tone === 'buy' && b.enabled !== false) { bg = PALETTE.buyBg; bd = PALETTE.buyBd; }
-    if (b.enabled === false) { fg = PALETTE.dim; bd = PALETTE.btnLineDim; bg = PALETTE.disabledBg; }
+    if (b.enabled === false && b.tone !== 'equipped') { fg = PALETTE.dim; bd = PALETTE.btnLineDim; bg = PALETTE.disabledBg; }   // M6 6.2: 장착 줄은 못 누르지만 꺼진 줄이 아니다
 
     // M7 4.2 — 도트 패널: 라운드 최소, 위 하이라이트·아래 섀도 1px(광원 위). 자리·크기는 그대로(c16·tap_check)
     ctx.fillStyle = bg; rr(b.x, b.y, b.w, b.h, 2); ctx.fill();
     ctx.strokeStyle = bd; ctx.lineWidth = 1; rr(b.x + .5, b.y + .5, b.w - 1, b.h - 1, 2); ctx.stroke();
     ctx.fillStyle = PALETTE.btnLine; ctx.fillRect(b.x + 2, b.y + 1, b.w - 4, 1);
     ctx.fillStyle = PALETTE.shade55; ctx.fillRect(b.x + 2, b.y + b.h - 2, b.w - 4, 1);
+    if (b.tone === 'equipped') {   // M6 6.2 — 장착 중: 등급 색 테두리 2px + 오른쪽 체크. 글자 대신 눈으로. 자리·크기는 그대로
+      ctx.strokeStyle = b.tint || PALETTE.parts; ctx.lineWidth = 2; rr(b.x + 1, b.y + 1, b.w - 2, b.h - 2, 2); ctx.stroke(); ctx.lineWidth = 1;
+      drawIcon('check', b.x + b.w - 26, b.y + b.h / 2, 20, b.tint || PALETTE.parts);
+    }
     if (b.tint) { ctx.fillStyle = b.tint; rr(b.x + 8, b.y + 8, 6, b.h - 16, 3); ctx.fill(); }
 
     // M5 2.2 — 목록 줄(sub 가 있는 줄)은 왼쪽에 아이콘. 등급 띠(tint)가 있으면 그 오른쪽에.
@@ -2112,6 +2132,22 @@ function drawButtons() {
   }
 }
 
+/* M6 6.2 — 견줌 줄. [{label, l, r, cmp}] — l/r 은 글자(없으면 null), cmp 는 뽑은 쪽(r) 기준 +1 높다 / −1 낮다 / 0 같다.
+   첫 줄은 위력(무기: 종류 배수 × 등급 배수) 또는 등급(방어구). 그 뒤 옵션은 AFFIX_DEFS 순서로 두 장비의 합집합 — 한쪽에만 있으면 다른 쪽은 null. */
+function compareRows(cur, g) {
+  const rows = [];
+  const pw = (it) => it.slot === 'weapon' ? (weaponOf(it.type) || WEAPON_TYPES[0]).mult * tierPower(it.tier) : it.tier;
+  const pwText = (it) => it.slot === 'weapon' ? '×' + pw(it).toFixed(2) : it.tier + ' / ' + TIER_MAX;
+  const vl = cur ? pw(cur) : null, vr = pw(g);
+  rows.push({ label: g.slot === 'weapon' ? '위력' : '등급', l: cur ? pwText(cur) : null, r: pwText(g), cmp: vl == null ? 1 : Math.sign(vr - vl) });
+  for (const d of AFFIX_DEFS) {
+    const a = cur ? cur.affixes.find((x) => x.id === d.id) : null, b = g.affixes.find((x) => x.id === d.id);
+    if (!a && !b) continue;
+    const pct = (x) => '+' + Math.round((x.mult - 1) * 100) + '%';
+    rows.push({ label: d.name, l: a ? pct(a) : null, r: b ? pct(b) : null, cmp: Math.sign((b ? b.mult : 1) - (a ? a.mult : 1)) });
+  }
+  return rows;
+}
 /* M6 2.4 — 뽑기 결과. 한 줄에 하나: 등급 색 이름 · 어디로 갔나 · 더 좋으면 ▲. 10줄이면 촘촘히. */
 function drawGachaResult() {
   ctx.fillStyle = PALETTE.scrim;
@@ -2122,22 +2158,32 @@ function drawGachaResult() {
   if (r.mode === 'one') {
     const g = r.g, cur = r.cur, sl = GEAR_SLOTS.find((s) => s.id === g.slot);
     ctx.fillText(r.done ? (r.done === 'equip' ? '장착했다' : '팔았다  +' + fmt(r.sold)) : '뽑았다 — ' + (sl ? sl.name : ''), GAME_W / 2, GAME_H / 2 - 220);
-    const col = (x, item, title) => {
+    /* M6 6.2 (지시 #138, 폰 제보) — '▲ 더 좋다' 글자 대신 **옵션마다** 색: 뽑은 쪽이 높으면 초록, 낮으면 빨강, 같으면 그대로.
+       줄은 두 칸이 같은 순서(위력/등급 → 옵션 7축 순)라 눈이 가로로 견준다. 낀 것 칸은 등급 색 테두리 + 체크, 뽑은 것 칸은 점선. */
+    const rows = compareRows(cur, g);
+    const card = (x, item, title, mine) => {
+      const cx = x - 110, cy = GAME_H / 2 - 196, cw = 220, ch = 60 + rows.length * 22 + 100;
+      ctx.fillStyle = mine ? PALETTE.equippedBg : PALETTE.ghostBg; rr(cx, cy, cw, ch, 4); ctx.fill();
+      ctx.strokeStyle = item ? (mine ? tierColor(item.tier) : PALETTE.edge) : PALETTE.edgeSoft; ctx.lineWidth = mine && item ? 2 : 1;
+      if (!mine) ctx.setLineDash([4, 4]);
+      rr(cx + 1, cy + 1, cw - 2, ch - 2, 4); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
+      if (mine && item) drawIcon('check', cx + cw - 16, cy + 14, 16, tierColor(item.tier));
       ctx.textAlign = 'center'; ctx.font = '600 13px ' + F; ctx.fillStyle = PALETTE.ink3;
-      ctx.fillText(title, x, GAME_H / 2 - 176);
+      ctx.fillText(title, x, cy + 20);
       if (!item) { ctx.fillStyle = PALETTE.dim; ctx.font = '600 16px ' + F; ctx.fillText('비었다', x, GAME_H / 2 - 100); return; }
       drawIcon(item.slot === 'weapon' ? 'w:' + (weaponOf(item.type) || WEAPON_TYPES[0]).shape : 'g:' + item.slot, x, GAME_H / 2 - 130, 44, tierColor(item.tier));
       ctx.fillStyle = tierColor(item.tier); ctx.font = '700 17px ' + F;
       ctx.fillText(gearName(item), x, GAME_H / 2 - 88);
-      ctx.fillStyle = PALETTE.ink; ctx.font = '600 14px ' + F;
-      const pw = item.slot === 'weapon' ? '위력 ×' + ((weaponOf(item.type) || WEAPON_TYPES[0]).mult * tierPower(item.tier)).toFixed(2) : '등급 ' + item.tier + ' / ' + TIER_MAX;
-      ctx.fillText(pw, x, GAME_H / 2 - 62);
-      ctx.fillStyle = PALETTE.ink3; ctx.font = '400 13px ' + F;
-      item.affixes.forEach((a, k) => ctx.fillText(affixText(a), x, GAME_H / 2 - 38 + k * 20));
+      rows.forEach((row, k) => {
+        const side = mine ? row.l : row.r, y = GAME_H / 2 - 62 + k * 22;
+        ctx.font = (k === 0 ? '600 14px ' : '400 13px ') + F;
+        ctx.fillStyle = side == null ? PALETTE.dim : (mine || row.cmp === 0 ? (k === 0 ? PALETTE.ink : PALETTE.ink3) : (row.cmp > 0 ? PALETTE.better : PALETTE.worse));
+        ctx.fillText(side == null ? row.label + ' —' : row.label + ' ' + side, x, y);
+      });
     };
-    col(GAME_W * .27, cur, '지금 낀 것');
-    col(GAME_W * .73, g, '뽑은 것' + (cur && gearScore(g) > gearScore(cur) ? '  ▲ 더 좋다' : ''));
-    if (!r.done) { ctx.textAlign = 'center'; ctx.fillStyle = PALETTE.ink3; ctx.font = '400 12px ' + F; ctx.fillText('장착하면 지금 낀 것은 팔린다  +' + fmt(cur ? gearSellPrice(cur) : 0), GAME_W / 2, GAME_H / 2 + 150); }
+    card(GAME_W * .27, cur, '지금 낀 것', true);
+    card(GAME_W * .73, g, '뽑은 것', false);
+    if (!r.done && cur) { ctx.textAlign = 'center'; ctx.fillStyle = PALETTE.ink3; ctx.font = '400 12px ' + F; ctx.fillText('장착하면 지금 낀 것은 팔린다  +' + fmt(gearSellPrice(cur)), GAME_W / 2, GAME_H / 2 + 150); }   // M6 6.2: 빈 칸이면 '+0' 을 안 띄운다
     return;
   }
   const items = r.items, n = items.length;
@@ -2162,7 +2208,7 @@ function drawGachaResult() {
 function drawOdds() {
   ctx.fillStyle = PALETTE.scrim;
   ctx.fillRect(0, 0, GAME_W, GAME_H);
-  const lv = G.gachaLv || 0, maxed = lv >= GACHA_LV_MAX;
+  const lv = curGachaLv(), maxed = lv >= GACHA_LV_MAX;   // M6 7.2 — 입수 레벨
   const cur = TIER_ODDS[lv], nxt = maxed ? null : TIER_ODDS[lv + 1];
   ctx.textAlign = 'center';
   ctx.fillStyle = PALETTE.ink;
@@ -2186,6 +2232,7 @@ function drawOdds() {
   ctx.fillStyle = PALETTE.ink3;
   ctx.font = '400 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText('부위 5개 중 랜덤 · 무기는 해금된 종류 중 · 천장 없음', GAME_W / 2, GAME_H / 2 + 160);
+  ctx.fillText(maxed ? '입수 Lv 최대' : '입수 Lv 은 설계도를 쓴 만큼 오른다 — 다음까지 ' + Math.max(0, GACHA_XP_NEEDS[lv] - (G.gachaXp || 0)) + '개', GAME_W / 2, GAME_H / 2 + 180);
 }
 
 function drawOffline() {

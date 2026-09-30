@@ -1,11 +1,11 @@
 {
  "측정일": "2026-09-30",
  "대상": "APK 빌드 — assets/index.html 이 저장소 게임 파일과 같은지",
- "빌드도장": "51104fc62fa707a8",
+ "빌드도장": "1d061bfb19facce0",
  "APK": "zombie-survival-debug.apk",
- "APK_바이트": 81446,
+ "APK_바이트": 82917,
  "assets_경로": "assets/index.html",
  "방법": "zipfile 로 APK 안 index.html 을 꺼내 game/index.html 과 바이트 비교. 같을 때만 복사.",
  "결과": "바이트 동일",
- "옛빌드_사유": "폰이 돌린 빌드(51104fc6, 실기 device-2026-09-30-M6M7.json)의 대조 기록. 그 뒤 빌드는 apk-2026-09-30b.json(1d061bfb, 지시 #138 후속)·apk-2026-09-30c.json(538b0eff, 7단계)"
+ "옛빌드_사유": "지시 #138 후속 빌드(1d061bfb)의 대조 기록 — 6.2 행이 가리킨다. 7단계 빌드(538b0eff)의 대조는 apk-2026-09-30c.json"
 }
