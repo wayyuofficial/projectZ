@@ -1503,16 +1503,8 @@ function drawArena() {
   ctx.fillStyle = sky;
   ctx.fillRect(0, ARENA_TOP, GAME_W, skyH);
 
-  // 원경 두 겹 — 높이를 전투 영역에 비례시킨다
-  for (const layer of [{ d: 0.62, a: 0.10, off: 17 }, { d: 0.40, a: 0.18, off: 0 }]) {
-    ctx.fillStyle = 'hsla(' + zoneHue() + ',' + (10 + (G.zone * 3) % 60 * 0.5) + '%,'
-      + (24 + (G.zone % 2) * 8) + '%,' + layer.a + ')';
-    for (let i = 0; i < 10; i++) {
-      const bw = 34 + ((i * 37 + G.zone * 13 + layer.off) % 34);
-      const bh = skyH * layer.d * (0.55 + ((i * 53 + G.zone * 29 + layer.off) % 60) / 100);
-      ctx.fillRect(i * 58 - 10 + layer.off, GROUND_Y - bh, bw, bh);
-    }
-  }
+  // M7 3.1 — 원경 두 겹을 8×8 타일(벽·창·지붕)로. 구역·크기마다 한 번 굽는다(bgLayers 캐시)
+  { const bl = bgLayers(); ctx.imageSmoothingEnabled = false; ctx.drawImage(bl.build, 0, ARENA_TOP, GAME_W, bl.skyH); }
   // M5 3.2 — 비네트: 가장자리를 어둡게 해 시선을 가운데(생존자·좀비)로. 좀비 없는 상단이 넓어도 평평해 보이지 않는다
   // M5 4.1 — 그라데이션은 배치(GROUND_Y)가 같으면 다시 안 만든다
   if (!vignetteCache || vignetteCache.gy !== GROUND_Y) {
@@ -1521,16 +1513,8 @@ function drawArena() {
     vignetteCache = { gy: GROUND_Y, vg: vg };
   }
   ctx.fillStyle = vignetteCache.vg; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
-  // 바닥
-  ctx.fillStyle = PALETTE.shade30;
-  ctx.fillRect(0, GROUND_Y, GAME_W, ARENA_BOT - GROUND_Y);
-  ctx.strokeStyle = PALETTE.rust;          // M5 3.2 — 바닥선은 녹슨 금속
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(0, GROUND_Y + .5); ctx.lineTo(GAME_W, GROUND_Y + .5); ctx.stroke();
-  ctx.strokeStyle = PALETTE.lineFaint;
-  for (let x = 0; x < GAME_W; x += 40) {
-    ctx.beginPath(); ctx.moveTo(x + .5, GROUND_Y); ctx.lineTo(x - 14 + .5, ARENA_BOT); ctx.stroke();
-  }
+  // M7 3.2 — 바닥 16×16 아스팔트 타일(맨 윗줄이 녹슨 바닥선). 캐시.
+  { const bl = bgLayers(); ctx.imageSmoothingEnabled = false; ctx.drawImage(bl.ground, 0, GROUND_Y, GAME_W, bl.gh); }
 
   for (const zb of zombies) {
     const s = zb.boss ? 1.6 : 1;
@@ -1857,6 +1841,50 @@ function sprite(kind, frame, variant) {
   return pxSprite(kind + ':' + frame + ':' + (variant || ''), rows, legendVariant(kind === 'boss' ? SPRITES.zombie.legend : d.legend, variant));
 }
 SPRITES.boss = { legend: SPRITES.zombie.legend, frames: SPRITES.zombie.frames };   // 격자 2배는 sprite() 가 한다 (24×32)
+/* M7 3단계 — 배경 타일. 건물은 8×8(벽·창·지붕), 바닥은 16×16 아스팔트. 원경 두 겹은 알파로(깊이감 유지, 구역 하늘색이 비친다). */
+SPRITES.tile = {
+  legend: { W: R.concrete[1], w: R.concrete[2], O: R.concrete[3], L: R.brass[2], A: R.concrete[3], a: R.concrete[2], c: R.olive[3], r: R.rust[2] },
+  frames: {
+    wall:  ['WWWWWWWW', 'WwWWWWwW', 'WWWOOWWW', 'WWWOOWWW', 'WWWWWWWW', 'WwWWWWwW', 'WWWWWWWW', 'wwwwwwww'],
+    lit:   ['WWWWWWWW', 'WwWWWWwW', 'WWWLLWWW', 'WWWLLWWW', 'WWWWWWWW', 'WwWWWWwW', 'WWWWWWWW', 'wwwwwwww'],
+    roof:  ['OOOOOOOO', 'WwWwWwWw', 'WWWWWWWW', 'wwwwwwww', 'WWWWWWWW', 'WwWWWWwW', 'WWWWWWWW', 'wwwwwwww'],
+    ground: ['rrrrrrrrrrrrrrrr', 'AAAAAAAAAAAAAAAA', 'AAAaAAAAAAAAaAAA', 'AAAAaAAAAAAaAAAA', 'AAAAAaAAAAAAAAAA', 'AAAAAAAAAAAAAAAA', 'AaAAAAAAAAAAAAaA',
+             'AAaAAAAAcAAAAAAA', 'AAAAAAAcAAAAAAAA', 'AAAAAAAAAAAAAAAA', 'AAAAAAAAAAaAAAAA', 'AAAAAAAAAAAaAAAA', 'AAAAAAAAAAAAAAAA', 'AAcAAAAAAAAAAAAA',
+             'AAAAAAAAAAAAAAAA', 'cccccccccccccccc']
+  }
+};
+/* 구역·크기별로 한 번 굽는다(장치 해상도로 — 도트가 뭉개지지 않게). 프레임마다 drawImage 한 번. */
+let bgCache = null;
+function bgLayers() {
+  const kx = backW / GAME_W, ky = backH / GAME_H;
+  const key = G.zone + '|' + backW + '|' + GROUND_Y + '|' + ARENA_BOT;
+  if (bgCache && bgCache.key === key) return bgCache;
+  const skyH = GROUND_Y - ARENA_TOP;
+  const mk = (h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(GAME_W * kx)); c.height = Math.max(1, Math.round(h * ky)); const g = c.getContext('2d'); g.scale(kx, ky); g.imageSmoothingEnabled = false; return [c, g]; };
+  const [bc, bg] = mk(skyH);
+  const T = 8 * PX;                                   // 타일 한 변(논리) 24
+  for (const layer of [{ d: 0.62, a: 0.10, off: 17 }, { d: 0.40, a: 0.18, off: 0 }]) {
+    bg.globalAlpha = layer.a;
+    for (let i = 0; i < 10; i++) {
+      const bw = 34 + ((i * 37 + G.zone * 13 + layer.off) % 34);
+      const bh = skyH * layer.d * (0.55 + ((i * 53 + G.zone * 29 + layer.off) % 60) / 100);
+      const x0 = i * 58 - 10 + layer.off, cols = Math.max(1, Math.round(bw / T)), rows = Math.max(1, Math.round(bh / T));
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const lit = ((i * 7 + r * 5 + c * 3 + G.zone) % 9) === 0;       // 드문드문 불 켜진 창
+        const spr = sprite('tile', r === 0 ? 'roof' : (lit ? 'lit' : 'wall'));
+        bg.drawImage(spr, x0 + c * T, skyH - (rows - r) * T, T, T);
+      }
+    }
+  }
+  bg.globalAlpha = 1;
+  const gh = ARENA_BOT - GROUND_Y;
+  const [gc, gg] = mk(gh);
+  const GT = 16 * PX;                                 // 48
+  const gs = sprite('tile', 'ground');
+  for (let x = 0; x < GAME_W; x += GT) gg.drawImage(gs, x, 0, GT, GT);
+  bgCache = { key: key, build: bc, ground: gc, skyH: skyH, gh: gh };
+  return bgCache;
+}
 
 const iconCache = new Map();
 let vignetteCache = null;
