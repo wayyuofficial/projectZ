@@ -1539,21 +1539,15 @@ function drawArena() {
     // 그림자
     ctx.fillStyle = PALETTE.shade35;
     ctx.beginPath(); ctx.ellipse(zb.x, fy + 2, 14 * s, 4 * s, 0, 0, 6.284); ctx.fill();
-    const body = zb.flash > 0 ? PALETTE.flash
-      : (zb.boss ? (zb.charge > 0 ? PALETTE.bossCharge : PALETTE.boss) : PALETTE.zombie);
     if (zb.boss && zb.charge > 0) {          // 돌진 중에는 뒤로 잔상을 남긴다
       ctx.fillStyle = PALETTE.bossGlow;
       ctx.fillRect(zb.x + 8 * s, fy - 46 * s, 30 * s, 44 * s);
     }
-    // 왼쪽으로 뻗은 팔 — 진행 방향을 알려준다
-    ctx.fillStyle = body;
-    ctx.fillRect(zb.x - 22 * s, fy - 34 * s + bob, 12 * s, 6 * s);
-    rr(zb.x - 11 * s, fy - 40 * s + bob, 24 * s, 40 * s, 6 * s); ctx.fill();
-    ctx.fillStyle = zb.flash > 0 ? PALETTE.flash : PALETTE.zombieLimb;
-    rr(zb.x - 11 * s, fy - 55 * s + bob, 19 * s, 16 * s, 5 * s); ctx.fill();
-    // 눈 (왼쪽을 본다)
-    ctx.fillStyle = zb.flash > 0 ? PALETTE.zombie : PALETTE.zombieDark;
-    ctx.fillRect(zb.x - 8 * s, fy - 49 * s + bob, 4 * s, 3 * s);
+    // M7 2.2·2.3 — 도트. 걷기 2프레임(wob 로 박자), 피격은 flash 변형, 보스 돌진은 blood 램프. body 색은 안 쓴다(변형 범례가 대신)
+    const frame = (Math.floor(zb.wob * 1.2) % 2) ? 'walk2' : 'walk1';
+    const variant = zb.flash > 0 ? 'flash' : (zb.boss && zb.charge > 0 ? 'blood' : zombieBand(G.zone));
+    if (zb.boss) drawPx(sprite('boss', frame, variant), zb.x - 12 * PX, fy - 32 * PX + bob, false);
+    else drawPx(sprite('zombie', frame, variant), zb.x - 6 * PX, fy - 16 * PX + bob, false);
     const w = 34 * s, pct = Math.max(0, zb.hp / zb.max);
     ctx.fillStyle = PALETTE.shade55;
     ctx.fillRect(zb.x - w / 2, fy - 66 * s + bob, w, 4);
@@ -1583,7 +1577,7 @@ function drawArena() {
     ctx.fillStyle = PALETTE.shade35;
     ctx.beginPath(); ctx.ellipse(x, fy + 2, 15, 4, 0, 0, 6.284); ctx.fill();
     // M7 2.1 — 생존자 도트(12×16, 픽셀 3px = 36×48). 숨 쉬기 2프레임. 오른쪽을 본다.
-    drawPx(sprite('survivor', (Math.floor(performance.now() / 500) % 2) ? 'idle2' : 'idle'), x - 6 * PX, fy - 16 * PX, false);
+    drawPx(sprite('survivor', shots.length ? 'shoot' : ((Math.floor(performance.now() / 500) % 2) ? 'idle2' : 'idle')), x - 6 * PX, fy - 16 * PX, false);
     ctx.fillStyle = wt;
     if (w.shape === 'wide')      ctx.fillRect(x + 12, fy - 38, 26, 9);
     else if (w.shape === 'long') ctx.fillRect(x + 12, fy - 36, 34, 5);
@@ -1788,9 +1782,81 @@ const SPRITES = {
     }
   }
 };
-function sprite(kind, frame) {
-  const d = SPRITES[kind]; return pxSprite(kind + ':' + frame, d.frames[frame], d.legend);
+/* 좀비 — 왼쪽을 보고 팔을 앞으로. 구역에 따라 램프를 바꾼다(정본 "좀비 스프라이트 재사용, 구역별 색 변형"):
+   구역 1~7 올리브 · 8~15 콘크리트 · 16~23 녹 · 24~30 피. 보스는 같은 격자를 2배(24×32) — 픽셀 크기는 같다. */
+SPRITES.zombie = {
+  legend: { O: R.olive[3], Z: R.olive[1], z: R.olive[2], E: R.blood[1], T: R.concrete[2], t: R.concrete[3], P: R.concrete[1], B: R.rust[2] },
+  frames: {
+    walk1: [
+      '....OOOO....',
+      '...OZZZZO...',
+      '..OZzZZZZO..',
+      '..OZEZZZZO..',
+      '..OZZZZZZO..',
+      '...OzzzzO...',
+      '..OOTTTTO...',
+      'OOTTTTTTTO..',
+      '.OOtTTTTTO..',
+      '...OtTTTtO..',
+      '...OTTTTTO..',
+      '...OPPPPPO..',
+      '...OPP.PPO..',
+      '...OPP.PPO..',
+      '...OBB.BBO..',
+      '...OOO.OOO..'],
+    walk2: [
+      '....OOOO....',
+      '...OZZZZO...',
+      '..OZzZZZZO..',
+      '..OZEZZZZO..',
+      '..OZZZZZZO..',
+      '...OzzzzO...',
+      '..OOTTTTO...',
+      '.OOTTTTTTO..',
+      'OOtTTTTTTO..',
+      '...OtTTTtO..',
+      '...OTTTTTO..',
+      '...OPPPPPO..',
+      '..OPP..PPO..',
+      '..OPP...PPO.',
+      '..OBB...BBO.',
+      '..OOO...OOO.']
+  }
+};
+SPRITES.survivor.frames.shoot = [
+  '....OOOO....',
+  '...OHHHHO...',
+  '..OHHHHHHO..',
+  '..OSSSSSSO..',
+  '..OSSSESEO..',
+  '..OsSSSSsO..',
+  '...OSSSSO...',
+  '..OJJjjJJOOO',
+  '.OJJJjjJJJSO',
+  '.OkJJJJJJkOO',
+  '.OkJJJJJJkO.',
+  '..OPPPPPPO..',
+  '..OPP..PPO..',
+  '..OPP..PPO..',
+  '..OBB..BBO..',
+  '..OOO..OOO..'];
+/* 변형 범례: 구역 램프 스왑 · 피격 플래시. 범례만 바꾸고 격자는 같다 — 캐시 키에 변형 이름이 들어간다. */
+const ZOMBIE_BANDS = [[7, 'olive'], [15, 'concrete'], [23, 'rust'], [30, 'blood']];
+function zombieBand(z) { for (const b of ZOMBIE_BANDS) if (z <= b[0]) return b[1]; return 'blood'; }
+function legendVariant(base, variant) {
+  if (variant === 'flash') { const o = {}; for (const k in base) o[k] = PALETTE.flash; return o; }
+  if (variant && R[variant]) {          // 램프 스왑: 피부(Z·z)만 그 계열로, 아웃라인은 그 계열의 4단
+    const o = Object.assign({}, base); o.Z = R[variant][1]; o.z = R[variant][2]; o.O = R[variant][3]; return o;
+  }
+  return base;
 }
+function scale2(rows) { const out = []; for (const r of rows) { const d = r.split('').map((c) => c + c).join(''); out.push(d, d); } return out; }
+function sprite(kind, frame, variant) {
+  const d = SPRITES[kind];
+  const rows = kind === 'boss' ? scale2(SPRITES.zombie.frames[frame]) : d.frames[frame];
+  return pxSprite(kind + ':' + frame + ':' + (variant || ''), rows, legendVariant(kind === 'boss' ? SPRITES.zombie.legend : d.legend, variant));
+}
+SPRITES.boss = { legend: SPRITES.zombie.legend, frames: SPRITES.zombie.frames };   // 격자 2배는 sprite() 가 한다 (24×32)
 
 const iconCache = new Map();
 let vignetteCache = null;
