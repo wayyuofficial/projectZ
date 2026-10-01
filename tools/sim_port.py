@@ -99,7 +99,6 @@ QUEST_PLANS = int(num("QUEST_PLANS"))
 RECLEAR_PLANS = int(num("RECLEAR_PLANS"))       # 다시 깨는 단계
 LEGACY_BP_RATIO = num("LEGACY_BP_RATIO")            # v5 저장본 이전에만
 LEGACY_GACHA_COST_FRAC = num("LEGACY_GACHA_COST_FRAC")
-SELL_PRICE_FRAC = num("SELL_PRICE_FRAC")      # 사례 27 (2026-09-30)
 ZONE_COUNT = int(num("ZONE_COUNT"))
 TIER_MAX = int(num("TIER_MAX"))
 MAX_ONSCREEN_ZOMBIES = int(num("MAX_ONSCREEN_ZOMBIES"))
@@ -114,9 +113,22 @@ TIER_MAX_PORT = int(num("TIER_MAX"))
 GEAR_SHAPES = int(num("GEAR_SHAPES"))
 GEAR_AFFIXES = int(num("GEAR_AFFIXES"))
 GEAR_SLOT_IDS = ["weapon", "head", "body", "hands", "feet"]
-AFFIX_DEFS = table("AFFIX_DEFS")            # M6 1.2 — 게임에서 읽는다 (전엔 손으로 적어 둬 어긋날 수 있었다)
-AFFIX_IDS = [a["id"] for a in AFFIX_DEFS]
-AFFIX_PER = {a["id"]: a["per"] for a in AFFIX_DEFS}
+# M10 (지시 #155) — 장비 융합 사다리. 무작위 옵션(AFFIX_DEFS)·판매(SELL_PRICE_FRAC)는 없어졌다. 값은 전부 원본에서 읽는다.
+GEAR_STEPS = int(num("GEAR_STEPS"))
+assert re.search(r"LADDER = 8 \* GEAR_STEPS", SRC), "원본 LADDER 식이 바뀌었다 — 여기도 맞춘다"
+LADDER = 8 * GEAR_STEPS
+FUSE_N = int(num("FUSE_N"))
+WEAPON_POW_G = num("WEAPON_POW_G")
+OWN_PER_TIER = num("OWN_PER_TIER")
+def _dict(name):
+    m = re.search(r"const\s+" + name + r"\s*=\s*\{([^}]*)\}", SRC)
+    if not m:
+        raise ValueError("game/index.html 에서 표 %s 를 못 찾았다" % name)
+    return {k: (v[1:-1] if v[0] == "'" else float(v)) for k, v in re.findall(r"(\w+)\s*:\s*('[^']*'|-?[\d.]+)", m.group(1))}
+SLOT_STAT = _dict("SLOT_STAT")
+SLOT_EQUIP_G = _dict("SLOT_EQUIP_G")
+REBIRTH_MIN_ZONE = int(num("REBIRTH_MIN_ZONE"))
+MEDAL_PER = num("MEDAL_PER")
 KEY_MAX = int(num("KEY_MAX"))
 SUPPLY_SHARE = num("SUPPLY_SHARE")
 LOGIN_DAYS = int(num("LOGIN_DAYS"))
@@ -132,7 +144,6 @@ BOSS_CHARGE_TIME = num("BOSS_CHARGE_TIME")
 BOSS_CHARGE_MULT = num("BOSS_CHARGE_MULT")
 TIER_COST_MULT = num("TIER_COST_MULT")
 TIER_POWER_MULT = num("TIER_POWER_MULT")     # M6 재설계 — 등급 위력 곱하기
-AFFIX_TIER_MULT = num("AFFIX_TIER_MULT")
 OFFLINE_MAX_HOURS = num("OFFLINE_MAX_HOURS")
 OFFLINE_RATE = num("OFFLINE_RATE")
 AD_BOOST_MIN = num("AD_BOOST_MIN")
@@ -222,27 +233,35 @@ MIRRORED = {
     "applyDamage": "44f3fc0acd0ea484",
     "applyOffline": "7c67a2a215adcf54",
     "attacksPerSec": "62c1a324deffd5c2",
+    "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "5aa9c62e7fe85cc7",
+    "buildButtons": "8209d219089ad51e",
     "buyStat": "e92f891d410963f4",
+    "canEquipBetter": "66a45cfc3ca1b1d8",
+    "canFuse": "236dc9baad626747",
+    "canRebirth": "a66b83d63aeb50bb",
     "curGachaLv": "e40d82faf896292f",
-    "curWeapon": "1109c7c05ab58ece",
+    "curWeapon": "837d285bf3118179",
     "dailyBudget": "51f1b98162132ed0",
     "dailyQuests": "79f19f9555b60faa",
     "damageZombie": "de858f78fa27b6f3",
     "dayIndex": "e395fb011be7dfbc",
-    "equipNew": "8874ff771d18a647",
+    "doRebirth": "20f05d7d78b4e563",
+    "equipBest": "0f92c8c2f2743745",
     "firstClear": "469a179f675bd42f",
     "fitGame": "c865c9f0968c6437",
-    "freshState": "23359dd1ff193bc4",
+    "freshState": "5ecb387d6fabef94",
+    "fuseAll": "82b2582d09c7805e",
     "gachaCost": "b5e4af366ce8db89",
     "gachaLevel": "17ab77ebf0a0fe9d",
     "gachaRoll": "c0bb58367ea73ed8",
-    "gearMult": "c2392bb827fd20df",
-    "gearScore": "a3b816f8da80d6a2",
-    "gearSellPrice": "e690a029f9f04ded",
+    "gainGear": "506e3715d9741927",
+    "gearItem": "8e278c2d1e03be09",
+    "gearMult": "42c8e66405ac5b6f",
+    "gearScore": "2d4b4f6590669ec3",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "86e5dbdf14ea5395",
+    "idxOf": "eef263846326e9ec",
     "isBossKill": "e461a4a51bbb69c5",
     "killReward": "0ef3ffe5d2eb73ba",
     "killZombie": "375971d82ed16341",
@@ -250,33 +269,34 @@ MIRRORED = {
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "69408f80ab6e2751",
     "maxHP": "85e54826f897f7c7",
-    "migrate": "90c7219e95a4aaf8",
+    "medalMult": "46c08bcbefe88ff9",
+    "medalsFor": "02ffb8ef36768afa",
+    "migrate": "f7c1fdbe6654cddf",
     "onDeath": "b20ea8a7475bafbb",
     "openSupply": "ef504f009bbf894e",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "playerDPS": "06d866ae2129b84d",
-    "pullGacha": "52ae2e4d3cbedd80",
+    "pullGacha": "851dba3af0fc6fb0",
     "questBand": "47a268e16a55bfbd",
     "questOpen": "14e21773cabeb67b",
     "questReady": "d56a30909b205279",
     "regenPerSec": "73badd17c9fc2857",
     "rewardMult": "bff5bcb3e94a3395",
-    "rollGear": "b7d88f684d0f1903",
+    "rollGear": "d5a4ca6ac6f36122",
     "rollTier": "802162caae06b933",
     "rollTierOdds": "ed4822ee0404a536",
     "rolloverDay": "9ddc72a3bfa1d93a",
-    "sellGear": "36cf55b4c1d1a51b",
     "spawnZombie": "d4054c63f48a4d4a",
     "stageKills": "4cb2b09008d21635",
     "statCost": "3915c9b212b37571",
     "statDef": "e7ad6087978fd6ec",
-    "statOf": "4c9956bbe1b533e2",
+    "statOf": "64433344a9e069b6",
     "stepCombat": "477e00f37b335b3e",
     "tabRowY": "d001ac81a8afa161",
     "takeQuest": "dba6cbbc58e50f5e",
     "todayQuests": "5da0fbfeb4eb3edf",
     "weaponOf": "cd23351858d3c448",
-    "weaponPower": "5ff1eee2d3a62b39",
+    "weaponPower": "8fcbdfc907029bf9",
     "zoneDPS": "9abab3ae0b004352",
     "zoneHP": "eafea50cbb2f5af6",
     "zoneReward": "1a11949b7141abd1",
@@ -394,7 +414,8 @@ class Sim(object):
     # ---- 저장 ----
     def freshState(self):
         return dict(v=SAVE_VERSION, parts=0.0, plans=0.0, zone=1, kills=0,
-                    gear=dict(weapon=dict(slot="weapon", type="pipe", tier=1, affixes=[], zone=1)), bag=[],   # M6 2.3
+                    gear=dict(weapon=0), inv=self.emptyInv(), own=dict(self.emptyInv(), weapon=[1] + [0] * (LADDER - 1)), fresh={},   # M10
+                    medals=0, rebirths=0,
                     day=0, maxDay=0, quest={}, questTaken={},   # 지시 #151
                     login=dict(streak=0, lastDay=-1), keys=KEY_MAX,
                     lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0),
@@ -418,7 +439,7 @@ class Sim(object):
             if not gear.get("weapon"):
                 gear["weapon"] = dict(slot="weapon", type=cur, tier=owned.get(cur, 1), affixes=[], zone=raw.get("bestZone") or 1)
             for wid, tr in owned.items():
-                if wid != cur and tr > 0 and any(w["id"] == wid for w in WEAPON_TYPES):
+                if wid != cur and tr > 0 and wid in ("pipe", "rifle", "shotgun", "flamer", "crossbow", "mine", "mg", "launcher", "saw", "rail"):   # M10: 옛 무기 id
                     bag.append(dict(slot="weapon", type=wid, tier=tr, affixes=[], zone=raw.get("bestZone") or 1))
             raw = dict(raw, v=5, gear=gear, bag=bag, gachaLv=0)
             raw.pop("owned", None); raw.pop("weapon", None)
@@ -429,14 +450,41 @@ class Sim(object):
             lv_old = max(0, min(GACHA_LV_MAX, raw.get("gachaLv") or 0))
             raw = dict(raw, v=6, plans=cnt, gachaXp=(GACHA_XP_NEEDS[lv_old - 1] if lv_old > 0 else 0), clearBest=(raw.get("bestZone") or 1) * STAGES_PER_ZONE)
             raw.pop("gachaLv", None)
+        if raw.get("v") == 6:                 # M10: 낀 장비·가방 → 사다리 칸 개수 (원본 migrate 와 같은 구조)
+            old_mult = dict(pipe=1.0, rifle=1.45, shotgun=1.9, flamer=2.6, crossbow=3.4, mine=4.5, mg=6.0, launcher=8.0, saw=10.5, rail=14.0)
+            def to_idx(g):
+                if not isinstance(g, dict):
+                    return None
+                if g.get("slot") == "weapon":
+                    p = old_mult.get(g.get("type"), 1.0) * (1.5 ** ((g.get("tier") or 1) - 1))
+                    return max(0, min(LADDER - 1, jsround(math.log(p) / math.log(WEAPON_POW_G))))
+                return self.idxOf(max(1, min(TIER_MAX_PORT, g.get("tier") or 1)), 3)
+            inv, own, gear = self.emptyInv(), self.emptyInv(), {}
+            for g in list((raw.get("gear") or {}).values()) + list(raw.get("bag") or []):
+                k = to_idx(g)
+                if k is None or g.get("slot") not in inv:
+                    continue
+                inv[g["slot"]][k] += 1; own[g["slot"]][k] = 1
+            for sl, g in (raw.get("gear") or {}).items():
+                k = to_idx(g)
+                if k is not None and sl in own:
+                    gear[sl] = k; inv[sl][k] = max(0, inv[sl][k] - 1)
+            if gear.get("weapon") is None:
+                gear["weapon"] = 0; own["weapon"][0] = 1
+            raw = dict(raw, v=7, gear=gear, inv=inv, own=own, fresh={}, medals=0, rebirths=0)
+            raw.pop("bag", None)
         if raw.get("v") != SAVE_VERSION:
             return self.freshState()
         s = self.freshState()
         for k in list(s.keys()):
             if k in raw:
                 s[k] = raw[k]
-        if not (s.get("gear") or {}).get("weapon"):
-            s["gear"] = dict(s.get("gear") or {}, **self.freshState()["gear"])
+        if not isinstance((s.get("gear") or {}).get("weapon"), (int, float)):
+            s["gear"] = dict(s.get("gear") or {}, weapon=0)
+        for sl in GEAR_SLOT_IDS:   # M10 — 칸 배열 길이를 맞춘다
+            s["inv"][sl] = [max(0, int(((s.get("inv") or {}).get(sl) or [])[k] if k < len(((s.get("inv") or {}).get(sl) or [])) else 0)) for k in range(LADDER)]
+            s["own"][sl] = [1 if (k < len(((s.get("own") or {}).get(sl) or [])) and ((s.get("own") or {}).get(sl) or [])[k]) else 0 for k in range(LADDER)]
+        s["own"]["weapon"][int(s["gear"]["weapon"])] = 1
         # 옛 저장본에는 inc 가 없다. 0 으로 채운다 (원본과 같다)
         lv = dict(atk=0, spd=0, hp=0, reg=0, inc=0)
         lv.update(raw.get("lv") or {})
@@ -450,7 +498,7 @@ class Sim(object):
     def statOf(self, i):
         s = self.statDef(i); lv = self.G["lv"].get(i, 0)
         # M6 1.2 — add 면 더하기 성장, cap 은 최종 상한 (원본 statOf 와 같은 구조)
-        v = (s["base"] + s["add"] * lv if s.get("add") is not None else s["base"] * (s["growth"] ** lv)) * self.gearMult(i)
+        v = (s["base"] + s["add"] * lv if s.get("add") is not None else s["base"] * (s["growth"] ** lv)) * self.gearMult(i) * self.medalMult(i)   # M10 2
         return min(s["cap"], v) if s.get("cap") is not None else v
 
     def statCost(self, i):
@@ -460,13 +508,102 @@ class Sim(object):
     def weaponOf(self, i):
         return next(w for w in WEAPON_TYPES if w["id"] == i)
 
-    def curWeapon(self):
-        return (self.G.get("gear") or {}).get("weapon") or dict(slot="weapon", type="pipe", tier=1, affixes=[], zone=1)
+    def curWeapon(self):                      # M10 — 칸 번호에서 묶음으로
+        k = (self.G.get("gear") or {}).get("weapon")
+        return self.gearItem("weapon", int(k) if isinstance(k, (int, float)) else 0)
 
     def weaponPower(self):
-        cw = self.curWeapon()
-        w = self.weaponOf(cw["type"])
-        return w["mult"] * (TIER_POWER_MULT ** (cw["tier"] - 1))
+        return WEAPON_POW_G ** self.curWeapon()["k"]   # M10: 1.15^칸
+
+    # ---- M10 사다리 (원본과 같은 식) ----
+    @staticmethod
+    def emptyInv():
+        return {sl: [0] * LADDER for sl in GEAR_SLOT_IDS}
+
+    @staticmethod
+    def idxOf(tier, step):
+        return (tier - 1) * GEAR_STEPS + (GEAR_STEPS - step)
+
+    @staticmethod
+    def idxTier(k):
+        return k // GEAR_STEPS + 1
+
+    @staticmethod
+    def gearItem(slot, k):
+        it = dict(slot=slot, k=k, tier=k // GEAR_STEPS + 1, step=GEAR_STEPS - (k % GEAR_STEPS))
+        if slot == "weapon":
+            it["type"] = WEAPON_TYPES[min(len(WEAPON_TYPES) - 1, (k * len(WEAPON_TYPES)) // LADDER)]["id"]
+        else:
+            it["shape"] = min(GEAR_SHAPES - 1, (k * GEAR_SHAPES) // LADDER)
+        return it
+
+    def gainGear(self, g):
+        is_new = not self.G["own"][g["slot"]][g["k"]]
+        self.G["inv"][g["slot"]][g["k"]] += 1; self.G["own"][g["slot"]][g["k"]] = 1
+        if is_new:
+            self.G.setdefault("fresh", {})[g["slot"]] = True
+        return is_new
+
+    def fuseAll(self):
+        made = 0
+        for sl in GEAR_SLOT_IDS:
+            inv = self.G["inv"][sl]
+            for k in range(LADDER - 1):
+                q = inv[k] // FUSE_N
+                if not q:
+                    continue
+                inv[k] -= q * FUSE_N; inv[k + 1] += q; made += q
+                if not self.G["own"][sl][k + 1]:
+                    self.G["own"][sl][k + 1] = 1; self.G.setdefault("fresh", {})[sl] = True
+        if made:
+            self.questProgress("fuse", made)
+        return made
+
+    def bestOwned(self, sl):
+        own = self.G["own"][sl]
+        for k in range(LADDER - 1, -1, -1):
+            if own[k]:
+                return k
+        return -1
+
+    def equipBest(self):
+        n = 0
+        for sl in GEAR_SLOT_IDS:
+            k = self.bestOwned(sl)
+            if k >= 0 and self.G["gear"].get(sl) != k:
+                self.G["gear"][sl] = k; n += 1
+        if n:
+            self.questProgress("equip", n)
+        return n
+
+    def canFuse(self):
+        return any(self.G["inv"][sl][k] >= FUSE_N for sl in GEAR_SLOT_IDS for k in range(LADDER - 1))
+
+    def canEquipBetter(self):
+        return any(self.bestOwned(sl) >= 0 and (not isinstance(self.G["gear"].get(sl), (int, float)) or self.bestOwned(sl) > self.G["gear"][sl]) for sl in GEAR_SLOT_IDS)
+
+    # ---- M10 2 환생 ----
+    @staticmethod
+    def medalsFor(bz):
+        return math.floor((bz - (REBIRTH_MIN_ZONE - 1)) ** 1.5) if bz >= REBIRTH_MIN_ZONE else 0
+
+    def medalMult(self, sid):
+        return 1 + MEDAL_PER * (self.G.get("medals") or 0) if sid in ("atk", "inc") else 1.0
+
+    def canRebirth(self):
+        return (self.G.get("bestZone") or 1) >= REBIRTH_MIN_ZONE
+
+    def doRebirth(self):
+        if not self.canRebirth():
+            return 0
+        gain = self.medalsFor(self.G.get("bestZone") or 1)
+        self.G["medals"] = (self.G.get("medals") or 0) + gain; self.G["rebirths"] = (self.G.get("rebirths") or 0) + 1
+        self.G.update(zone=1, bestZone=1, kills=0, parts=0.0, clearBest=0)
+        for k in list(self.G["lv"].keys()):
+            self.G["lv"][k] = 0
+        self.G["hp"] = self.maxHP()
+        self.killIndex = 0; self.zombies = []; self.reviveOffer = None
+        return gain
 
     def hitDamage(self):
         # M6 1.2 — 원본은 한 발마다 굴린다(hitDamage). 자는 **기대값**(원본 expectedHit)으로 잰다 — 정본 '치명타' 행.
@@ -515,54 +652,26 @@ class Sim(object):
         return max(1, min(TIER_MAX_PORT, t))
 
     def rollGear(self, z, slot_id=None, tier_given=None):
-        # M6 2.2 — slot 없으면 5부위 중 랜덤(무기 포함). tier_given 이면 그 등급.
+        # M10 — 부위 무작위 · 등급(영원은 초월로) · 단계 5~1 무작위 → 칸
         slot = slot_id or GEAR_SLOT_IDS[int(self.rnd() * len(GEAR_SLOT_IDS))]
-        tier = tier_given or self.rollTier(z)
-        shape = int(self.rnd() * GEAR_SHAPES)
-        if slot == "weapon":
-            pool_w = [w for w in WEAPON_TYPES if self.weaponUnlocked(w)]
-            w = pool_w[int(self.rnd() * len(pool_w))]
-            n_aff_w = min(GEAR_AFFIXES, 2 if self.rnd() < (tier - 1) / float(TIER_MAX_PORT - 1) else 1)
-            pool_a = list(AFFIX_IDS); aff_w = []
-            for _ in range(n_aff_w):
-                if not pool_a:
-                    break
-                aid = pool_a.pop(int(self.rnd() * len(pool_a)))
-                aff_w.append({"id": aid, "mult": 1 + AFFIX_PER[aid] * (AFFIX_TIER_MULT ** (tier - 1)) * (0.7 + self.rnd() * 0.6)})
-            return {"slot": "weapon", "type": w["id"], "tier": tier, "affixes": aff_w, "zone": z}
-        n_aff = min(GEAR_AFFIXES, 2 if self.rnd() < (tier - 1) / float(TIER_MAX_PORT - 1) else 1)
-        pool = list(AFFIX_IDS)
-        affixes = []
-        for _ in range(n_aff):
-            if not pool:
-                break
-            k = int(self.rnd() * len(pool))
-            aid = pool.pop(k)
-            affixes.append({"id": aid, "mult": 1 + AFFIX_PER[aid] * (AFFIX_TIER_MULT ** (tier - 1)) * (0.7 + self.rnd() * 0.6)})
-        return {"slot": slot, "shape": shape, "tier": tier, "affixes": affixes, "zone": z}
+        tier = min(TIER_MAX_PORT - 1, tier_given or self.rollTier(z))
+        step = 1 + int(self.rnd() * GEAR_STEPS)
+        return self.gearItem(slot, self.idxOf(tier, step))
 
     @staticmethod
     def gearScore(g):
-        if not g:
-            return 0.0
-        if g.get("slot") == "weapon":       # M6 2.3 — 무기 값어치 = 위력 (원본과 같이)
-            w = next((x for x in WEAPON_TYPES if x["id"] == g.get("type")), WEAPON_TYPES[0])
-            v = w["mult"] * (TIER_POWER_MULT ** (g["tier"] - 1))
-        else:
-            v = 2.1 ** (g["tier"] - 1)
-        for a in g["affixes"]:
-            v *= a["mult"]
-        return v
+        return g["k"] if g else -1          # M10 — 칸 번호가 곧 값어치
 
     def gearMult(self, sid):
         m = 1.0
-        for slot in GEAR_SLOT_IDS:
-            g = (self.G.get("gear") or {}).get(slot)
-            if not g:
+        for sl in GEAR_SLOT_IDS:
+            if SLOT_STAT.get(sl) != sid:
                 continue
-            for a in g["affixes"]:
-                if a["id"] == sid:
-                    m *= a["mult"]
+            k = (self.G.get("gear") or {}).get(sl)
+            if sl != "weapon" and isinstance(k, (int, float)):
+                m *= SLOT_EQUIP_G[sl] ** (k + 1)
+            own = (self.G.get("own") or {}).get(sl) or []
+            m *= 1 + OWN_PER_TIER * sum(self.idxTier(i) for i, o in enumerate(own) if o)
         return m
 
     def _income(self, kind, v):
@@ -607,44 +716,19 @@ class Sim(object):
     def gachaCost(self, n):
         return n * GACHA_COST_PLANS                     # M6 7.1
 
-    def sellGear(self, g):
-        v = self.gearSellPrice(g)
-        self.G["parts"] += v
-        self._income("sell", v)
-        return v
-
-    def equipNew(self, g):
-        self.G.setdefault("gear", {})
-        old = self.G["gear"].get(g["slot"])
-        self.G["gear"][g["slot"]] = g
-        return self.sellGear(old) if old else 0.0
-
     def pullGacha(self, n):
-        # 원본(지시 #150): 뽑은 것은 가방에 담기고 사람이 부위 칸을 눌러 고른다. 자는 그 사람을 **'더 좋으면 끼고 나머지는 판다'** 로 흉내 낸다
-        # (가방 팝업에서 ▲ 를 끼고 '나쁜 것' 을 파는 사람). 그래서 가방을 안 들고 바로 처리한다 — 결과(낀 것·부품)는 같다.
+        # M10 — 뽑은 칸은 개수로 쌓인다(판매·가방·자동 장착 없음). 원본과 같다. 자(auto_run)는 뽑은 뒤 일괄 융합·최고 장착을 누르는 사람이다.
         cost = self.gachaCost(n)
         if self.G.get("plans", 0.0) < cost:
             return False
         self.G["plans"] = self.G.get("plans", 0.0) - cost
         self.G["gachaXp"] = self.G.get("gachaXp", 0) + cost   # M6 7.2
         self.questProgress("pull", n)   # 지시 #151
-        items = []; gain = 0.0
+        items = []
         for _ in range(n):
-            g = self.gachaRoll()
-            cur = (self.G.get("gear") or {}).get(g["slot"])
-            if (not cur) or self.gearScore(g) > self.gearScore(cur):
-                v = self.equipNew(g); items.append({"g": g, "r": "equip", "gain": v}); self.questProgress("equip", 1)
-            else:
-                v = self.sellGear(g); items.append({"g": g, "r": "sell", "gain": v}); self.questProgress("sell", 1)
-            gain += v
-        self.gachaResult = {"mode": "one" if n == 1 else "ten", "items": items, "gain": gain}
+            g = self.gachaRoll(); items.append({"g": g, "isNew": self.gainGear(g)})
+        self.gachaResult = {"mode": "one" if n == 1 else "ten", "items": items}
         return True
-
-    # M6 7.2 — 뽑기 강화(부품, gachaUpCost·upgradeGacha)는 없어졌다. 레벨은 pullGacha 가 올린 gachaXp 에서 나온다.
-
-    def gearSellPrice(self, g):
-        return (self.zoneIncome(g.get("zone") or self.G["zone"]) * SELL_PRICE_FRAC   # 사례 27: 0.09 가 여기 손으로 적혀 있었다 — 게임에서 읽는다
-                * math.pow(1.55, g["tier"] - 1) * self.statOf("inc"))
 
     @staticmethod
     def zoneKills(z):
@@ -657,11 +741,6 @@ class Sim(object):
     @staticmethod
     def isBossKill(z, idx):
         return (z % BOSS_EVERY == 0) and idx == Sim.zoneKills(z) - 1
-
-    def weaponUnlocked(self, w):
-        return w.get("unlock", 1) <= self.G.get("bestZone", 1)
-
-    # M6 2.3 — weaponUpgradeCost·buyWeapon·equip 은 없어졌다(원본과 같이). 무기는 뽑기·equipGear.
 
     def boostActive(self):
         return self.now_ms < (self.G.get("boostUntil") or 0)
@@ -812,7 +891,7 @@ class Sim(object):
             b("daily_close", 186, dy + 10, 168, ROW_H, "ghost")
             return bs
         TW, TG = 160, 6                       # 지시 #151: 탭 셋(일일 탭이 빠졌다)
-        for i, tid in enumerate(("stat", "weapon", "gear")):
+        for i, tid in enumerate(("stat", "rebirth", "gear")):   # M10: 무기 탭 → 환생 탭
             b("tab_" + tid, 24 + i * (TW + TG), self.tabRowY(), TW, ROW_H,
               "on" if self.tab == tid else "off")
         b("daily_btn", GAME_W - 24 - 58, L["ARENA_BOT"] - 58 - 8, 58, 58, "mini")   # 지시 #151 — 전투 화면 오른쪽 아래
@@ -837,6 +916,8 @@ class Sim(object):
             put_row("gear_sum", "ghost", False, None)
             for n in (1, 10):                                   # M6 2.2 뽑기 줄
                 put_row("gacha_%d" % n, "buy", self.G.get("plans", 0.0) >= self.gachaCost(n), None)
+            put_row("fuse_all", "buy", self.canFuse(), None)                 # M10 — 일괄 융합 · 최고 장착
+            put_row("equip_best", "buy", self.canEquipBetter(), None)
             put_row("gacha_lv", "ghost", False, None)                    # M6 7.2 — 입수 레벨 줄(정보) · 3.2 확률 보기
             put_row("odds_view", "off", True, None)
             # M6 재설계 — 가방·자동 판매 줄 없음
@@ -845,11 +926,11 @@ class Sim(object):
                 cost = self.statCost(s["id"])
                 put_row("stat", "buy", self.G["parts"] >= cost, s["id"])
         else:
-            # M6 2.3 — 낀 무기 1줄 · 가방의 무기(값비싼 것부터) · 다음 풀 종류 1줄
-            cw = self.curWeapon()
-            put_row("weapon_cur", "equipped", False, cw["type"])
-            for w in WEAPON_TYPES:                              # M6 재설계 — 종류 10줄(풀/잠금), 누르는 줄 아님
-                put_row("weapon_type", "ghost", False, w["id"])
+            # M10 2.2 — 환생 탭: 훈장 · 환생하기 · 남는 것 · 처음으로
+            put_row("rebirth_info", "equipped", False, None)
+            put_row("rebirth_go", "buy", self.canRebirth(), None)
+            put_row("rebirth_keep", "ghost", False, None)
+            put_row("rebirth_reset", "ghost", False, None)
         self.listMax = max(0.0, cy[0] - (bot - top))
         self.listScroll = min(max(0.0, self.listScroll), self.listMax)
 
@@ -1213,6 +1294,7 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
                 if n and s.pullGacha(n):
                     bought = True
                     s.gachaResult = None
+                    s.fuseAll(); s.equipBest()       # M10 — 뽑은 뒤 일괄 융합·최고 장착(사람이 누르는 두 버튼)
                     if on_buy:
                         on_buy(s.t, s.G["zone"], "G:%d" % n, s.gachaCost(n))
 
