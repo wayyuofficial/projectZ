@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """장비 판매가 부품 수입의 몇 퍼센트인지 — M4 4.1 / 예측 M4-B3.
 
+**M10(2026-10-01, 지시 #155) 뒤 판매가 없다 — 판매 비중 판정은 은퇴.** 판매 수입은 늘 0 이다.
+구역 30 도달 시각은 여전히 c23(도구들 기준선 일치)이 읽으므로 그 줄만 남긴다. 종료 코드는 항상 0.
+
 조사에서 가장 많이 언급된 루프가 *장비를 쏟아내고 안 쓰는 것을 파는 것*이다.
 그 루프가 살아 있으려면 판매가 수입에서 **무시 못 할 몫**이어야 한다. M4 계획의 선은 **30% 이상**.
 
@@ -46,7 +49,7 @@ def main(argv):
     print("시드 %d · 완주 %d/%d · 구역 30 도달(중앙) %s분 · 헛돈틱 %d"
           % (len(seeds), done, len(seeds), ("%.1f" % statistics.median(mins)) if mins else "-", idle))
     print("처치 수입 %.0f · 판매 수입 %.0f" % (kill, sell))
-    print("판매 비중 %.1f%% (선 %.0f%% 이상) — %s" % (pct, LINE, "안쪽" if ok else "**미달**"))
+    print("판매 비중 %.1f%% — 은퇴(M10: 판매 없음), 판정 안 함" % pct)
 
     if a.out:
         stamp = hashlib.sha256(io.open(S.GAME, "rb").read()).hexdigest()[:16]
@@ -57,11 +60,11 @@ def main(argv):
                "구역30_도달_중앙_분": round(statistics.median(mins), 1) if mins else None,
                "처치_수입": round(kill, 2), "판매_수입": round(sell, 2),
                "판매_비중_퍼센트": round(pct, 1), "선": "%.0f%% 이상" % LINE,
-               "헛돈틱": idle, "결과": "통과" if ok else "미달",
+               "헛돈틱": idle, "결과": "은퇴(M10 판매 없음)",
                "판정하지_않는다": "M4-B3 판정은 검증자·사람 몫이다."}
         io.open(a.out, "w", encoding="utf-8").write(json.dumps(rec, ensure_ascii=False, indent=2))
         print("기록: %s" % a.out)
-    return 0 if ok else 1
+    return 0   # M10 — 판매가 없어 판정 은퇴
 
 
 if __name__ == "__main__":

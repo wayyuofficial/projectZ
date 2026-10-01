@@ -749,8 +749,7 @@ function gachaLevel(xp) { let lv = 0; for (const n of GACHA_XP_NEEDS) if ((xp ||
 function curGachaLv() { return gachaLevel(G.gachaXp); }
 function gachaRoll() { return rollGear(G.bestZone || 1, null, rollTierOdds(curGachaLv())); }
 function gachaCost(n) { return n * GACHA_COST_PLANS; }   // M6 7.1 — 장비 1개 = 설계도 1개
-/* 결과 팝업.  1회: { mode:'one', g, cur, done:null|'equip'|'sell', sold }  — 사람이 장착/판매를 고른다 (빈 부위면 바로 낀다).
-              10회: { mode:'ten', items:[{ g, r:'equip'|'sell', gain }], gain } — 더 좋으면 낀다(벗은 것은 판다), 아니면 판다. 버섯커의 10연 자동 처리. */
+/* 결과 팝업(M10): { mode:'one'|'ten', items:[{ g, isNew }] } — 뽑은 칸과 '처음 얻은 칸(NEW)' 표시만. 판매·장착 선택은 없다(개수로 쌓인다). */
 let gachaResult = null;
 let oddsPopup = false;    // M6 3.2 — 확률 팝업. TIER_ODDS[curGachaLv()] 를 그대로 그린다
 /* M6 7.2 — gachaUpCost·upgradeGacha(부품 강화)는 없어졌다. 레벨은 설계도를 쓴 만큼 오른다(pullGacha 가 gachaXp 를 올린다). */
