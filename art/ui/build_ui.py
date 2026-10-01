@@ -50,6 +50,7 @@ def icons(sheet, cols, kinds, L=24, K=4):
 
 def main():
     frame("card", "sheet_card_frame.png", 120)
+    frame("btn", "sheet_btn_frame.png", 220)
     strip("crate", "sheet_crate.png", 3, 240)
     icons("sheet_icons_a.png", 4, ["stat", "weapon", "gear", "daily", "c:parts", "c:plans", "s:atk", "s:spd", "s:hp", "s:reg", "s:inc", "s:crit"])
     icons("sheet_icons_b.png", 3, ["s:cdmg", "d:login", "d:quest", "d:supply", "d:reset", "boss", "revive", "clock", "key"])
