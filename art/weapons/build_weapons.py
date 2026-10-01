@@ -9,6 +9,8 @@ import io, os, re, json, base64
 from collections import deque
 import numpy as np
 from PIL import Image
+import sys; sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from sheet_tools import components, replace_block   # M9 0.2 공통 도구
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE))
 P = os.path.join(ROOT, "game", "index.html")
@@ -32,20 +34,6 @@ ART = {
     "saw":      (40, 0.22, 0.45),
     "rail":     (44, 0.24, 0.62),
 }
-
-
-def components(mask):
-    h, w = mask.shape; lab = np.zeros((h, w), np.int32); out = []; n = 0
-    for y0, x0 in zip(*np.nonzero(mask)):
-        if lab[y0, x0]: continue
-        n += 1; lab[y0, x0] = n; q = deque([(y0, x0)]); ys, xs = [], []
-        while q:
-            y, x = q.popleft(); ys.append(y); xs.append(x)
-            for yy, xx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
-                if 0 <= yy < h and 0 <= xx < w and mask[yy, xx] and not lab[yy, xx]:
-                    lab[yy, xx] = n; q.append((yy, xx))
-        out.append((np.array(ys), np.array(xs)))
-    return out
 
 
 def items(path, count):
@@ -83,10 +71,7 @@ def main():
     missing = set(ART) - set(art); assert not missing, "못 찾은 무기: %s" % missing
     rows = ",\n".join("  %s: { w: %d, h: %s, gx: %s, gy: %s, src: 'data:image/webp;base64,%s' }" % (k, *art[k]) for k in ART)
     js = "const WEAPON_ART = {\n" + rows + "\n};"
-    t = io.open(P, encoding="utf-8-sig").read()
-    t, n = re.subn(r"const WEAPON_ART = \{\n(?:  \w+: \{[^\n]*\},?\n)*\};", lambda m: js, t)   # 한 줄에 무기 하나 — 줄 단위로만 맞춘다(빈 블록에서 아래 코드를 삼키지 않게)
-    assert n == 1, "WEAPON_ART 블록을 못 찾았다"
-    io.open(P, "w", encoding="utf-8", newline="").write(t)
+    replace_block("WEAPON_ART", js)
     print("ok", {k: "%dx%s" % (v[0], v[1]) for k, v in art.items()}, sum(len(v[4]) for v in art.values()), "chars")
 
 

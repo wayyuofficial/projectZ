@@ -10,6 +10,8 @@
 import io, os, re, json, base64
 import numpy as np
 from PIL import Image
+import sys; sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from sheet_tools import grid_cells, merge_to, replace_block   # M9 0.2 공통 도구
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE))
 P = os.path.join(ROOT, "game", "index.html")
@@ -23,24 +25,8 @@ SHEETS = {
 }
 
 
-def bands(occ, gap):
-    """1차원 점유 배열에서 gap 픽셀 이상 비어 있는 곳으로 나눈 구간들."""
-    idx = np.nonzero(occ)[0]; out = []
-    if not len(idx): return out
-    s = p = idx[0]
-    for i in idx[1:]:
-        if i - p > gap: out.append((s, p + 1)); s = i
-        p = i
-    out.append((s, p + 1)); return out
-
-
 def cells(path):
-    a = np.array(Image.open(path).convert("RGBA")); m = a[..., 3] > 40
-    rows = []
-    for y0, y1 in bands(m.any(1), 14):
-        sub = m[y0:y1]; cols = bands(sub.any(0), 14)
-        rows.append([(y0, y1, x0, x1) for x0, x1 in cols])
-    return a, rows
+    a = np.array(Image.open(path).convert("RGBA")); return a, grid_cells(a, 14)
 
 
 def crop(a, y0, y1, x0, x1):
@@ -67,19 +53,13 @@ def main():
                     im = crop(a, *c); art[name] = enc(im, L * K / max(im.size))
             else:                                          # 애니메이션
                 name, n, L = sp
-                row = list(row)
-                while len(row) > n:                        # 흩어진 불꽃이 칸 둘로 쪼개지면 — 가장 가까운 이웃끼리 합친다
-                    g = min(range(len(row) - 1), key=lambda i: row[i + 1][2] - row[i][3])
-                    a0, b0 = row[g], row[g + 1]; row[g:g + 2] = [(min(a0[0], b0[0]), max(a0[1], b0[1]), a0[2], b0[3])]
+                row = merge_to(row, n)                     # 흩어진 불꽃이 칸 둘로 쪼개지면 — 가장 가까운 이웃끼리 합친다
                 assert len(row) == n, "%s %s: 프레임 %d개 (기대 %d)" % (f, name, len(row), n)
                 ims = [crop(a, *c) for c in row]; s = L * K / max(max(i.size) for i in ims)
                 art[name] = [enc(i, s) for i in ims]
     lines = ",\n".join("  %s: %s" % (k, json.dumps(v, separators=(",", ":"))) for k, v in art.items())
     js = "const FX_ART = {\n" + lines + "\n};"
-    t = io.open(P, encoding="utf-8-sig").read()
-    t, n = re.subn(r"const FX_ART = \{\n(?:  \w+: [^\n]*\n)*\};", lambda m: js, t)   # 한 줄에 하나 — 줄 단위로만 맞춘다
-    assert n == 1, "FX_ART 블록을 못 찾았다"
-    io.open(P, "w", encoding="utf-8", newline="").write(t)
+    replace_block("FX_ART", js)
     print("ok", {k: (len(v) if isinstance(v, list) else "%sx%s" % (v["w"], v["h"])) for k, v in art.items()}, len(js), "chars")
 
 
