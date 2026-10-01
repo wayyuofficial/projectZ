@@ -1,13 +1,15 @@
 {
-  "ran_at": "2026-10-01T23:46:25",
-  "blocking": 0,
+  "ran_at": "2026-10-01T23:53:35",
+  "blocking": 1,
   "warn": 2,
   "skip": 0,
   "results": [
     {
-      "status": "ok",
+      "status": "fail",
       "detail": [
-        "정본 5개 일치"
+        "정본이 바뀜: 00-identity.md",
+        "정본이 바뀜: 10-scope.md",
+        "사람이 의도한 변경이면 python tools/approve_canon.py 실행"
       ],
       "check": "c0_canon_lock.py",
       "name": "정본이 승인 없이 바뀌었는지",
@@ -198,7 +200,7 @@
     {
       "status": "ok",
       "detail": [
-        "계획서 47개 통과"
+        "계획서 49개 통과"
       ],
       "check": "c4_plan_hygiene.py",
       "name": "계획서에 예측·반증 조건이 있는지",
