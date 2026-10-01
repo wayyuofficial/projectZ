@@ -7,7 +7,7 @@ import os, sys, json
 import numpy as np
 from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from sheet_tools import grid_cells, merge_to, crop_alpha, webp_uri, replace_block, block_js
+from sheet_tools import grid_cells, merge_to, crop_alpha, row_frames, webp_uri, replace_block, block_js
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 items = []
@@ -24,10 +24,23 @@ def frame(name, sheet, W):
     items.append((name, json.dumps({"w": im.width, "h": im.height, "inset": inset, "src": webp_uri(im, q=90)}, separators=(",", ":"))))
 
 
+def strip(name, sheet, n, H):
+    """한 줄 n 프레임 애니메이션(보급 상자). 같은 배율, 가로 가운데·바닥 맞춤, 칸 = 가장 큰 프레임."""
+    p = os.path.join(HERE, sheet)
+    if not os.path.exists(p): return
+    fr = row_frames(p, n, flip=False); s = H / max(im.height for im in fr)
+    fr = [im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS) for im in fr]
+    cw, ch = max(im.width for im in fr), max(im.height for im in fr)
+    atlas = Image.new("RGBA", (cw * n, ch))
+    for i, im in enumerate(fr): atlas.alpha_composite(im, (i * cw + (cw - im.width) // 2, ch - im.height))
+    items.append((name, json.dumps({"cw": cw, "ch": ch, "n": n, "src": webp_uri(atlas, q=88)}, separators=(",", ":"))))
+
+
 def main():
     frame("card", "sheet_card_frame.png", 120)
+    strip("crate", "sheet_crate.png", 3, 240)
     replace_block("UI_ART", block_js("UI_ART", items))
-    print("ok", [(k, json.loads(v)["w"], json.loads(v)["h"], json.loads(v).get("inset")) for k, v in items], sum(len(v) for _, v in items), "chars")
+    print("ok", [(k, {a: b for a, b in json.loads(v).items() if a != "src"}) for k, v in items], sum(len(v) for _, v in items), "chars")
 
 
 if __name__ == "__main__":
