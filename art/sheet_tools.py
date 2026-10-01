@@ -71,6 +71,55 @@ def webp_uri(im, w=None, h=None, q=88):
     return "data:image/webp;base64," + base64.b64encode(b.getvalue()).decode("ascii")
 
 
+def row_frames(path, FRAMES, flip=True):
+    """한 줄 FRAMES 프레임 시트(M9 좀비·보스). flip 이면 좌우를 뒤집는다(오른쪽을 보고 그려진 것을 왼쪽으로). 덩어리로 자른다 — 앞으로 뻗은 손이 옆 프레임 칸까지 들어가서 칸으로 자르면 옆 좀비 손이 묻는다.
+    가장 큰 덩어리 6개 = 몸, 나머지 조각(떨어진 손가락·머리카락)은 상자가 가장 가까운 몸에 붙인다. 몸끼리 붙어 6개가 안 되면 칸으로 자른다."""
+    a = np.array(Image.open(path).convert("RGBA")); m = a[..., 3] > 128
+    comps = sorted(components(m), key=lambda c: -len(c[0]))
+    big = comps[:FRAMES]
+    if len(big) == FRAMES and len(big[-1][0]) > 0.4 * len(big[0][0]):
+        groups = [[c] for c in big]
+        for c in comps[FRAMES:]:
+            cy, cx = c[0].mean(), c[1].mean()
+            d = [max(0, b[1].min() - cx, cx - b[1].max()) + max(0, b[0].min() - cy, cy - b[0].max()) for b in big]
+            if min(d) < 10: groups[int(np.argmin(d))].append(c)
+        groups.sort(key=lambda g: g[0][1].mean())
+        out = []
+        for g in groups:
+            ys = np.concatenate([c[0] for c in g]); xs = np.concatenate([c[1] for c in g])
+            sub = np.zeros((ys.max() - ys.min() + 1, xs.max() - xs.min() + 1, 4), np.uint8)
+            sub[ys - ys.min(), xs - xs.min()] = a[ys, xs]
+            out.append(Image.fromarray(sub))
+        return [im.transpose(Image.FLIP_LEFT_RIGHT) for im in out] if flip else out
+    # 몸끼리 닿았다 — 프레임 경계 근처(±1/4 폭)에서 픽셀이 가장 적은 세로줄로 자르고, 조각마다 가장 큰 덩어리(+가까운 조각)만 남긴다
+    print("  [가는 목으로 자름]", os.path.basename(path))
+    xs = np.nonzero(m.any(0))[0]; x0, x1 = xs.min(), xs.max() + 1; W = (x1 - x0) / FRAMES; col = m.sum(0)
+    cuts = [x0]
+    for i in range(1, FRAMES):
+        c = int(x0 + i * W); lo, hi = int(c - W / 4), int(c + W / 4)
+        cuts.append(lo + int(np.argmin(col[lo:hi])))
+    cuts.append(x1)
+    out = []
+    for i in range(FRAMES):
+        sub = a[:, cuts[i]:cuts[i + 1]].copy(); sm = sub[..., 3] > 128
+        cs = sorted(components(sm), key=lambda c: -len(c[0])); keep = np.zeros_like(sm); body = cs[0]
+        keep[body[0], body[1]] = True; near = keep.copy()
+        for _ in range(2):                                   # 몸에서 2px 안에 닿는 조각만(옆 프레임 손은 떨어져 있다)
+            g = near.copy(); g[1:] |= near[:-1]; g[:-1] |= near[1:]; g[:, 1:] |= near[:, :-1]; g[:, :-1] |= near[:, 1:]; near = g
+        for c in cs[1:]:
+            if near[c[0], c[1]].any(): keep[c[0], c[1]] = True
+        sub[~keep] = 0; ys, xs2 = np.nonzero(keep)
+        out.append(Image.fromarray(sub[ys.min():ys.max() + 1, xs2.min():xs2.max() + 1]))
+    return [im.transpose(Image.FLIP_LEFT_RIGHT) for im in out] if flip else out
+
+
+def foot_x(im):
+    """발 중심 x(아래 10% 의 가로 가운데)."""
+    m = np.array(im)[..., 3] > 128; h = m.shape[0]
+    xs = np.nonzero(m[int(h * 0.9):].any(0))[0]
+    return (xs.min() + xs.max()) / 2
+
+
 def replace_block(name, js, path=GAME):
     """js 는 `const NAME = {\\n  k: ...\\n};` 형식(한 줄에 항목 하나)."""
     t = io.open(path, encoding="utf-8-sig").read()
