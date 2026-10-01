@@ -129,7 +129,8 @@ SLOT_STAT = _dict("SLOT_STAT")
 SLOT_EQUIP_G = _dict("SLOT_EQUIP_G")
 REBIRTH_MIN_ZONE = int(num("REBIRTH_MIN_ZONE"))
 MEDAL_PER = num("MEDAL_PER")
-LOOP_G = num("LOOP_G")                     # M11 1 — 회차 배수
+LOOP_G = num("LOOP_G")                     # M11 1 — 회차 배수(좀비)
+LOOP_RW = num("LOOP_RW")                   # M11 1 — 회차 배수(처치 보상)
 KEY_MAX = int(num("KEY_MAX"))
 SUPPLY_SHARE = num("SUPPLY_SHARE")
 LOGIN_DAYS = int(num("LOGIN_DAYS"))
@@ -236,7 +237,7 @@ MIRRORED = {
     "attacksPerSec": "62c1a324deffd5c2",
     "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "970aec5c32b9ee1b",
+    "buildButtons": "2c69b126a7a6a576",
     "buyStat": "e92f891d410963f4",
     "canEquipBetter": "66a45cfc3ca1b1d8",
     "canFuse": "236dc9baad626747",
@@ -270,6 +271,7 @@ MIRRORED = {
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "69408f80ab6e2751",
     "loopMult": "72fea6b1ab010c6d",
+    "loopRwMult": "d559223a9b92f280",
     "maxHP": "85e54826f897f7c7",
     "medalMult": "46c08bcbefe88ff9",
     "medalsFor": "40a1cb07ee003bd6",
@@ -301,7 +303,7 @@ MIRRORED = {
     "weaponPower": "8fcbdfc907029bf9",
     "zoneDPS": "9abab3ae0b004352",
     "zoneHP": "f22aa0d1cae9de6c",
-    "zoneReward": "165713bd004be423",
+    "zoneReward": "fc08ad169107745f",
 }
 
 
@@ -590,6 +592,9 @@ class Sim(object):
     def loopMult(self):
         return LOOP_G ** (max(1, (self.G.get("loop") or 1) if getattr(self, "G", None) else 1) - 1)   # M11 1
 
+    def loopRwMult(self):
+        return LOOP_RW ** (max(1, (self.G.get("loop") or 1) if getattr(self, "G", None) else 1) - 1)   # M11 1
+
     def medalsFor(self, bz):
         return math.floor((bz - (REBIRTH_MIN_ZONE - 1)) ** 1.5) * max(1, self.G.get("loop") or 1) if bz >= REBIRTH_MIN_ZONE else 0   # M11: × 회차
 
@@ -738,7 +743,7 @@ class Sim(object):
         return KILLS_PER_ZONE * (WALL_KILL_MULT if (z >= WALL_START and z % WALL_EVERY == 0) else 1)   # M2 벽: 구역 10 부터, 처치 수만
 
     def zoneReward(self, z):
-        return ZONE_RW0 * (ZONE_RW_G ** (z - 1)) * KILLS_PER_ZONE / Sim.zoneKills(z) * self.loopMult()   # M2 벽: 처치당 보상 ÷3
+        return ZONE_RW0 * (ZONE_RW_G ** (z - 1)) * KILLS_PER_ZONE / Sim.zoneKills(z) * self.loopRwMult()   # M2 벽: 처치당 보상 ÷3
 
     @staticmethod
     def isBossKill(z, idx):

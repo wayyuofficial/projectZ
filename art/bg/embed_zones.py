@@ -8,7 +8,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.pat
 P = os.path.join(ROOT, "game", "index.html")
 t = io.open(P, encoding="utf-8-sig").read()
 rows, total = [], 0
-for z in range(1, 31):
+for z in range(1, 61):   # M11: 구역 60
     f = os.path.join(HERE, "zones", "z%02d.png" % z)
     if not os.path.exists(f):
         continue

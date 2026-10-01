@@ -4,7 +4,7 @@
    쓰는 법: python art/bg/gen_zones.py"""
 import os, subprocess, sys, shutil
 HERE = os.path.dirname(os.path.abspath(__file__))
-TOOL = r"D:\nanobanana\nanobanana.py"
+TOOL = os.environ.get("NANOBANANA") or (r"D:\nanobanana\nanobanana.py" if os.name == "nt" else os.path.join(os.path.dirname(os.path.dirname(HERE)), "nanobanana", "nanobanana.py"))   # M11: 클라우드는 저장소 안 도구
 REF = os.path.join(HERE, "city_512.png")
 STYLE = ("Same pixel art style and palette as the reference image. 16-bit retro pixel art, crisp hard-edged pixels, "
          "side-scrolling 2D game background seen from the side. The lower fifth is a flat walkable floor running straight across the full width. "
@@ -40,6 +40,37 @@ ZONES = {
   28: "underground lab, rows of glass culture tanks, pipes, broken glass tubes, glowing teal light",
   29: "containment wing, sealed heavy doors, organic fleshy growth spreading over the walls, teal and blood red",
   30: "final containment chamber, one giant central culture tank, the whole room covered in organic tissue, pulsing red light with teal accents",
+  # M11 (지시 #156·#157) — 구역 31~60: 학교 · 대형 마트 · 놀이공원 · 교도소 · 크루즈선 · 핵발전소
+  31: "abandoned school front gate at dusk, closed iron gate pushed open, school bus crashed into the wall, scattered backpacks, warm orange-brown light",
+  32: "empty school sports field at dusk, broken soccer goals, running track, toppled bleachers, flagpole without flag, orange-brown haze",
+  33: "school hallway interior, rows of lockers hanging open, broken classroom windows, scattered papers, dim orange sunset light through windows",
+  34: "school science lab, lab benches, broken beakers and flasks, skeleton model, cracked chalkboard without text, orange-brown dim light",
+  35: "school auditorium, rows of seats, stage with torn curtains, fallen spotlights, dusty orange stage light",
+  36: "huge supermarket parking lot, abandoned shopping carts, crashed cars, big store front with broken glass doors, sickly yellow-green streetlights",
+  37: "supermarket checkout area, row of cash registers, knocked-over candy racks, scattered goods, flickering fluorescent lights, yellow-green",
+  38: "supermarket food aisles, tall shelves half empty, fallen products, spilled cans, flickering fluorescent light, yellow-green",
+  39: "supermarket frozen storage room, frosted freezers, hanging meat hooks, ice on the floor, cold blue-green light",
+  40: "supermarket loading dock, delivery truck, stacked pallets, open warehouse shutter, dim yellow light",
+  41: "abandoned amusement park entrance at night, ticket booths, colorful arch gate, broken neon lights, pink and purple glow",
+  42: "abandoned carousel plaza at night, broken carousel horses, popcorn stand, scattered balloons, pink and purple neon",
+  43: "abandoned roller coaster at night, tall twisted tracks, derailed coaster car, neon lights flickering, pink and purple",
+  44: "haunted house attraction at night, fake tombstones, torn ghost decorations, broken spooky facade, purple fog",
+  45: "parade street of an amusement park at night, toppled parade float, giant deflated balloon, confetti on the ground, pink and purple neon",
+  46: "prison outer perimeter at night, tall barbed wire fences, guard tower with searchlight, grey concrete walls, orange warning lights",
+  47: "prison visiting room, glass partitions, telephones, overturned chairs, grey walls, dim orange light",
+  48: "prison cell block interior, two floors of cells with open bars, metal walkways, grey concrete, orange alarm lights",
+  49: "prison exercise yard at night, basketball hoop, weight benches, chain link fence, searchlight beams, grey and orange",
+  50: "solitary confinement wing, heavy steel doors, narrow dark corridor, flickering orange alarm lights, grey concrete",
+  51: "cruise ship pier at stormy night, gangway to a huge white cruise ship, abandoned luggage, navy blue and white",
+  52: "cruise ship open deck in a storm, deck chairs, empty swimming pool, lifeboats hanging, rain and dark navy sea",
+  53: "cruise ship grand ballroom, chandeliers, overturned dining tables, grand staircase, dim navy blue and gold light",
+  54: "cruise ship engine room, huge engines, pipes and valves, steam, metal catwalk, dim navy blue light with red warning lamps",
+  55: "cruise ship bridge at stormy night, ship wheel and control panels, cracked front windows, lightning over the dark sea, navy blue",
+  56: "nuclear power plant front gate at night, security booth, barrier, radiation warning signs without text, eerie green glow",
+  57: "nuclear power plant cooling towers at night, steam, cracked concrete, toxic green glow on the ground",
+  58: "nuclear power plant turbine hall, giant turbines, pipes, catwalks, flickering lights, green and black",
+  59: "nuclear power plant control room, rows of control panels with blinking lights, broken monitors, green warning glow",
+  60: "nuclear reactor core chamber, glowing reactor pool, radioactive green light, cracked containment walls, black and toxic green",
 }
 os.makedirs(os.path.join(HERE, "zones"), exist_ok=True)
 z1 = os.path.join(HERE, "zones", "z01.png")
