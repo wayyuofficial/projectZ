@@ -946,6 +946,34 @@ const GEAR_ART = {
 };
 const gearImg = {};
 for (const k of Object.keys(GEAR_ART)) { const im = new Image(); im.onload = () => { im.ready = true; }; im.src = GEAR_ART[k].src; gearImg[k] = im; }
+/* M9 3·4 — UI 그림(art/ui/build_ui.py): card = 카드 틀(9칸 늘리기, inset = 그림 테두리 두께) … */
+const UI_ART = {
+  card: {"w":120,"h":159,"inset":14,"src":"data:image/webp;base64,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"}
+};
+const uiImg = {};
+for (const k of Object.keys(UI_ART)) { const im = new Image(); im.onload = () => { im.ready = true; }; im.src = UI_ART[k].src; uiImg[k] = im; }
+/* 9칸 틀: 모서리는 그대로(크기 d), 변은 늘린다. 그림이 없으면 false — 부르는 쪽이 예전 사각형을 그린다 */
+function drawFrame9(name, x, y, w, h, d) {
+  const a = UI_ART[name], im = uiImg[name]; if (!a || !im || !im.ready) return false;
+  const s = a.inset, W = a.w, H = a.h; d = Math.min(d, w / 2, h / 2);
+  const sx = [0, s, W - s, W], sy = [0, s, H - s, H], dx = [x, x + d, x + w - d, x + w], dy = [y, y + d, y + h - d, y + h];
+  ctx.imageSmoothingEnabled = true;
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) {
+    if (i === 1 && j === 1) continue;   // 가운데는 비운다(카드 바탕은 부르는 쪽이)
+    ctx.drawImage(im, sx[i], sy[j], sx[i + 1] - sx[i], sy[j + 1] - sy[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]);
+  }
+  ctx.imageSmoothingEnabled = false;
+  return true;
+}
+/* 등급 카드: 바탕 + 강철 틀 + 안쪽 등급 색 선(+고급 이상은 위쪽 빛). 그림이 없으면 예전 테두리 */
+function drawTierCard(x, y, w, h, color, opt) {
+  opt = opt || {};
+  ctx.fillStyle = opt.bg || PALETTE.equippedBg; rr(x, y, w, h, 4); ctx.fill();
+  if (color && opt.glow) { const g = ctx.createLinearGradient(0, y, 0, y + h * 0.5); g.addColorStop(0, color); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.globalAlpha = 0.18; ctx.fillStyle = g; ctx.fillRect(x + 4, y + 4, w - 8, h * 0.5); ctx.globalAlpha = 1; }
+  const d = opt.d || 9;
+  if (!drawFrame9('card', x, y, w, h, d)) { ctx.strokeStyle = color || PALETTE.edgeSoft; ctx.lineWidth = 1.5; rr(x + .5, y + .5, w - 1, h - 1, 4); ctx.stroke(); ctx.lineWidth = 1; return; }
+  if (color) { ctx.strokeStyle = color; ctx.lineWidth = opt.line || 1.5; if (opt.dash) ctx.setLineDash([4, 3]); ctx.strokeRect(x + d * 0.75, y + d * 0.75, w - d * 1.5, h - d * 1.5); ctx.setLineDash([]); ctx.lineWidth = 1; }
+}
 const WEAPON_VIS_SHAPE = { pistol: 'bar', dual: 'bar' };   // 그림이 없을 때 쓰는 예전 도트 아이콘
 const SHAPE_VIS = { bar: 'pistol', long: 'rifle', wide: 'shotgun', nozzle: 'flamer', cross: 'crossbow', disc: 'mine', twin: 'mg', launcher: 'launcher', saw: 'saw', rail: 'rail' };
 /* 등급 색 테두리(고급 이상)를 입힌 무기 그림. 한 번 만들어 둔다 — shadowBlur 를 매 프레임 쓰지 않는다 */
@@ -2652,10 +2680,10 @@ function drawEquipStrip() {
     const wp = isW ? weaponOf(curWeapon().type) : null;
     const has = isW ? !!wp : !!g;
     const tint = !has ? PALETTE.dim2 : tierColor(isW ? curWeapon().tier : g.tier);   // M5 2.5 — 등급 색 (M6 2.3: 무기도 장비 등급)
-    ctx.fillStyle = has ? PALETTE.equippedBg : PALETTE.ghostBg; rr(x, y, w, h, 8); ctx.fill();
-    ctx.strokeStyle = has ? tint : PALETTE.edgeSoft; ctx.lineWidth = has ? 1.5 : 1;
-    if (!has) ctx.setLineDash([4, 4]);
-    rr(x + .5, y + .5, w - 1, h - 1, 8); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
+    /* M9 3.2 — 강철 카드 틀 + 등급 색 안쪽 선(고급 이상 위쪽 빛). 빈 칸은 틀만 흐리게 + 점선 */
+    if (!has) ctx.globalAlpha = 0.5;
+    drawTierCard(x, y, w, h, has ? tint : PALETTE.edgeSoft, { bg: has ? PALETTE.equippedBg : PALETTE.ghostBg, glow: has && (isW ? curWeapon().tier : g.tier) >= 2, dash: !has, d: 8 });
+    ctx.globalAlpha = 1;
     drawIcon(isW ? (wp ? 'w:' + weaponVis(curWeapon().type, curWeapon().tier) : 'g:weapon') : (g ? gearSlotIcon(g) : 'g:' + sl.id), x + w / 2, y + 30, 30, has ? tint : PALETTE.dim2);
     ctx.textAlign = 'center';
     ctx.font = '600 12px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
@@ -2793,13 +2821,11 @@ function drawGachaResult() {
     const rows = compareRows(cur, g);
     const card = (x, item, title, mine) => {
       const cx = x - 110, cy = GAME_H / 2 - 196, cw = 220, ch = 60 + rows.length * 22 + 100;
-      ctx.fillStyle = mine ? PALETTE.equippedBg : PALETTE.ghostBg; rr(cx, cy, cw, ch, 4); ctx.fill();
-      ctx.strokeStyle = item ? (mine ? tierColor(item.tier) : PALETTE.edge) : PALETTE.edgeSoft; ctx.lineWidth = mine && item ? 2 : 1;
-      if (!mine) ctx.setLineDash([4, 4]);
-      rr(cx + 1, cy + 1, cw - 2, ch - 2, 4); ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1;
-      if (mine && item) drawIcon('check', cx + cw - 16, cy + 14, 16, tierColor(item.tier));
+      /* M9 3.2 — 강철 카드 틀. 낀 것 = 등급 색 실선, 뽑은 것 = 등급 색 점선(고급 이상은 위쪽 빛) */
+      drawTierCard(cx, cy, cw, ch, item ? tierColor(item.tier) : PALETTE.edgeSoft, { bg: mine ? PALETTE.equippedBg : PALETTE.ghostBg, glow: !!item && item.tier >= 2, dash: !mine, line: mine && item ? 2 : 1.5, d: 12 });
+      if (mine && item) drawIcon('check', cx + cw - 24, cy + 24, 16, tierColor(item.tier));   // M9 3.2 — 틀 안쪽으로
       ctx.textAlign = 'center'; ctx.font = '600 13px ' + F; ctx.fillStyle = PALETTE.ink3;
-      ctx.fillText(title, x, cy + 20);
+      ctx.fillText(title, x, cy + 30);
       if (!item) { ctx.fillStyle = PALETTE.dim; ctx.font = '600 16px ' + F; ctx.fillText('비었다', x, GAME_H / 2 - 100); return; }
       drawIcon(gearSlotIcon(item), x, GAME_H / 2 - 130, 44, tierColor(item.tier));
       ctx.fillStyle = tierColor(item.tier); ctx.font = '700 17px ' + F;
