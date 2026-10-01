@@ -1,10 +1,11 @@
 {
-  "측정일": "2026-09-30",
-  "대상": "APK 빌드 — assets/index.html 이 저장소 게임 파일과 같은지",
-  "빌드도장": "538b0eff0d26c2c8",
-  "APK": "zombie-survival-debug.apk",
-  "APK_바이트": 84530,
-  "assets_경로": "assets/index.html",
-  "방법": "zipfile 로 APK 안 index.html 을 꺼내 game/index.html 과 바이트 비교. 같을 때만 복사.",
-  "결과": "바이트 동일"
+ "측정일": "2026-09-30",
+ "대상": "APK 빌드 — assets/index.html 이 저장소 게임 파일과 같은지",
+ "빌드도장": "538b0eff0d26c2c8",
+ "APK": "zombie-survival-debug.apk",
+ "APK_바이트": 84530,
+ "assets_경로": "assets/index.html",
+ "방법": "zipfile 로 APK 안 index.html 을 꺼내 game/index.html 과 바이트 비교. 같을 때만 복사.",
+ "결과": "바이트 동일",
+ "옛빌드_사유": "M6 7단계 빌드(538b0eff)의 근거. 그 뒤 변경은 M8 배경(지시 #141, 그리기만 — 로직·상수·버튼 불변, c16 62함수 일치)이라 값이 안 바뀐다. M8 6묶음 뒤 배터리를 한 번 다시 뜬다"
 }

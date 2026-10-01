@@ -1,0 +1,11 @@
+{
+ "측정일": "2026-09-30",
+ "대상": "APK 빌드 — assets/index.html 이 저장소 게임 파일과 같은지",
+ "빌드도장": "3b18ab775001c246",
+ "APK": "zombie-survival-debug.apk",
+ "APK_바이트": 85901,
+ "assets_경로": "assets/index.html",
+ "방법": "zipfile 로 APK 안 index.html 을 꺼내 game/index.html 과 바이트 비교. 같을 때만 복사.",
+ "결과": "바이트 동일",
+ "옛빌드_사유": "타일판 1묶음 빌드(3b18ab77)의 대조 기록 — wbs-M8 1.2 행이 가리킨다. 이미지판 빌드(63475c6b)의 대조는 apk-2026-10-01.json"
+}

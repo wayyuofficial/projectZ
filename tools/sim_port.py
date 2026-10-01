@@ -168,10 +168,23 @@ WEAPON_TYPES = table("WEAPON_TYPES")
 # 원본과 갈라진다 (사례 23: 한 개념이 두 곳에 있으면 한 곳은 남는다).
 GEAR_ONLY_STATS = {s["id"] for s in STATS if s.get("gearOnly")}
 # M4 1.2 (a) 2026-09-17 — 과제도 원본 표에서 읽는다. 전에는 need 를 손으로 베껴 두고 "바뀌면 여기도" 라고 적었다.
-QUEST_DEFS = table("QUEST_DEFS")
-QUEST_DEFS_IDS = [q["id"] for q in QUEST_DEFS]
-QUEST_NEEDS = {q["id"]: int(q["need"]) for q in QUEST_DEFS}
-QUEST_SHARES = {q["id"]: float(q["share"]) for q in QUEST_DEFS}
+# 지시 #151 — 풀(9종)과 칸(3: 시간대·몫). 날마다 dailyQuests(day) 가 풀에서 3개를 골라 칸에 앉힌다.
+QUEST_POOL = table("QUEST_POOL")
+QUEST_SLOTS = table("QUEST_SLOTS")
+QUEST_DEFS_IDS = [q["id"] for q in QUEST_POOL]                 # 도구 호환 — 이제 '풀' 의 id
+QUEST_NEEDS = {q["id"]: int(q["need"]) for q in QUEST_POOL}
+
+
+def daily_quests(day):
+    """원본 dailyQuests 와 같은 식(Math.imul 하위 32비트 = 파이썬 & 0xffffffff)."""
+    s = ((int(day) * 2654435761) & 0xffffffff) or 1
+    idx = list(range(len(QUEST_POOL))); out = []
+    for k in range(len(QUEST_SLOTS)):
+        s = (s * 1103515245 + 12345) & 0x7fffffff
+        j = k + (s % (len(idx) - k))
+        idx[k], idx[j] = idx[j], idx[k]
+        q = dict(QUEST_POOL[idx[k]]); q.update(QUEST_SLOTS[k]); out.append(q)
+    return out
 QUEST_BANDS = [int(x) for x in re.search(r"const\s+QUEST_BANDS\s*=\s*\[([^\]]*)\]", SRC).group(1).replace(" ", "").split(",") if x]
 
 
@@ -204,24 +217,24 @@ def fingerprint(name):
 # 여기 적힌 함수는 아래 파이썬 구현이 **거울**이다.
 # 원본이 바뀌면 c16 이 막는다. 막히면 아래 구현을 손으로 다시 맞춘 뒤 --reseal 한다.
 MIRRORED = {
-    "acceptRevive": "eba568f29ac328db",
+    "acceptRevive": "0732d6c748a74f02",
     "adRowY": "5ed5d78e1b23b919",
     "applyDamage": "44f3fc0acd0ea484",
     "applyOffline": "7c67a2a215adcf54",
     "attacksPerSec": "62c1a324deffd5c2",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "9b4b3d4ba9660bda",
-    "buyStat": "66cfe1998f8e4376",
+    "buildButtons": "5aa9c62e7fe85cc7",
+    "buyStat": "e92f891d410963f4",
     "curGachaLv": "e40d82faf896292f",
     "curWeapon": "1109c7c05ab58ece",
     "dailyBudget": "51f1b98162132ed0",
+    "dailyQuests": "79f19f9555b60faa",
     "damageZombie": "de858f78fa27b6f3",
     "dayIndex": "e395fb011be7dfbc",
     "equipNew": "8874ff771d18a647",
     "firstClear": "469a179f675bd42f",
     "fitGame": "c865c9f0968c6437",
-    "flushBag": "4feeb3d1a243c612",
-    "freshState": "11741bf954e5dbd3",
+    "freshState": "23359dd1ff193bc4",
     "gachaCost": "b5e4af366ce8db89",
     "gachaLevel": "17ab77ebf0a0fe9d",
     "gachaRoll": "c0bb58367ea73ed8",
@@ -232,17 +245,17 @@ MIRRORED = {
     "hitDamage": "86e5dbdf14ea5395",
     "isBossKill": "e461a4a51bbb69c5",
     "killReward": "0ef3ffe5d2eb73ba",
-    "killZombie": "5cf905b90d386bd6",
+    "killZombie": "375971d82ed16341",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "69408f80ab6e2751",
     "maxHP": "85e54826f897f7c7",
     "migrate": "90c7219e95a4aaf8",
-    "onDeath": "5396186cf0d759ae",
+    "onDeath": "b20ea8a7475bafbb",
     "openSupply": "ef504f009bbf894e",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "playerDPS": "06d866ae2129b84d",
-    "pullGacha": "f6661f45d87d7cbc",
+    "pullGacha": "52ae2e4d3cbedd80",
     "questBand": "47a268e16a55bfbd",
     "questOpen": "14e21773cabeb67b",
     "questReady": "d56a30909b205279",
@@ -251,7 +264,7 @@ MIRRORED = {
     "rollGear": "b7d88f684d0f1903",
     "rollTier": "802162caae06b933",
     "rollTierOdds": "ed4822ee0404a536",
-    "rolloverDay": "431066c97502a0eb",
+    "rolloverDay": "9ddc72a3bfa1d93a",
     "sellGear": "36cf55b4c1d1a51b",
     "spawnZombie": "d4054c63f48a4d4a",
     "stageKills": "4cb2b09008d21635",
@@ -260,7 +273,8 @@ MIRRORED = {
     "statOf": "4c9956bbe1b533e2",
     "stepCombat": "477e00f37b335b3e",
     "tabRowY": "d001ac81a8afa161",
-    "takeQuest": "4093df094b412efe",
+    "takeQuest": "dba6cbbc58e50f5e",
+    "todayQuests": "5da0fbfeb4eb3edf",
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "5ff1eee2d3a62b39",
     "zoneDPS": "9abab3ae0b004352",
@@ -381,7 +395,7 @@ class Sim(object):
     def freshState(self):
         return dict(v=SAVE_VERSION, parts=0.0, plans=0.0, zone=1, kills=0,
                     gear=dict(weapon=dict(slot="weapon", type="pipe", tier=1, affixes=[], zone=1)), bag=[],   # M6 2.3
-                    day=0, maxDay=0, quest=dict(zone=0, up=0, stage=0), questTaken={},
+                    day=0, maxDay=0, quest={}, questTaken={},   # 지시 #151
                     login=dict(streak=0, lastDay=-1), keys=KEY_MAX,
                     lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0),
                     hp=100.0, bestZone=1, totalKills=0, gachaXp=0, clearBest=0,   # M6 7.2 · 7.1
@@ -606,21 +620,22 @@ class Sim(object):
         return self.sellGear(old) if old else 0.0
 
     def pullGacha(self, n):
-        # 원본: 1회는 사람이 장착/판매를 고른다 — 자는 **더 좋으면 낀다** 로 고른다(▲ 를 누르는 사람). 10회는 원본 그대로 자동.
+        # 원본(지시 #150): 뽑은 것은 가방에 담기고 사람이 부위 칸을 눌러 고른다. 자는 그 사람을 **'더 좋으면 끼고 나머지는 판다'** 로 흉내 낸다
+        # (가방 팝업에서 ▲ 를 끼고 '나쁜 것' 을 파는 사람). 그래서 가방을 안 들고 바로 처리한다 — 결과(낀 것·부품)는 같다.
         cost = self.gachaCost(n)
         if self.G.get("plans", 0.0) < cost:
             return False
         self.G["plans"] = self.G.get("plans", 0.0) - cost
         self.G["gachaXp"] = self.G.get("gachaXp", 0) + cost   # M6 7.2
-        self.questProgress("up", n)
+        self.questProgress("pull", n)   # 지시 #151
         items = []; gain = 0.0
         for _ in range(n):
             g = self.gachaRoll()
             cur = (self.G.get("gear") or {}).get(g["slot"])
             if (not cur) or self.gearScore(g) > self.gearScore(cur):
-                v = self.equipNew(g); items.append({"g": g, "r": "equip", "gain": v})
+                v = self.equipNew(g); items.append({"g": g, "r": "equip", "gain": v}); self.questProgress("equip", 1)
             else:
-                v = self.sellGear(g); items.append({"g": g, "r": "sell", "gain": v})
+                v = self.sellGear(g); items.append({"g": g, "r": "sell", "gain": v}); self.questProgress("sell", 1)
             gain += v
         self.gachaResult = {"mode": "one" if n == 1 else "ten", "items": items, "gain": gain}
         return True
@@ -666,8 +681,8 @@ class Sim(object):
         """M4 1 — 카운터만 센다. **시뮬은 일일 보상을 수령하지 않는다** (사람이 눌러야 받는다).
            그래서 auto_run 의 진행에 일일 보상이 안 섞이고 곡선 측정이 흔들리지 않는다.
            M4 1.2 (a): 열린 시간대에만 센다."""
-        q = next((x for x in QUEST_DEFS if x["id"] == qid), None)
-        if q is not None and not self.questOpen(q):
+        q = next((x for x in self.todayQuests() if x["id"] == qid), None)   # 지시 #151 — 오늘 미션만
+        if q is None or not self.questOpen(q):
             return
         d = self.G.setdefault("quest", {})
         d[qid] = d.get(qid, 0) + n
@@ -701,7 +716,7 @@ class Sim(object):
         cont = prev.get("lastDay") == today - 1
         self.G["login"] = {"streak": min(LOGIN_DAYS, prev.get("streak", 0) + 1) if cont else 1,
                            "lastDay": today}
-        self.G["quest"] = {"zone": 0, "up": 0, "stage": 0}
+        self.G["quest"] = {}
         self.G["questTaken"] = {}
         self.G["keys"] = KEY_MAX
         self.G["day"] = today
@@ -710,16 +725,23 @@ class Sim(object):
         gain = self.grant(self.dailyBudget() * w)
         return {"kind": "login", "day": self.G["login"]["streak"], "gain": gain}
 
+    def dailyQuests(self, day):
+        return daily_quests(day)
+
+    def todayQuests(self):
+        return daily_quests(self.G.get("day") or 0)
+
     def questReady(self, qid):
         return (self.G.get("quest", {}).get(qid, 0) >= QUEST_NEEDS[qid]
                 and not (self.G.get("questTaken") or {}).get(qid))
 
     def takeQuest(self, qid):
-        if not self.questReady(qid):
+        q = next((x for x in self.todayQuests() if x["id"] == qid), None)   # 지시 #151
+        if q is None or not self.questReady(qid):
             return False
         self.G.setdefault("questTaken", {})[qid] = 1
         self.G["plans"] = self.G.get("plans", 0.0) + QUEST_PLANS   # M6 7.1 — 과제 하나에 설계도 QUEST_PLANS 개
-        return self.grant(self.dailyBudget() * QUEST_SHARES[qid])
+        return self.grant(self.dailyBudget() * float(q["share"]))
 
     def openSupply(self):
         if (self.G.get("keys") or 0) <= 0:
@@ -738,7 +760,7 @@ class Sim(object):
             return False
         self.G["parts"] -= c
         self.G["lv"][i] = self.G["lv"].get(i, 0) + 1
-        self.questProgress("up", 1)
+        self.questProgress("stat", 1)   # 지시 #151
         return True
 
     # ---- 버튼 배치 ----
@@ -775,10 +797,25 @@ class Sim(object):
             return bs
 
         # M4 1 — 탭 3개. 폭 164, 간격 8 (원본과 같다)
-        TW, TG = 120, 6                       # M4 3.4: 탭 4개
-        for i, tid in enumerate(("stat", "weapon", "gear", "daily")):
+        if getattr(self, "dailyPopup", False):   # 지시 #151 — 미션 팝업: 접속 1 · 미션 3 · 상자 1 · 지우기 1 · 닫기
+            b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
+            dy = L["GAME_H"] / 2 - 200
+            rows = [("login", "ghost", False, None)]
+            for q in self.todayQuests():
+                cur = (self.G.get("quest") or {}).get(q["id"], 0); need = int(q["need"])
+                taken = bool((self.G.get("questTaken") or {}).get(q["id"]))
+                rows.append(("quest", "ghost" if taken else ("buy" if cur >= need else "off"), (not taken) and cur >= need, q["id"]))
+            keys = self.G.get("keys", 0)
+            rows += [("supply", "buy" if keys > 0 else "off", keys > 0, None), ("reset", "ghost", True, None)]
+            for kind, tone, en, wid in rows:
+                b(kind, 24, dy, GAME_W - 48, ROW_H, tone, en, wid); dy += ROW_PITCH
+            b("daily_close", 186, dy + 10, 168, ROW_H, "ghost")
+            return bs
+        TW, TG = 160, 6                       # 지시 #151: 탭 셋(일일 탭이 빠졌다)
+        for i, tid in enumerate(("stat", "weapon", "gear")):
             b("tab_" + tid, 24 + i * (TW + TG), self.tabRowY(), TW, ROW_H,
               "on" if self.tab == tid else "off")
+        b("daily_btn", GAME_W - 24 - 58, L["ARENA_BOT"] - 58 - 8, 58, 58, "mini")   # 지시 #151 — 전투 화면 오른쪽 아래
 
         top, bot = self.listTopY(), self.listBotY()
         clip = (top, bot)
@@ -793,24 +830,16 @@ class Sim(object):
 
         if self.tab == "gear":
             # M5 2.4 — 부위 줄 5개 대신: 합계 · 자동 판매 기준 · 가방 머리 줄. 장착 띠는 버튼이 아니라 여기 없다.
+            # 지시 #150 — 장착 띠 칸 5개가 누르는 곳이 됐다(부위 가방). 원본과 같은 자리
+            gap = 8; cw = (GAME_W - 48 - gap * 4) / 5
+            for i in range(5):
+                b("strip_%d" % i, 24 + i * (cw + gap), self.tabRowY() + ROW_H + 8, cw, EQUIP_STRIP_H, "hit")
             put_row("gear_sum", "ghost", False, None)
             for n in (1, 10):                                   # M6 2.2 뽑기 줄
                 put_row("gacha_%d" % n, "buy", self.G.get("plans", 0.0) >= self.gachaCost(n), None)
             put_row("gacha_lv", "ghost", False, None)                    # M6 7.2 — 입수 레벨 줄(정보) · 3.2 확률 보기
             put_row("odds_view", "off", True, None)
             # M6 재설계 — 가방·자동 판매 줄 없음
-        elif self.tab == "daily":
-            # M4 1 — 접속 1줄 + 과제 3줄 + 보급 상자 1줄
-            put_row("login", "ghost", False, None)
-            for q in QUEST_DEFS_IDS:
-                cur = (self.G.get("quest") or {}).get(q, 0)
-                need = QUEST_NEEDS[q]
-                taken = bool((self.G.get("questTaken") or {}).get(q))
-                put_row("quest", "ghost" if taken else ("buy" if cur >= need else "off"),
-                        (not taken) and cur >= need, q)
-            keys = self.G.get("keys", 0)
-            put_row("supply", "buy" if keys > 0 else "off", keys > 0, None)
-            put_row("reset", "ghost", True, None)      # 테스트용 저장 지우기 (2026-09-17). 게임에서 빼면 여기도 뺀다
         elif self.tab == "stat":
             for s in [x for x in STATS if x["id"] not in GEAR_ONLY_STATS]:   # M4 4.3
                 cost = self.statCost(s["id"])
@@ -899,6 +928,9 @@ class Sim(object):
         self.G["parts"] += gain
         self._income("kill", gain)
         self.G["totalKills"] += 1
+        self.questProgress("kill", 1)                      # 지시 #151
+        if z["boss"]:
+            self.questProgress("boss", 1)
         self.killIndex += 1
         # M3 4.2 — 단계 클리어 일시금. 구역을 넘는 마지막 칸에서는 안 준다.
         if (self.killIndex % self.stageKills(self.G["zone"]) == 0

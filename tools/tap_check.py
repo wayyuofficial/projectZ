@@ -20,7 +20,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # cp949 콘솔에�
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sim_port as S
 
-TABS = ("stat", "weapon", "gear", "daily")
+TABS = ("stat", "weapon", "gear", "daily")   # 지시 #151: "daily" 는 이제 탭이 아니라 미션 팝업 상태
 
 
 def main(argv):
@@ -42,7 +42,8 @@ def main(argv):
             fit = S.fit_game(vw, vh)
             css_per = fit["scale"]              # 논리 1px 당 CSS px
             for tab in TABS:
-                s.tab = tab
+                s.tab = "stat" if tab == "daily" else tab
+                s.dailyPopup = (tab == "daily")
                 for b in s.buildButtons():
                     if b.get("clip"):
                         continue               # 잘릴 수 있는 줄은 안 잰다 (위 3번)

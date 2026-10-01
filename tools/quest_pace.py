@@ -47,21 +47,23 @@ def main(argv):
     seeds = list(range(1, a.seeds + 1))
 
     rows = measure(seeds, a.start_hour)
-    full = [r for r in rows if len(r) == len(S.QUEST_DEFS_IDS)]
+    s0 = S.Sim(seed=1, now_ms=(S.DEFAULT_NOW_MS - (S.DEFAULT_NOW_MS % S.DAY_MS) + a.start_hour * 3600000) if a.start_hour is not None else S.DEFAULT_NOW_MS)
+    s0.rolloverDay()                                   # 지시 #151 — 미션은 날마다 바뀐다. 런 첫날의 3개를 잰다
+    QS = s0.todayQuests(); IDS = [q["id"] for q in QS]
+    full = [r for r in rows if len(r) == len(IDS)]
     last = sorted(max(r.values()) for r in full)
     within = [x for x in last if x <= LINE_MIN]
 
-    print("과제: %s (need %s)" % (S.QUEST_DEFS_IDS, [S.QUEST_NEEDS[q] for q in S.QUEST_DEFS_IDS]))
+    print("과제: %s (need %s)" % (IDS, [S.QUEST_NEEDS[q] for q in IDS]))
     # M4 1.2 (a) 2026-09-17 — 시간대가 생겼다. 1런은 포트 시각 01:46(UTC) 에서 시작하므로
     # 시간대 2([22,06)) 과제만 열려 있고, 06:00 = 4시간 14분 뒤에야 시간대 0 이 열린다.
     # 그래서 "셋 다 채워진 시드" 는 이제 구조상 0 이다 — 그 수는 더 이상 시험이 아니다.
     # 시험이 되는 것은 **열린 시간대의 과제가 얼마나 빨리 채워지는가**다. 과제별로 따로 찍는다.
-    s0 = S.Sim(seed=1, now_ms=(S.DEFAULT_NOW_MS - (S.DEFAULT_NOW_MS % S.DAY_MS) + a.start_hour * 3600000) if a.start_hour is not None else S.DEFAULT_NOW_MS)
-    bands = {q["id"]: int(q["band"]) for q in S.QUEST_DEFS}
-    open_now = {q["id"]: s0.questOpen(q) for q in S.QUEST_DEFS}
+    bands = {q["id"]: int(q["band"]) for q in QS}
+    open_now = {q["id"]: s0.questOpen(q) for q in QS}
     print("시작 시각(UTC) %02d시 · 열린 시간대 %d · 과제별 시간대 %s"
           % (int((s0.now_ms // 3600000) % 24), s0.questBand(int((s0.now_ms // 3600000) % 24)), bands))
-    for qid in S.QUEST_DEFS_IDS:
+    for qid in IDS:
         ts = sorted(r[qid] for r in rows if qid in r)
         print("  %-5s 시간대 %d %s · 채워진 시드 %d/%d%s" % (
             qid, bands[qid], "열림" if open_now[qid] else "닫힘", len(ts), len(seeds),
@@ -81,14 +83,14 @@ def main(argv):
         rec = {"측정일": datetime.date.today().isoformat(),
                "대상": "일일 과제 3개가 연속 30분 안에 다 채워지는지 — M4 1.2 / 예측 M4-B1",
                "빌드도장": stamp, "도구": "tools/quest_pace.py", "시드": seeds,
-               "과제": {q: S.QUEST_NEEDS[q] for q in S.QUEST_DEFS_IDS},
+               "과제": {q: S.QUEST_NEEDS[q] for q in IDS},
                "시드별_처음_닿은_시각_분": rows,
                "셋_다_채워진_시드": len(full),
                "시작_시각_옵션": a.start_hour,
                "시간대": {"시작_시각_UTC": int((s0.now_ms // 3600000) % 24), "과제별_시간대": bands, "시작시_열림": open_now},
                "과제별": {qid: {"채워진_시드": sum(1 for r in rows if qid in r),
                                "처음_닿은_시각_분_중앙": round(statistics.median([r[qid] for r in rows if qid in r]), 2) if any(qid in r for r in rows) else None}
-                         for qid in S.QUEST_DEFS_IDS},
+                         for qid in IDS},
                "마지막_완료_시각_분": {"중앙": round(statistics.median(last), 2) if last else None,
                                       "최소": round(last[0], 2) if last else None,
                                       "최대": round(last[-1], 2) if last else None},

@@ -68,7 +68,7 @@
   loadError = null;
   load();
   chk('v4 저장본이 최신으로 이어진다 (무기 → 장비)', G.v === SAVE_VERSION && G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 3
-      && G.bag.length === 0 && G.parts > 1234.5 && G.owned === undefined && G.gachaXp === 0 && loadError === null,   // M6 7: gachaLv → gachaXp   // M6 재설계: 가방은 없다 — 옛 무기는 팔려 부품이 된다
+      && G.bag.length === 2 && G.parts === 1234.5 && G.owned === undefined && G.gachaXp === 0 && loadError === null,   // 지시 #150: 가방이 돌아왔다 — 옛 무기 둘(쇠파이프·산탄총)은 팔지 않고 가방에 남는다   // M6 재설계: 가방은 없다 — 옛 무기는 팔려 부품이 된다
       G.gear.weapon.type + '/' + G.gear.weapon.tier + '/' + G.bag.length + '/' + Math.round(G.parts));
 
   // M6 7 — v5 (M6 2~6 저장본) 의 설계도 '돈' 은 옛 1회 값으로 나눠 개수가 되고(상한 50), 뽑기 강화 단계 3 은 입수 Lv3 문턱 경험치가 된다.

@@ -14,7 +14,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GAME = os.path.join(ROOT, "game", "index.html")
 
-TABLES = ("WEAPON_TYPES", "STATS", "GEAR_SLOTS", "AFFIX_DEFS", "QUEST_DEFS", "PALETTE")
+TABLES = ("WEAPON_TYPES", "STATS", "GEAR_SLOTS", "AFFIX_DEFS", "QUEST_POOL", "QUEST_SLOTS", "PALETTE")
 COLOR = re.compile(r"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{3}\b|rgba?\(\s*\d")   # rgba( 뒤에 숫자가 바로 올 때만 리터럴이다 — 'rgba(' + PALETTE.deathRgb 는 색이 PALETTE 에서 온다 (1.1 오탐 1건)
 
 
@@ -48,6 +48,11 @@ def scan():
             in_block = True; continue
         if st.startswith(("//", "/*", "*")):
             continue
+        # 줄 중간에서 시작해 다음 줄로 이어지는 블록 주석(`const X = 1;   /* 설명 ...` + 다음 줄) — 2026-09-30 세 번째 오탐: ZONE_HP_G 주석 둘째 줄의 '#139'
+        if "/*" in line and "*/" not in line[line.index("/*"):]:
+            line = line[:line.index("/*")]; in_block = True
+        elif "/*" in line and "*/" in line:
+            line = re.sub(r"/\*.*?\*/", "", line)
         # 줄 끝 주석(// ...)도 안 센다 — 2026-09-18 오탐: "// 지시 #118" 의 '#118' 이 3자리 hex 로 잡혔다 (등급명 빌드 b503e5adadd6a324)
         line = line.split("//")[0] if "//" in line and "://" not in line else line
         for c in COLOR.finditer(line):

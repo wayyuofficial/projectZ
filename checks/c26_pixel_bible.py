@@ -5,7 +5,7 @@
 한 격자·한 램프·한 아웃라인 규칙을 코드가 지키게 한다. 눈으로 보는 것(한 세트로 보이나)은 폰이 한다.
 
 ## 무엇을 보는가
-`const SPRITES = { ... };` 안에서
+`const SPRITES = { ... };` 와 뒤에 붙인 `SPRITES.<이름> = { ... };` 전부에서 (M8 0.2)
   1. 범례(legend) 값이 전부 `R.<계열>[n]`(= PALETTE.ramp) 참조인가 — hex·rgb 리터럴 0
   2. 프레임의 모든 줄 길이가 같고, (폭, 높이) 가 `PX_GRIDS` 안인가
   3. 범례 키 'O'(아웃라인)가 있으면 램프 4단(index 3)을 가리키는가 — 순검정 금지는 램프 값이 담보한다(#000 없음)
@@ -39,8 +39,12 @@ def run(root):
         gm = re.search(r"const PX_GRIDS\s*=\s*\[(.*?)\];", txt)
         grids = set(tuple(int(v) for v in re.findall(r"\d+", pair)) for pair in re.findall(r"\[(\d+,\s*\d+)\]", gm.group(1))) if gm else set()
         # SPRITES 블록
-        i = txt.index("const SPRITES = {"); j = txt.index("\n};", i)
-        block = txt[i:j]
+        # M8 0.2 (2026-09-30): `const SPRITES = {` 블록만 보다가 뒤에 `SPRITES.<이름> = {` 로 붙인 세트(좀비·보스·배경)를 못 봤다 — 전부 모은다
+        blocks = []
+        for sm in re.finditer(r"(?:const SPRITES|SPRITES\.[\w.]+) = \{", txt):
+            j = txt.index("\n};", sm.start()); blocks.append(txt[sm.start():j])
+        block = "\n".join(blocks)
+        block = re.sub(r"/\*.*?\*/", "", block, flags=re.S); block = re.sub(r"//[^\n]*", "", block)   # 주석의 '지시 #141' 은 색이 아니다(사례 25 계열)
         lits = re.findall(r"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{3}\b|rgba?\(", block)
         if lits:
             bad.append("%s : SPRITES 범례에 직접 색 %d개 %s — R.<계열>[n] 만" % (base, len(lits), lits[:3]))

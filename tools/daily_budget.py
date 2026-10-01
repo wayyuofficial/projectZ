@@ -39,7 +39,7 @@ def one_day(s):
     r = s.rolloverDay()                       # 접속 보상
     for _ in range(SPAM):
         s.rolloverDay()                       # 같은 날 또 불러도 더 주면 안 된다
-    for qid in S.QUEST_DEFS_IDS:              # 과제 — 조건을 채우고 여러 번 받아 본다
+    for qid in [q["id"] for q in s.todayQuests()]:   # 과제(지시 #151: 오늘 미션 3개) — 조건을 채우고 여러 번 받아 본다
         s.G.setdefault("quest", {})[qid] = S.QUEST_NEEDS[qid]
         for _ in range(SPAM):
             s.takeQuest(qid)
@@ -81,9 +81,10 @@ def main(argv):
     # 가드가 실제로 서는지 따로 말한다 — 위 숫자만 보면 왜 통과했는지 모른다
     s = S.Sim(seed=1); s.G["zone"] = 10; s.G["bestZone"] = 10; s.G["hp"] = s.maxHP()
     s.now_ms += S.DAY_MS; s.rolloverDay()
-    s.G.setdefault("quest", {})["zone"] = S.QUEST_NEEDS["zone"]
-    first = s.takeQuest("zone")
-    second = s.takeQuest("zone")
+    q0 = s.todayQuests()[0]["id"]             # 지시 #151 — 오늘 첫 미션으로 가드를 본다
+    s.G.setdefault("quest", {})[q0] = S.QUEST_NEEDS[q0]
+    first = s.takeQuest(q0)
+    second = s.takeQuest(q0)
     keys_used = 0
     s.G["keys"] = S.KEY_MAX
     for _ in range(S.KEY_MAX + SPAM):
@@ -100,9 +101,9 @@ def main(argv):
                "대상": "일일 보상 총량이 하루 예산(시간 수입의 20%) 안인지 — M4 1.4",
                "빌드도장": stamp, "도구": "tools/daily_budget.py",
                "방법": "포트의 rolloverDay·takeQuest·openSupply 를 **실제로 불러** 받은 양을 센다. 일부러 %d번씩 더 눌러 중복 수령·열쇠 초과를 노린다. 접속 %d일째(가장 큰 날)를 잰다." % (SPAM, S.LOGIN_DAYS),
-               "몫": {"과제": S.QUEST_SHARES, "보급 상자": S.SUPPLY_SHARE,
+               "몫": {"과제(칸)": [q["share"] for q in S.QUEST_SLOTS], "보급 상자": S.SUPPLY_SHARE,
                       "접속 최대": max(S.LOGIN_SHARES),
-                      "합": round(sum(S.QUEST_SHARES.values()) + S.SUPPLY_SHARE + max(S.LOGIN_SHARES), 3)},
+                      "합": round(sum(q["share"] for q in S.QUEST_SLOTS) + S.SUPPLY_SHARE + max(S.LOGIN_SHARES), 3)},
                "구역별": rows, "가장_큰_비율_퍼센트": round(worst, 1), "선_퍼센트": LINE * 100,
                "가드": guards,
                "결과": "통과" if ok else "미달",
