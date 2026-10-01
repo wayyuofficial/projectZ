@@ -3,3 +3,5 @@ measurements/tmp-*
 __pycache__/
 zombie-survival-debug.apk
 .selftest-running
+.env
+*.env
