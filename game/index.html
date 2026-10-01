@@ -955,6 +955,137 @@ const HERO_ANIM = { cw: 131, ch: 171, k: 3, lx: -26.1, stand: [0, 1, 2, 3, 4, 5,
 const heroImg = new Image(); heroImg.onload = () => { heroImg.ready = true; }; if (HERO_ANIM.src) heroImg.src = HERO_ANIM.src;
 let heroUp = 0, heroDrawAt = 0;   // 팔 올림 정도 0(서 있음)~1(겨눔) · 지난 그리기 시각
 let heroShotAt = -1e9, heroLastShot = null;   // 마지막 발사 시각(ms) — 사격 프레임·반동 기준. 그리기가 shots 에 새 탄이 생긴 걸 보고 잰다(전투 함수는 파이썬 포트와 잠겨 있어 건드리지 않는다, c16)
+/* 무기별 발사 효과 — 2026-10-01 사람: "무기 스킨은 바뀌었는데 나가는 총알이 다 똑같아서 바뀐 느낌이 없다".
+   데미지는 전투 함수(stepCombat, 파이썬 포트와 잠김 c16)가 즉시 준다. 여기는 **그리기만** 한다: shots 에 새 탄이 생기면
+   그 순간 낀 무기의 효과를 총구(heroMuzzle)에서 표적(x2, y2)으로 띄운다. 날아가는 시간은 눈요기 — 데미지 시점과는 무관.
+   kind: bullet(탄) · pellets(산탄) · flame(불줄기) · bolt(화살) · lob(포물선+폭발) · disc(회전 톱날) · beam(빔).
+   my/my2 = 총구 높이(무기 그림 높이 비율), flash = 총구 화염 크기 */
+const SHOT_FX = {
+  pistol:   { kind: 'bullet', c: '#F2D36A', len: 14, w: 3,   t: 0.08, my: 0.22, flash: 7 },
+  dual:     { kind: 'bullet', c: '#F2D36A', len: 14, w: 3,   t: 0.08, my: 0.18, my2: 0.55, flash: 7, alt: true },
+  rifle:    { kind: 'bullet', c: '#FFE9A8', len: 26, w: 3,   t: 0.06, my: 0.28, flash: 10 },
+  mg:       { kind: 'bullet', c: '#FFB24A', len: 22, w: 3,   t: 0.06, my: 0.22, my2: 0.42, flash: 10, both: true },
+  shotgun:  { kind: 'pellets', c: '#FFD27A', n: 7, spread: 0.26, t: 0.1, my: 0.3, flash: 14 },
+  flamer:   { kind: 'flame', n: 11, t: 0.32, my: 0.42, flash: 0 },
+  crossbow: { kind: 'bolt', c: '#C9A93A', t: 0.14, my: 0.4, flash: 0 },
+  mine:     { kind: 'lob', c: '#C9A93A', t: 0.34, arc: 40, r: 5, boom: 26, my: 0.5, flash: 0 },
+  launcher: { kind: 'lob', c: '#9EAA5A', t: 0.3,  arc: 30, r: 4, boom: 34, my: 0.3, flash: 12, smoke: true },
+  saw:      { kind: 'disc', c: '#E0E4DA', t: 0.18, r: 8, my: 0.45, flash: 0 },
+  rail:     { kind: 'beam', c: '#8CD4D6', t: 0.22, w: 7, my: 0.4, flash: 12 }
+};
+let shotFx = [], shotSeen = new WeakSet(), heroMuzzle = null, shotFxAt = 0, shotParity = 0;
+function spawnShotFx(s, now) {
+  const cw = curWeapon(), vis = weaponVis(cw.type, cw.tier), d = SHOT_FX[vis] || SHOT_FX.pistol;
+  const m = heroMuzzle || { x: s.x1, y: s.y1, y2: s.y1 + 4 };
+  const from = (y) => ({ x: m.x, y });
+  const add = (o) => { if (shotFx.length < 90) shotFx.push(Object.assign({ born: now, d }, o)); };
+  shotParity ^= 1;
+  if (d.flash) add({ type: 'flash', x: m.x, y: d.alt && shotParity ? m.y2 : m.y, r: d.flash, life: 0.06, c: d.c || '#FFD27A' });
+  if (d.kind === 'bullet') {
+    const ys = d.both ? [m.y, m.y2] : [d.alt && shotParity ? m.y2 : m.y];
+    for (const y of ys) add({ type: 'bullet', ...from(y), tx: s.x2, ty: s.y2 + (y - m.y) * 0.5, life: d.t });
+  } else if (d.kind === 'pellets') {
+    const a0 = Math.atan2(s.y2 - m.y, s.x2 - m.x), L = Math.hypot(s.x2 - m.x, s.y2 - m.y);
+    for (let i = 0; i < d.n; i++) { const a = a0 + (i / (d.n - 1) - 0.5) * d.spread + (Math.random() - 0.5) * 0.05;
+      add({ type: 'bullet', ...from(m.y), tx: m.x + Math.cos(a) * L, ty: m.y + Math.sin(a) * L, life: d.t, len: 5, w: 2 }); }
+  } else if (d.kind === 'flame') {
+    for (let i = 0; i < d.n; i++) add({ type: 'flame', ...from(m.y), tx: s.x2, ty: s.y2 + (Math.random() - 0.5) * 10, born: now + i * 18, life: d.t, j: Math.random() });
+  } else if (d.kind === 'bolt') add({ type: 'bolt', ...from(m.y), tx: s.x2, ty: s.y2, life: d.t });
+  else if (d.kind === 'lob') { add({ type: 'lob', ...from(m.y), tx: s.x2, ty: s.y2 + 8, life: d.t });
+    if (d.smoke) add({ type: 'smoke', x: m.x, y: m.y, life: 0.35 }); }
+  else if (d.kind === 'disc') add({ type: 'disc', ...from(m.y), tx: s.x2, ty: s.y2, life: d.t });
+  else if (d.kind === 'beam') add({ type: 'beam', ...from(m.y), tx: s.x2 + 60, ty: s.y2, life: d.t });
+}
+function impactFx(o, now) {   // 날아간 것이 닿으면: 작은 불꽃, 폭발형은 폭발
+  const d = o.d;
+  if (o.type === 'lob') shotFx.push({ type: 'boom', x: o.tx, y: o.ty, r: d.boom, born: now, life: 0.32, d });
+  else if (o.type !== 'flame' && o.type !== 'beam' && shotFx.length < 90) shotFx.push({ type: 'spark', x: o.tx, y: o.ty, born: now, life: 0.12, d, c: o.type === 'disc' ? '#F2D36A' : (d.c || '#FFD27A') });
+}
+function drawShotFx(now) {
+  for (const s of shots) if (!shotSeen.has(s)) { shotSeen.add(s); spawnShotFx(s, now); }
+  const keep = [];
+  for (const o of shotFx) {
+    const p = (now - o.born) / 1000 / o.life;
+    if (p < 0) { keep.push(o); continue; }
+    if (p >= 1) { if (!o.hit) { o.hit = true; impactFx(o, now); } continue; }
+    keep.push(o);
+    const d = o.d, lx = o.x + (o.tx - o.x) * p, ly = o.y + (o.ty - o.y) * p;
+    ctx.globalAlpha = 1;
+    if (o.type === 'flash') {
+      const r = o.r * (1 - p * 0.4);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.45 * (1 - p); ctx.fillStyle = o.c;                                 // 빛번짐
+      ctx.beginPath(); ctx.arc(o.x + r * 0.6, o.y, r * 1.6, 0, 6.284); ctx.fill();
+      ctx.globalAlpha = 1 - p * 0.5; ctx.fillStyle = o.c;                                     // 앞으로 뻗는 불꽃 + 위아래 갈래
+      ctx.beginPath(); ctx.moveTo(o.x, o.y - r * 0.6); ctx.lineTo(o.x + r * 2.6, o.y); ctx.lineTo(o.x, o.y + r * 0.6); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(o.x + r * 0.4, o.y); ctx.lineTo(o.x + r * 1.2, o.y - r * 1.1); ctx.lineTo(o.x + r * 0.9, o.y); ctx.lineTo(o.x + r * 1.2, o.y + r * 1.1); ctx.fill();
+      ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(o.x + r * 0.5, o.y, r * 0.45, 0, 6.284); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+    } else if (o.type === 'bullet') {
+      const L = o.len || d.len, a = Math.atan2(o.ty - o.y, o.tx - o.x);
+      const bx = lx - Math.cos(a) * L, by = ly - Math.sin(a) * L, W = o.w || d.w;
+      ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+      ctx.globalAlpha = 0.35; ctx.strokeStyle = d.c; ctx.lineWidth = W * 2.5;                 // 빛번짐
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(lx, ly); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.lineWidth = W; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(lx, ly); ctx.stroke();
+      ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = Math.max(1, W - 1.5);                      // 탄두 쪽 흰 심
+      ctx.beginPath(); ctx.moveTo(lx - Math.cos(a) * L * 0.4, ly - Math.sin(a) * L * 0.4); ctx.lineTo(lx, ly); ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over'; ctx.lineCap = 'butt';
+    } else if (o.type === 'flame') {
+      const r = 3 + p * 9 + o.j * 3;
+      ctx.globalAlpha = 0.85 * (1 - p);
+      ctx.fillStyle = p < 0.3 ? '#FFE27A' : p < 0.6 ? '#FF9A3A' : p < 0.85 ? '#C4482A' : '#4E544C';
+      ctx.beginPath(); ctx.arc(lx, ly - p * 6 * o.j, r, 0, 6.284); ctx.fill();
+    } else if (o.type === 'bolt') {
+      const a = Math.atan2(o.ty - o.y, o.tx - o.x), cx = Math.cos(a), sy = Math.sin(a);
+      ctx.strokeStyle = '#6B3A1C'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(lx - cx * 14, ly - sy * 14); ctx.lineTo(lx, ly); ctx.stroke();
+      ctx.fillStyle = '#B8BDB2'; ctx.beginPath(); ctx.moveTo(lx + cx * 5, ly + sy * 5); ctx.lineTo(lx - sy * 3, ly + cx * 3); ctx.lineTo(lx + sy * 3, ly - cx * 3); ctx.fill();
+      ctx.fillStyle = '#B23A2E'; ctx.fillRect(lx - cx * 14 - 1, ly - sy * 14 - 3, 3, 6);
+    } else if (o.type === 'lob') {
+      const h = Math.sin(p * Math.PI) * d.arc;
+      for (let i = 1; i <= 4; i++) {                                                          // 연기 꼬리
+        const q = Math.max(0, p - i * 0.06), tx = o.x + (o.tx - o.x) * q, ty = o.y + (o.ty - o.y) * q - Math.sin(q * Math.PI) * d.arc;
+        ctx.globalAlpha = 0.35 * (1 - i / 5); ctx.fillStyle = '#B8BDB2'; ctx.beginPath(); ctx.arc(tx, ty, d.r * (0.6 + i * 0.25), 0, 6.284); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.fillStyle = d.c; ctx.strokeStyle = '#1E2312'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(lx, ly - h, d.r, 0, 6.284); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#E85A4A'; ctx.fillRect(lx - 1, ly - h - d.r - 1, 2, 2);                 // 신관 불빛
+    } else if (o.type === 'smoke') {
+      ctx.globalAlpha = 0.5 * (1 - p); ctx.fillStyle = '#7E857C';
+      ctx.beginPath(); ctx.arc(o.x + p * 8, o.y - p * 10, 3 + p * 8, 0, 6.284); ctx.fill();
+    } else if (o.type === 'disc') {
+      ctx.save(); ctx.translate(lx, ly); ctx.rotate(now / 25);
+      ctx.fillStyle = d.c; ctx.beginPath();
+      for (let i = 0; i < 16; i++) { const rr = i % 2 ? d.r : d.r * 0.7, a = i * Math.PI / 8; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+      ctx.fill(); ctx.fillStyle = '#4E544C'; ctx.beginPath(); ctx.arc(0, 0, 2, 0, 6.284); ctx.fill(); ctx.restore();
+    } else if (o.type === 'beam') {
+      ctx.globalAlpha = 1 - p;
+      ctx.strokeStyle = d.c; ctx.lineWidth = d.w * (1 - p * 0.5);
+      ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(o.tx, o.ty); ctx.stroke();
+      ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(o.tx, o.ty); ctx.stroke();
+      for (let i = 0; i < 4; i++) { const q = (i + 0.5) / 4; ctx.strokeStyle = d.c; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(o.x + (o.tx - o.x) * q, o.y + (o.ty - o.y) * q, 3 + p * 6, 0, 6.284); ctx.stroke(); }
+    } else if (o.type === 'boom') {
+      ctx.globalAlpha = 1 - p; ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = '#FF9A3A'; ctx.beginPath(); ctx.arc(o.x, o.y, o.r * (0.5 + p * 0.8), 0, 6.284); ctx.fill();
+      ctx.fillStyle = '#FFF4C8'; ctx.beginPath(); ctx.arc(o.x, o.y, o.r * (0.45 - p * 0.3), 0, 6.284); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+      for (let i = 0; i < 6; i++) { const a = i * 1.047 + 0.3; ctx.fillStyle = '#6B3A1C';           // 파편
+        ctx.fillRect(o.x + Math.cos(a) * o.r * (0.3 + p * 1.3) - 1.5, o.y + Math.sin(a) * o.r * (0.3 + p * 1.3) - p * 10 - 1.5, 3, 3); }
+      ctx.strokeStyle = '#C4482A'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(o.x, o.y, o.r * (0.5 + p), 0, 6.284); ctx.stroke();
+      ctx.fillStyle = '#4E544C'; ctx.globalAlpha = 0.6 * (1 - p);
+      ctx.beginPath(); ctx.arc(o.x - 4, o.y - o.r * p, o.r * 0.5 * p + 2, 0, 6.284); ctx.fill();
+    } else if (o.type === 'spark') {
+      ctx.globalAlpha = 1 - p; ctx.fillStyle = o.c;
+      for (let i = 0; i < 6; i++) { const a = i * 1.05 + o.born; ctx.fillRect(o.x + Math.cos(a) * p * 14 - 1.5, o.y + Math.sin(a) * p * 14 - 1.5, 3, 3); }
+      ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.6 * (1 - p); ctx.beginPath(); ctx.arc(o.x, o.y, 6 * (1 - p) + 2, 0, 6.284); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+  shotFx = keep; ctx.globalAlpha = 1; ctx.lineWidth = 1;
+}
 const CONTACT_X = SURVIVOR_X + 46;  // 좀비가 더 못 오는 위치
 const ZOMBIE_GAP = 18;              // 줄 설 때 앞뒤 간격. 몸통(24px)보다 좁아 서로 밀착해 보인다
 const CONTACT_REACH = 40;           // 접촉선에서 이만큼 안에 있는 좀비만 피해를 준다
@@ -1727,13 +1858,6 @@ function drawArena() {
     ctx.fillRect(zb.x - w / 2, fy - 66 * s + bob, w * pct, 4);
   }
 
-  ctx.strokeStyle = weaponTint();
-  ctx.lineWidth = 2;
-  for (const s of shots) {
-    ctx.globalAlpha = Math.max(0, 1 - s.t / 0.09);
-    ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
 
   for (const p of particles) {
     ctx.globalAlpha = Math.max(0, 1 - p.t / p.life);
@@ -1779,6 +1903,8 @@ function drawArena() {
     if (wc) {   // 손잡이(gx, gy)를 주먹 자리(x+13, fy-31)에
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(wc, x + 13 - wa.gx * wa.w - wc._pad / dprW, fy - 31 - wa.gy * wa.h - wc._pad / dprW, wc.width / dprW, wc.height / dprW);
+      const fd = SHOT_FX[vis] || SHOT_FX.pistol, top = fy - 31 - wa.gy * wa.h + wdy;   // 총구 = 그림 오른쪽 끝(손이 옮긴 만큼 더한다)
+      heroMuzzle = { x: x + 13 + (1 - wa.gx) * wa.w + wdx, y: top + fd.my * wa.h, y2: top + (fd.my2 || fd.my) * wa.h };
       ctx.imageSmoothingEnabled = false;
     }
     else if (w.shape === 'wide')      ctx.fillRect(x + 12, fy - 38, 26, 9);
@@ -1797,6 +1923,7 @@ function drawArena() {
     else                          ctx.fillRect(x + 12, fy - 34, 20, 6);
     ctx.restore();
   }
+  drawShotFx(performance.now());   // 무기 위에 총구 화염이 오게 무기 다음에 그린다
 
   ctx.textAlign = 'center';
   for (const f of floats) {
