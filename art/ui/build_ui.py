@@ -36,11 +36,25 @@ def strip(name, sheet, n, H):
     items.append((name, json.dumps({"cw": cw, "ch": ch, "n": n, "src": webp_uri(atlas, q=88)}, separators=(",", ":"))))
 
 
+def icons(sheet, cols, kinds, L=24, K=4):
+    """아이콘 격자(줄마다 cols 칸, 읽는 순서 = kinds). 키 = icon_<kind, ':' → '_'>. 긴 변 L(논리 px)의 K 배."""
+    p = os.path.join(HERE, sheet)
+    if not os.path.exists(p): return
+    a = np.array(Image.open(p).convert("RGBA")); rows = grid_cells(a, 10)
+    cells = [c for r in rows for c in merge_to(r, cols)]
+    assert len(cells) >= len(kinds), "%s: 칸 %d개 (기대 %d)" % (sheet, len(cells), len(kinds))
+    for kind, c in zip(kinds, cells):
+        im = crop_alpha(a, c); s = L * K / max(im.size); w, h = round(im.width * s), round(im.height * s)
+        items.append(("icon_" + kind.replace(":", "_"), json.dumps({"w": round(w / K, 2), "h": round(h / K, 2), "src": webp_uri(im, w, h, 90)}, separators=(",", ":"))))
+
+
 def main():
     frame("card", "sheet_card_frame.png", 120)
     strip("crate", "sheet_crate.png", 3, 240)
+    icons("sheet_icons_a.png", 4, ["stat", "weapon", "gear", "daily", "c:parts", "c:plans", "s:atk", "s:spd", "s:hp", "s:reg", "s:inc", "s:crit"])
+    icons("sheet_icons_b.png", 3, ["s:cdmg", "d:login", "d:quest", "d:supply", "d:reset", "boss", "revive", "clock", "key"])
     replace_block("UI_ART", block_js("UI_ART", items))
-    print("ok", [(k, {a: b for a, b in json.loads(v).items() if a != "src"}) for k, v in items], sum(len(v) for _, v in items), "chars")
+    print("ok", len(items), "items", [k for k, _ in items], sum(len(v) for _, v in items), "chars")
 
 
 if __name__ == "__main__":
