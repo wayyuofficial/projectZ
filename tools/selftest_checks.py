@@ -250,6 +250,7 @@ def main():
             ("c24_gacha_table.py", ("fail",)),
             ("c25_port_state_keys.py", ("fail",)),
             ("c26_pixel_bible.py", ("fail",)),
+            ("c27_asset_budget.py", ("fail",)),   # M9 5.1 — 아래 루프에서 C27_LIMIT 을 1000 바이트로 낮춰 본다
         ]
 
         bad = []
@@ -262,7 +263,11 @@ def main():
         if not tool_ok:
             bad.append("curve_check --selftest")
         for name, want in expect:
-            got = load(name).run(ROOT).get("status")
+            if name == "c27_asset_budget.py": os.environ["C27_LIMIT"] = "1000"
+            try:
+                got = load(name).run(ROOT).get("status")
+            finally:
+                os.environ.pop("C27_LIMIT", None)
             ok = got in want
             print("[%s] %-22s 기대 %-6s 실제 %s" %
                   ("  OK  " if ok else " MISS ", name, "/".join(want), got))
