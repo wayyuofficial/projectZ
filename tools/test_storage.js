@@ -91,6 +91,14 @@
       && G.own.head[idxOf(3, 3)] === 1 && G.inv.feet[idxOf(8, 3)] === 1 && G.bag === undefined && G.medals === 0 && loadError === null,
       JSON.stringify(G.gear) + '/' + G.inv.head[idxOf(3, 3)] + '/' + G.inv.feet[idxOf(8, 3)]);
 
+  // M11 1.1 — v7 (M10) 에는 회차가 없다. 이미 환생한 저장은 환생 수 + 1 회차, 장비·훈장은 그대로
+  store[SAVE_KEY] = JSON.stringify({ v: 7, parts: 55, zone: 3, bestZone: 3, lv: { atk: 2 }, gear: { weapon: 4 }, inv: emptyInv(), own: Object.assign(emptyInv(), { weapon: ladderArr(0).map((_, k) => (k === 4 ? 1 : 0)) }),
+    fresh: {}, medals: 40, rebirths: 2, plans: 3, gachaXp: 0, lastSeen: Date.now() });
+  loadError = null;
+  load();
+  chk('v7 저장본이 최신으로 이어진다 (회차 = 환생 + 1)', G.v === SAVE_VERSION && G.loop === 3 && G.medals === 40 && G.gear.weapon === 4 && G.parts === 55 && loadError === null,
+      G.v + '/' + G.loop + '/' + G.medals + '/' + G.gear.weapon);
+
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();
   chk('항목이 빠진 저장 보정', G.zone === 1 && G.lv.reg === 0 && G.gear.weapon === 0 && G.inv.feet.length === LADDER && G.own.weapon[0] === 1, JSON.stringify(G.lv));

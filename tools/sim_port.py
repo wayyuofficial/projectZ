@@ -129,6 +129,7 @@ SLOT_STAT = _dict("SLOT_STAT")
 SLOT_EQUIP_G = _dict("SLOT_EQUIP_G")
 REBIRTH_MIN_ZONE = int(num("REBIRTH_MIN_ZONE"))
 MEDAL_PER = num("MEDAL_PER")
+LOOP_G = num("LOOP_G")                     # M11 1 — 회차 배수
 KEY_MAX = int(num("KEY_MAX"))
 SUPPLY_SHARE = num("SUPPLY_SHARE")
 LOGIN_DAYS = int(num("LOGIN_DAYS"))
@@ -235,7 +236,7 @@ MIRRORED = {
     "attacksPerSec": "62c1a324deffd5c2",
     "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "8209d219089ad51e",
+    "buildButtons": "970aec5c32b9ee1b",
     "buyStat": "e92f891d410963f4",
     "canEquipBetter": "66a45cfc3ca1b1d8",
     "canFuse": "236dc9baad626747",
@@ -246,11 +247,11 @@ MIRRORED = {
     "dailyQuests": "79f19f9555b60faa",
     "damageZombie": "de858f78fa27b6f3",
     "dayIndex": "e395fb011be7dfbc",
-    "doRebirth": "20f05d7d78b4e563",
+    "doRebirth": "5b76769d9e01760c",
     "equipBest": "0f92c8c2f2743745",
     "firstClear": "469a179f675bd42f",
     "fitGame": "c865c9f0968c6437",
-    "freshState": "5ecb387d6fabef94",
+    "freshState": "5ade04503149ba86",
     "fuseAll": "82b2582d09c7805e",
     "gachaCost": "b5e4af366ce8db89",
     "gachaLevel": "17ab77ebf0a0fe9d",
@@ -268,10 +269,11 @@ MIRRORED = {
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "69408f80ab6e2751",
+    "loopMult": "72fea6b1ab010c6d",
     "maxHP": "85e54826f897f7c7",
     "medalMult": "46c08bcbefe88ff9",
-    "medalsFor": "02ffb8ef36768afa",
-    "migrate": "f7c1fdbe6654cddf",
+    "medalsFor": "40a1cb07ee003bd6",
+    "migrate": "5a38d6762bfbf69e",
     "onDeath": "b20ea8a7475bafbb",
     "openSupply": "ef504f009bbf894e",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
@@ -298,8 +300,8 @@ MIRRORED = {
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "8fcbdfc907029bf9",
     "zoneDPS": "9abab3ae0b004352",
-    "zoneHP": "eafea50cbb2f5af6",
-    "zoneReward": "1a11949b7141abd1",
+    "zoneHP": "f22aa0d1cae9de6c",
+    "zoneReward": "165713bd004be423",
 }
 
 
@@ -415,7 +417,7 @@ class Sim(object):
     def freshState(self):
         return dict(v=SAVE_VERSION, parts=0.0, plans=0.0, zone=1, kills=0,
                     gear=dict(weapon=0), inv=self.emptyInv(), own=dict(self.emptyInv(), weapon=[1] + [0] * (LADDER - 1)), fresh={},   # M10
-                    medals=0, rebirths=0,
+                    medals=0, rebirths=0, loop=1,
                     day=0, maxDay=0, quest={}, questTaken={},   # 지시 #151
                     login=dict(streak=0, lastDay=-1), keys=KEY_MAX,
                     lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0),
@@ -445,7 +447,7 @@ class Sim(object):
             raw.pop("owned", None); raw.pop("weapon", None)
         if raw.get("v") == 5:                 # M6 7: 설계도 돈 → 개수, 강화 단계 → 입수 경험치 (원본 migrate 와 같은 구조)
             inc_s = next(s for s in STATS if s["id"] == "inc"); inc_lv = (raw.get("lv") or {}).get("inc", 0)
-            legacy_one = Sim.zoneIncome(raw.get("bestZone") or 1) * LEGACY_BP_RATIO * LEGACY_GACHA_COST_FRAC * inc_s["base"] * (inc_s["growth"] ** inc_lv)
+            legacy_one = self.zoneIncome(raw.get("bestZone") or 1) * LEGACY_BP_RATIO * LEGACY_GACHA_COST_FRAC * inc_s["base"] * (inc_s["growth"] ** inc_lv)
             cnt = min(50, math.floor((raw.get("plans") or 0.0) / max(1.0, legacy_one)))
             lv_old = max(0, min(GACHA_LV_MAX, raw.get("gachaLv") or 0))
             raw = dict(raw, v=6, plans=cnt, gachaXp=(GACHA_XP_NEEDS[lv_old - 1] if lv_old > 0 else 0), clearBest=(raw.get("bestZone") or 1) * STAGES_PER_ZONE)
@@ -473,6 +475,8 @@ class Sim(object):
                 gear["weapon"] = 0; own["weapon"][0] = 1
             raw = dict(raw, v=7, gear=gear, inv=inv, own=own, fresh={}, medals=0, rebirths=0)
             raw.pop("bag", None)
+        if raw.get("v") == 7:                 # M11: 회차 = 환생 수 + 1
+            raw = dict(raw, v=8, loop=(raw.get("rebirths") or 0) + 1)
         if raw.get("v") != SAVE_VERSION:
             return self.freshState()
         s = self.freshState()
@@ -583,9 +587,11 @@ class Sim(object):
         return any(self.bestOwned(sl) >= 0 and (not isinstance(self.G["gear"].get(sl), (int, float)) or self.bestOwned(sl) > self.G["gear"][sl]) for sl in GEAR_SLOT_IDS)
 
     # ---- M10 2 환생 ----
-    @staticmethod
-    def medalsFor(bz):
-        return math.floor((bz - (REBIRTH_MIN_ZONE - 1)) ** 1.5) if bz >= REBIRTH_MIN_ZONE else 0
+    def loopMult(self):
+        return LOOP_G ** (max(1, (self.G.get("loop") or 1) if getattr(self, "G", None) else 1) - 1)   # M11 1
+
+    def medalsFor(self, bz):
+        return math.floor((bz - (REBIRTH_MIN_ZONE - 1)) ** 1.5) * max(1, self.G.get("loop") or 1) if bz >= REBIRTH_MIN_ZONE else 0   # M11: × 회차
 
     def medalMult(self, sid):
         return 1 + MEDAL_PER * (self.G.get("medals") or 0) if sid in ("atk", "inc") else 1.0
@@ -598,6 +604,7 @@ class Sim(object):
             return 0
         gain = self.medalsFor(self.G.get("bestZone") or 1)
         self.G["medals"] = (self.G.get("medals") or 0) + gain; self.G["rebirths"] = (self.G.get("rebirths") or 0) + 1
+        self.G["loop"] = (self.G.get("loop") or 1) + 1   # M11 1
         self.G.update(zone=1, bestZone=1, kills=0, parts=0.0, clearBest=0)
         for k in list(self.G["lv"].keys()):
             self.G["lv"][k] = 0
@@ -626,25 +633,21 @@ class Sim(object):
     def regenPerSec(self):
         return self.statOf("reg")
 
-    @staticmethod
-    def zoneHP(z):
-        return ZONE_HP0 * (ZONE_HP_G ** (z - 1))
+    def zoneHP(self, z):
+        return ZONE_HP0 * (ZONE_HP_G ** (z - 1)) * self.loopMult()   # M11: 회차 배수
 
-    @staticmethod
-    def zoneDPS(z):
-        return Sim.zoneHP(z) * ZOMBIE_DPS_RATIO
+    def zoneDPS(self, z):
+        return self.zoneHP(z) * ZOMBIE_DPS_RATIO
 
     @staticmethod
     def stageKills(z):
         return max(1, jsround(Sim.zoneKills(z) / STAGES_PER_ZONE))
 
-    @staticmethod
-    def killReward(z):
-        return Sim.zoneReward(z)
+    def killReward(self, z):
+        return self.zoneReward(z)
 
-    @staticmethod
-    def zoneIncome(z):
-        return Sim.zoneReward(z) * Sim.zoneKills(z)
+    def zoneIncome(self, z):
+        return self.zoneReward(z) * Sim.zoneKills(z)
 
     def rollTier(self, z):
         center = 1 + (TIER_MAX_PORT - 1) * min(1.0, (z - 1) / float(ZONE_COUNT - 1))
@@ -734,9 +737,8 @@ class Sim(object):
     def zoneKills(z):
         return KILLS_PER_ZONE * (WALL_KILL_MULT if (z >= WALL_START and z % WALL_EVERY == 0) else 1)   # M2 벽: 구역 10 부터, 처치 수만
 
-    @staticmethod
-    def zoneReward(z):
-        return ZONE_RW0 * (ZONE_RW_G ** (z - 1)) * KILLS_PER_ZONE / Sim.zoneKills(z)   # M2 벽: 처치당 보상 ÷3
+    def zoneReward(self, z):
+        return ZONE_RW0 * (ZONE_RW_G ** (z - 1)) * KILLS_PER_ZONE / Sim.zoneKills(z) * self.loopMult()   # M2 벽: 처치당 보상 ÷3
 
     @staticmethod
     def isBossKill(z, idx):

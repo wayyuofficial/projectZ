@@ -141,7 +141,7 @@ setTimeout(function () {
    검사 c2_scope.py 가 이 선언들을 읽어 canon/10-scope.md 의 상한과 대조한다.
    ========================================================================= */
 
-const SAVE_VERSION = 7;   // M10 (지시 #155): 장비가 융합 사다리(inv·own·gear 칸 번호)·환생(medals). v6 는 migrate() 가 끌어올린다   // M6 7: 설계도가 개수, 뽑기 강화 → 입수 레벨(gachaXp). v5 는 migrate() 가 끌어올린다   // M6 2.3: 무기가 장비가 됐다(gear.weapon). v4 는 migrate() 가 끌어올린다   // M4 1: 일일 리듬(day·quest·login·keys). v1~v3 은 migrate() 가 끌어올린다   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
+const SAVE_VERSION = 8;   // M11 (지시 #156): 회차(loop). v7 은 migrate() 가 끌어올린다   // M10 (지시 #155): 장비가 융합 사다리(inv·own·gear 칸 번호)·환생(medals). v6 는 migrate() 가 끌어올린다   // M6 7: 설계도가 개수, 뽑기 강화 → 입수 레벨(gachaXp). v5 는 migrate() 가 끌어올린다   // M6 2.3: 무기가 장비가 됐다(gear.weapon). v4 는 migrate() 가 끌어올린다   // M4 1: 일일 리듬(day·quest·login·keys). v1~v3 은 migrate() 가 끌어올린다   // M2: 무기 10종·구역 30. v1 은 migrate() 가 끌어올린다 — 초기화하지 않는다
 const ZONE_COUNT   = 30;   // M2 (지시 #60·#61). M1 은 10
 const TIER_MAX     = 8;   // M4 3: 정본 개정(지시 #96). 색만 바꾼다 — 모양은 안 늘린다
 const MAX_ONSCREEN_ZOMBIES = 8;
@@ -489,6 +489,7 @@ function freshState() {
        처음은 무기 0번(일반 5단계 권총). 판매·가방·옵션 없음. */
     gear: { weapon: 0 }, inv: emptyInv(), own: Object.assign(emptyInv(), { weapon: ladderArr(0).map((_, k) => k === 0 ? 1 : 0) }), fresh: {},
     medals: 0, rebirths: 0,                     // M10 2 — 환생 훈장(영구 공격력·수입 배수)·환생 횟수
+    loop: 1,                                    // M11 1 — 회차. 환생하면 +1, 같은 구역이 LOOP_G 배 세진다
     day: 0, maxDay: 0,
     quest: {}, questTaken: {},                // 지시 #151 — 키는 오늘 미션 id
     login: { streak: 0, lastDay: -1 },
@@ -554,6 +555,7 @@ function migrate(raw) {
     raw = Object.assign({}, raw, { v: 7, gear: gear, inv: inv, own: own, fresh: {}, medals: 0, rebirths: 0 });
     delete raw.bag;
   }
+  if (raw.v === 7) { raw = Object.assign({}, raw, { v: 8, loop: (raw.rebirths || 0) + 1 }); }   // M11 — 이미 환생한 저장은 그만큼 회차가 올라 있다
   if (raw.v !== SAVE_VERSION) return freshState();
   const s = freshState();
   for (const k of Object.keys(s)) if (k in raw) s[k] = raw[k];
@@ -591,7 +593,7 @@ function load() {
        지금은 SAVE_VERSION 이 1뿐이라 안 터질 뿐이다. */
     /* M2: v1 은 migrate() 가 v2 로 끌어올린다 — 초기화가 아니므로 문구를 띄우지 않는다.
        (브라우저 시험에서 v1 저장본이 진행은 그대로인데 "처음부터 시작한다" 를 띄웠다 — 거짓 경고) */
-    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION && raw.v !== 1 && raw.v !== 2 && raw.v !== 3 && raw.v !== 4 && raw.v !== 5 && raw.v !== 6) {
+    if (raw && typeof raw === 'object' && raw.v !== SAVE_VERSION && raw.v !== 1 && raw.v !== 2 && raw.v !== 3 && raw.v !== 4 && raw.v !== 5 && raw.v !== 6 && raw.v !== 7) {
       loadError = '저장 형식이 바뀌어 처음부터 시작한다';
     }
     G = migrate(raw);
@@ -637,10 +639,10 @@ function playerDPS() { return expectedHit() * attacksPerSec(); }   // M6 1.2: �
 function maxHP() { return statOf('hp'); }
 function regenPerSec() { return statOf('reg'); }
 
-function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1); }
+function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1) * loopMult(); }   // M11: 회차 배수(회차 1 은 ×1)
 function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO; }
 function zoneKills(z) { return KILLS_PER_ZONE * ((z >= WALL_START && z % WALL_EVERY === 0) ? WALL_KILL_MULT : 1); }   // M2 벽: 처치 수만 늘어난다
-function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z); }   // M2 벽: 처치당 보상 ÷2 — 벽의 총수입은 보통 구역과 같다 (M2-B2‴, 지시 #63)
+function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z) * loopMult(); }   // M2 벽: 처치당 보상 ÷2 — 벽의 총수입은 보통 구역과 같다 (M2-B2‴, 지시 #63)
 /* =========================================================================
    3.5 장비 생성기 — M4 3.3
    구역이 깊을수록 높은 등급이 잘 나온다. **정해진 목록이 아니라 뽑는다** — 조사 ① 의 핵심.
@@ -1480,19 +1482,22 @@ function acceptRevive() {
 /* ── M10 2 환생 (지시 #155, 정본 '환생' 행) ──
    이번 판 최고 구역(G.bestZone) 이 REBIRTH_MIN_ZONE 이상이면 환생할 수 있다. 훈장 = floor((최고 구역 − 9)^1.5) — 구역 10 → 1 · 15 → 14 · 20 → 36 · 30 → 96.
    훈장 1개 = 공격력·수입 +MEDAL_PER(합산). 처음으로: 구역·처치·부품·능력치 레벨·단계 기록·이번 판 최고 구역·체력. 남는 것: 장비·설계도·입수 레벨·일일·열쇠·훈장. */
+/* M11 1 (지시 #156) — 회차. 환생 = 다음 회차: 같은 구역의 좀비 체력·공격·처치 보상 × LOOP_G^(회차−1). 훈장은 회차를 곱한다. */
+const LOOP_G = 3;
+function loopMult() { return Math.pow(LOOP_G, Math.max(1, (G && G.loop) || 1) - 1); }
 const REBIRTH_MIN_ZONE = 10, MEDAL_PER = 0.01;   // M10 3.2: 0.05 는 두 번째 판 30구역이 2.4분(첫 판의 1%) — 0.01 이면 약 10% (tools/rebirth_check.py)
-function medalsFor(bz) { return bz >= REBIRTH_MIN_ZONE ? Math.floor(Math.pow(bz - (REBIRTH_MIN_ZONE - 1), 1.5)) : 0; }
+function medalsFor(bz) { return bz >= REBIRTH_MIN_ZONE ? Math.floor(Math.pow(bz - (REBIRTH_MIN_ZONE - 1), 1.5)) * Math.max(1, G.loop || 1) : 0; }   // M11: × 지금 회차
 function medalMult(statId) { return (statId === 'atk' || statId === 'inc') ? 1 + MEDAL_PER * (G.medals || 0) : 1; }
 function canRebirth() { return (G.bestZone || 1) >= REBIRTH_MIN_ZONE; }
 function doRebirth() {
   if (!canRebirth()) return 0;
   const gain = medalsFor(G.bestZone || 1);
-  G.medals = (G.medals || 0) + gain; G.rebirths = (G.rebirths || 0) + 1;
+  G.medals = (G.medals || 0) + gain; G.rebirths = (G.rebirths || 0) + 1; G.loop = (G.loop || 1) + 1;
   G.zone = 1; G.bestZone = 1; G.kills = 0; G.parts = 0; G.clearBest = 0;
   for (const k of Object.keys(G.lv)) G.lv[k] = 0;
   G.hp = maxHP();
   killIndex = 0; zombies.length = 0; shots.length = 0; reviveOffer = null;
-  addFloat(GAME_W / 2, ARENA_TOP + 60, '환생 — 훈장 +' + gain, PALETTE.gold, 24);
+  addFloat(GAME_W / 2, ARENA_TOP + 60, G.loop + '회차 — 훈장 +' + gain, PALETTE.gold, 24);
   save();
   return gain;
 }
@@ -1858,17 +1863,17 @@ function buildButtons() {
   } else {
     /* M10 2.2 — 환생 탭(무기 탭 자리). 훈장 · 다음 환생 보상 · 환생하기(두 번 눌러야 한다) · 남는 것/처음으로 */
     const m = G.medals || 0, gain = medalsFor(G.bestZone || 1), armed = rebirthArmedUntil > performance.now();
-    putRow({ label: '훈장 ' + m + '개', sub: '공격력·수입 ×' + (1 + MEDAL_PER * m).toFixed(2) + ' · 환생 ' + (G.rebirths || 0) + '회',
-             chips: [{ i: 's:atk', t: '×' + (1 + MEDAL_PER * m).toFixed(2), c: PALETTE.better }, { i: 's:inc', t: '×' + (1 + MEDAL_PER * m).toFixed(2), c: PALETTE.better }],
+    putRow({ label: (G.loop || 1) + '회차 · 훈장 ' + m + '개', sub: '공격력·수입 ×' + (1 + MEDAL_PER * m).toFixed(2) + ' · 좀비 ×' + fmt(loopMult()),
+             chips: [{ i: 's:atk', t: '×' + (1 + MEDAL_PER * m).toFixed(2), c: PALETTE.better }, { i: 's:inc', t: '×' + (1 + MEDAL_PER * m).toFixed(2), c: PALETTE.better }].concat((G.loop || 1) > 1 ? [{ i: 'boss', t: '×' + fmt(loopMult()), c: PALETTE.warn }] : []),
              cost: null, enabled: false, tone: 'equipped', icon: 'revive', onTap: () => false });
-    putRow({ label: armed ? '한 번 더 누르면 환생' : '환생하기  +' + gain + ' 훈장',
+    putRow({ label: armed ? '한 번 더 누르면 ' + ((G.loop || 1) + 1) + '회차' : '환생 → ' + ((G.loop || 1) + 1) + '회차  +' + gain + ' 훈장',
              sub: canRebirth() ? '이번 판 최고 구역 ' + (G.bestZone || 1) + ' · 훈장 +' + gain + ' → ×' + (1 + MEDAL_PER * (m + gain)).toFixed(2) : '구역 ' + REBIRTH_MIN_ZONE + ' 부터 (지금 최고 ' + (G.bestZone || 1) + ')',
-             chips: canRebirth() ? [{ i: 'revive', t: '+' + gain, c: PALETTE.gold }] : [{ i: 'lock', t: '구역 ' + REBIRTH_MIN_ZONE, c: PALETTE.dim }],
+             chips: canRebirth() ? [{ i: 'revive', t: '+' + gain, c: PALETTE.gold }, { i: 'boss', t: '×' + fmt(loopMult() * LOOP_G), c: PALETTE.warn }] : [{ i: 'lock', t: '구역 ' + REBIRTH_MIN_ZONE, c: PALETTE.dim }],
              cost: null, enabled: canRebirth(), tone: armed ? 'ad' : 'buy', icon: 'revive',
              onTap: () => { if (!canRebirth()) return false; if (!armed) { rebirthArmedUntil = performance.now() + 3000; return true; } rebirthArmedUntil = 0; doRebirth(); return true; } });
     putRow({ label: '남는 것', sub: '장비 · 설계도 · 입수 레벨 · 훈장 · 일일', chips: [{ i: 'gear' }, { i: 'c:plans' }, { i: 'revive' }],
              cost: null, enabled: false, tone: 'ghost', icon: 'check', onTap: () => false });
-    putRow({ label: '처음으로', sub: '구역 · 부품 · 능력치 레벨', chips: [{ i: 'boss' }, { i: 'c:parts' }, { i: 'stat' }],
+    putRow({ label: '처음으로', sub: '구역 · 부품 · 능력치 레벨 — 다음 회차 좀비 ×' + LOOP_G + ' (보상도)', chips: [{ i: 'boss' }, { i: 'c:parts' }, { i: 'stat' }],
              cost: null, enabled: false, tone: 'ghost', icon: 'd:reset', onTap: () => false });
   }
 
@@ -1992,6 +1997,10 @@ function drawArena() {
     // 그림자
     ctx.fillStyle = PALETTE.shade35;
     ctx.beginPath(); ctx.ellipse(zb.x, fy + 2, 14 * s, 4 * s, 0, 0, 6.284); ctx.fill();
+    if ((G.loop || 1) > 1) {   // M11 1.2 — 회차 표시: 발밑 붉은 기운(회차가 높을수록 진하게, 그림은 그대로)
+      ctx.globalAlpha = Math.min(0.55, 0.18 + 0.09 * (G.loop - 2)); ctx.fillStyle = PALETTE.danger;
+      ctx.beginPath(); ctx.ellipse(zb.x, fy + 1, 19 * s, 6 * s, 0, 0, 6.284); ctx.fill(); ctx.globalAlpha = 1;
+    }
     const bband = bgBand(G.zone), BA = zb.boss && BOSS_ART[bband], bimg = BA && bossArtFor(bband);
     if (bimg) {   // M9 2.2 — 그림 보스: 걷기 2 · 돌진 0.6초 전 준비 · 돌진(+뒤로 잔상 두 겹) · 피격 하얀 칸
       const f = zb.charge > 0 ? 3 : (zb.nextCharge < 0.6 ? 2 : Math.floor(zb.wob * (zb.held ? 0.35 : 0.6)) % 2);
@@ -2150,7 +2159,8 @@ function drawHUD() {
   ctx.textAlign = 'right';
   ctx.fillStyle = PALETTE.parts;
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText('구역 ' + G.zone, GAME_W - 24, 26);   // M8 (지시 #148) — 번호는 작게, 이름을 크게
+  if ((G.loop || 1) > 1) ctx.fillStyle = PALETTE.warn;   // M11 1.2 — 회차가 오르면 붉게
+  ctx.fillText(((G.loop || 1) > 1 ? G.loop + '회차 · ' : '') + '구역 ' + G.zone, GAME_W - 24, 26);   // M8 (지시 #148) — 번호는 작게, 이름을 크게
   ctx.fillStyle = PALETTE.ink;
   ctx.font = '700 21px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
   ctx.fillText(zoneName(G.zone), GAME_W - 24, 52);
