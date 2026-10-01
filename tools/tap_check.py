@@ -20,7 +20,8 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # cp949 콘솔에�
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sim_port as S
 
-TABS = ("stat", "weapon", "gear", "daily")   # 지시 #151: "daily" 는 이제 탭이 아니라 미션 팝업 상태
+TABS = ("stat", "rebirth", "gear", "daily")   # 지시 #151: "daily" 는 이제 탭이 아니라 미션 팝업 상태 · M10: 무기 탭 → 환생 탭
+# M10 — 부위 사다리 팝업(40칸)은 거울에 없다(그리기·입력 쪽). 브라우저에서 잰다: tools/ladder_tap.js
 
 
 def main(argv):
@@ -31,9 +32,7 @@ def main(argv):
 
     s = S.Sim(seed=1)
     s.G["hp"] = s.maxHP()
-    # 가방을 채워 목록이 가장 길 때를 본다 (M4 3.4 와 같은 조건)
-    for i in range(8):
-        s.G["bag"].append(s.rollGear(3))
+    # M10 — 가방이 없다. 장비 탭 줄 수는 장비와 무관하다(뽑기·융합·최고 장착·입수·확률 고정)
 
     best = None
     n = 0
@@ -66,7 +65,7 @@ def main(argv):
         rec = {"측정일": datetime.date.today().isoformat(),
                "대상": "탭 %d개 배치가 7.1(탭 대상 >= MIN_TAP_CSS)을 지키는지" % len(TABS),
                "빌드도장": stamp, "도구": "tools/tap_check.py",
-               "방법": "sim_port 의 fit_game·buildButtons 로 280~500 x 560~1000 을 %dpx 씩 훑고 탭 %d개를 전부 본다. 가방에 장비 8개를 넣고 잰다. **잘리지 않는 고정 버튼만** 잰다(잘린 줄은 hitButton 이 건너뛴다)." % (a.step, len(TABS)),
+               "방법": "sim_port 의 fit_game·buildButtons 로 280~500 x 560~1000 을 %dpx 씩 훑고 탭 %d개를 전부 본다. **잘리지 않는 고정 버튼만** 잰다(잘린 줄은 hitButton 이 건너뛴다)." % (a.step, len(TABS)),
                "표본": n, "최소_CSS_px": round(best[0], 2), "가장_작은_자리": best[1],
                "선": line, "결과": "통과" if ok else "미달",
                "판정하지_않는다": "판정은 검증자·사람 몫이다. 여기는 만든 쪽의 측정이다."}

@@ -4,7 +4,7 @@
 거울(tools/sim_port.py)의 auto_run 으로 첫 판을 구역 30 까지 → 게임과 같은 doRebirth(훈장 floor((최고구역−9)^1.5))
 → 같은 Sim 을 이어 두 번째 판을 구역 30 까지. 장비·설계도·입수 레벨은 남고 구역·부품·능력치 레벨은 처음으로(게임과 같다).
 예측 M10-P3: 두 번째 판의 30구역 도달이 첫 판의 50% 이하. 50% 를 넘으면 틀렸다 — 훈장 효과(MEDAL_PER)를 올린다.
-쓰는 법: python3 tools/rebirth_check.py [--seeds 8] [--out measurements/rebirth-M10-....json]
+쓰는 법: python tools/rebirth_check.py [--seeds 8] [--out measurements/rebirth-M10-....json]
 종료 코드: 비율 중앙이 0.5 를 넘으면 1."""
 import os, sys, json, argparse, statistics, datetime
 from multiprocessing import Pool
