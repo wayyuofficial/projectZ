@@ -278,10 +278,10 @@ const GEAR_SLOTS = [
 /* M10 (지시 #155, 정본 '장비 단계·융합' 행) — 부위마다 사다리 40칸 = 등급 8 × 단계 5. 칸 k = (등급−1)×5 + (5−단계): 0 = 일반 5단계 … 39 = 영원 1단계.
    같은 칸 FUSE_N 개 → 윗칸 1개. 장착 효과(낀 칸) + 보유 효과(얻어 본 칸마다, 끼지 않아도). 값은 plan-M10 — 측정(3.2)에서 맞춘다. */
 const GEAR_STEPS = 5, LADDER = 8 * GEAR_STEPS, FUSE_N = 5;
-const WEAPON_POW_G = 1.15;                                                          // 무기 장착: 위력 ×1.15^칸
+const WEAPON_POW_G = 1.12;                                                          // 무기 장착: 위력 ×1.12^칸 (M10 3.2: 1.15 는 30구역 111분 — M10-P2 반증, 끝 칸 ×83)
 const SLOT_STAT = { weapon: 'atk', head: 'hp', body: 'reg', hands: 'spd', feet: 'inc' };   // 부위가 올리는 능력치
 const SLOT_EQUIP_G = { head: 1.05, body: 1.05, hands: 1.025, feet: 1.04 };          // 방어구 장착: 그 능력치 ×G^(칸+1)
-const OWN_PER_TIER = 0.01;                                                          // 보유: 얻어 본 칸마다 그 부위 능력치 +등급×1%
+const OWN_PER_TIER = 0.005;                                                         // 보유: 얻어 본 칸마다 그 부위 능력치 +등급×0.5% (M10 3.2: 1% → 0.5%, 30구역 ≈175분)
 const GEAR_SHAPES = 3;                                  // 부위별 방어구 모양 (정본 상한)
 const GEAR_AFFIXES = 0;                                 // M10 (지시 #155): 무작위 옵션 없음 — 칸마다 효과가 정해져 있다 (정본 상한 2 안)
 /* 옵션 — 죽어 있던 최대체력·체력회복이 여기로 온다 (M4 4.3 / M4-B5).
@@ -623,7 +623,7 @@ function weaponVis(type) { return type; }
 function weaponName(type) { return (weaponOf(type) || WEAPON_TYPES[0]).name; }
 /* M10 — 낀 무기 = 칸 번호(G.gear.weapon). 화면용 묶음(gearItem)으로 돌려준다. */
 function curWeapon() { return gearItem('weapon', (G.gear && typeof G.gear.weapon === 'number') ? G.gear.weapon : 0); }
-function weaponPower() { return Math.pow(WEAPON_POW_G, curWeapon().k); }   // M10: 위력 = 1.15^칸(0번 ×1 … 39번 ×233)
+function weaponPower() { return Math.pow(WEAPON_POW_G, curWeapon().k); }   // M10: 위력 = WEAPON_POW_G^칸(1.12: 0번 ×1 … 39번 ×83)
 let lastHitCrit = false;   // M6 1.2 — 마지막 hitDamage 가 치명타였는지 (피해 글자 크기용)
 function hitDamage() {
   const base = statOf('atk') * weaponPower();
@@ -1481,7 +1481,7 @@ function acceptRevive() {
 /* ── M10 2 환생 (지시 #155, 정본 '환생' 행) ──
    이번 판 최고 구역(G.bestZone) 이 REBIRTH_MIN_ZONE 이상이면 환생할 수 있다. 훈장 = floor((최고 구역 − 9)^1.5) — 구역 10 → 1 · 15 → 14 · 20 → 36 · 30 → 96.
    훈장 1개 = 공격력·수입 +MEDAL_PER(합산). 처음으로: 구역·처치·부품·능력치 레벨·단계 기록·이번 판 최고 구역·체력. 남는 것: 장비·설계도·입수 레벨·일일·열쇠·훈장. */
-const REBIRTH_MIN_ZONE = 10, MEDAL_PER = 0.05;
+const REBIRTH_MIN_ZONE = 10, MEDAL_PER = 0.01;   // M10 3.2: 0.05 는 두 번째 판 30구역이 2.4분(첫 판의 1%) — 0.01 이면 약 10% (tools/rebirth_check.py)
 function medalsFor(bz) { return bz >= REBIRTH_MIN_ZONE ? Math.floor(Math.pow(bz - (REBIRTH_MIN_ZONE - 1), 1.5)) : 0; }
 function medalMult(statId) { return (statId === 'atk' || statId === 'inc') ? 1 + MEDAL_PER * (G.medals || 0) : 1; }
 function canRebirth() { return (G.bestZone || 1) >= REBIRTH_MIN_ZONE; }

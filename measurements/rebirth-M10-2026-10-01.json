@@ -1,0 +1,80 @@
+{
+ "측정일": "2026-10-01",
+ "도구": "tools/rebirth_check.py",
+ "시드": 8,
+ "행": [
+  {
+   "seed": 1,
+   "first_min": 171.6,
+   "best": 30,
+   "medals": 96,
+   "second_min": 18.1,
+   "ratio": 0.10547785547785549,
+   "z10_second": 0.5
+  },
+  {
+   "seed": 2,
+   "first_min": 167.5,
+   "best": 30,
+   "medals": 96,
+   "second_min": 18.9,
+   "ratio": 0.11283582089552238,
+   "z10_second": 0.5
+  },
+  {
+   "seed": 3,
+   "first_min": 179.0,
+   "best": 30,
+   "medals": 96,
+   "second_min": 13.9,
+   "ratio": 0.0776536312849162,
+   "z10_second": 0.5
+  },
+  {
+   "seed": 4,
+   "first_min": 193.0,
+   "best": 30,
+   "medals": 96,
+   "second_min": 18.2,
+   "ratio": 0.09430051813471502,
+   "z10_second": 0.5
+  },
+  {
+   "seed": 5,
+   "first_min": 188.3,
+   "best": 30,
+   "medals": 96,
+   "second_min": 21.7,
+   "ratio": 0.11524163568773232,
+   "z10_second": 0.5
+  },
+  {
+   "seed": 6,
+   "first_min": 160.1,
+   "best": 30,
+   "medals": 96,
+   "second_min": 14.2,
+   "ratio": 0.0886945658963148,
+   "z10_second": 0.5
+  },
+  {
+   "seed": 7,
+   "first_min": 174.6,
+   "best": 30,
+   "medals": 96,
+   "second_min": 16.4,
+   "ratio": 0.09392898052691867,
+   "z10_second": 0.5
+  },
+  {
+   "seed": 8,
+   "first_min": 153.1,
+   "best": 30,
+   "medals": 96,
+   "second_min": 16.4,
+   "ratio": 0.10711952971913781,
+   "z10_second": 0.5
+  }
+ ],
+ "비율중앙": 0.09988918680628525
+}

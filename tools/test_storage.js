@@ -49,13 +49,13 @@
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before6, { v: 1, bestZone: undefined }));
   loadError = null;                       // 앞 항목의 실패 문구가 남지 않게 (24차 부수 지적 3: load() 는 loadError 를 스스로 비우지 않는다)
   load();
-  chk('v1 저장본이 최신으로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.gear.weapon === 6 && loadError === null, G.v + '/' + G.zone + '/' + G.bestZone + '/' + loadError);
+  chk('v1 저장본이 최신으로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.gear.weapon === 7 && loadError === null, G.v + '/' + G.zone + '/' + G.bestZone + '/' + loadError);
 
   // M3 5 — v2 (M2 저장본) 도 설계도 0 으로 이어져야 한다. 무기는 이미 가진 것을 잃지 않는다.
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before6, { v: 2, plans: undefined }));
   loadError = null;
   load();
-  chk('v2 저장본이 최신으로 이어진다 (설계도 0)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 0 && G.gear.weapon === 6 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + loadError);
+  chk('v2 저장본이 최신으로 이어진다 (설계도 0)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 0 && G.gear.weapon === 7 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + loadError);
 
   // M4 1 — v3 (M3 저장본) 도 일일 상태가 붙어 이어져야 한다.
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before6, { v: 3, plans: 77, day: undefined, keys: undefined }));
@@ -70,7 +70,7 @@
   loadError = null;
   load();
   /* M10: 소총 3등급(1.45×2.25=3.26) → 칸 8, 가방의 권총 1등급(1.0) → 칸 0, 산탄총 1등급(1.9) → 칸 5. 가방은 없어지고 개수로 */
-  chk('v4 저장본이 최신으로 이어진다 (무기 → 장비 → 칸)', G.v === SAVE_VERSION && G.gear.weapon === 8 && G.inv.weapon[0] === 1 && G.inv.weapon[5] === 1 && G.own.weapon[8] === 1
+  chk('v4 저장본이 최신으로 이어진다 (무기 → 장비 → 칸)', G.v === SAVE_VERSION && G.gear.weapon === 10 && G.inv.weapon[0] === 1 && G.inv.weapon[6] === 1 && G.own.weapon[10] === 1   // 칸 = round(ln 옛위력 / ln WEAPON_POW_G(1.12)): 소총 2등급 2.175 → 7, 소총 3등급 3.26 → 10, 산탄총 1.9 → 6
       && G.bag === undefined && G.parts === 1234.5 && G.owned === undefined && G.gachaXp === 0 && loadError === null,   // 지시 #150: 가방이 돌아왔다 — 옛 무기 둘(쇠파이프·산탄총)은 팔지 않고 가방에 남는다   // M6 재설계: 가방은 없다 — 옛 무기는 팔려 부품이 된다
       G.gear.weapon + '/' + G.inv.weapon.slice(0, 9).join(',') + '/' + Math.round(G.parts));
 

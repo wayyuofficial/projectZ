@@ -513,7 +513,7 @@ class Sim(object):
         return self.gearItem("weapon", int(k) if isinstance(k, (int, float)) else 0)
 
     def weaponPower(self):
-        return WEAPON_POW_G ** self.curWeapon()["k"]   # M10: 1.15^칸
+        return WEAPON_POW_G ** self.curWeapon()["k"]   # M10: WEAPON_POW_G^칸
 
     # ---- M10 사다리 (원본과 같은 식) ----
     @staticmethod
@@ -1209,7 +1209,7 @@ def run_many(seeds, kw=None, overrides=None, lock_stat=None, want_buys=False, wa
 
 def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
              offline_every_min=None, offline_hours=8, on_buy=None, focus_duty=None,
-             stop_zone=None, now_ms=None):
+             stop_zone=None, now_ms=None, sim=None):
     """가장 싼 것부터 계속 사면서 구역 10 까지 간다.
 
     `offline_every_min` 을 주면 그만큼 놀고 나서 `offline_hours` 시간 자리를 비운다.
@@ -1219,7 +1219,9 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
     `focus_duty=(3, 20)` 을 주면 20초마다 3초씩 집중 사격을 켠다 (M4 2).
 
     돌아오는 값: 구역별 도달 시각(분) · 벽(10분 넘게 정체한 구역) · 사망 수 · 총 분."""
-    s = Sim(seed=seed, now_ms=now_ms)     # now_ms: 시간대 과제를 재려고 시작 시각을 옮길 때만 (tools/quest_pace.py)
+    s = Sim(seed=seed, now_ms=now_ms) if sim is None else sim     # now_ms: 시간대 과제를 재려고 시작 시각을 옮길 때만 (tools/quest_pace.py)
+    if sim is not None:
+        s.t = 0.0          # M10 3.2 — 이어 돌리기(환생 뒤 두 번째 판, tools/rebirth_check.py). t 는 재는 시계일 뿐 — 게임 시각은 now_ms 가 이어진다
     s.G["hp"] = s.maxHP()
     zone_at, wall = {1: 0.0}, {}
     deaths, buyT, stuck_from, last_zone = 0, 0.0, 0.0, 1
