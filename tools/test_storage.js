@@ -25,7 +25,7 @@
 
   // --- 저장과 복원 ---
   G = freshState();
-  G.parts = 1234.5; G.zone = 4; G.lv.atk = 7; G.gear.weapon = { slot: 'weapon', type: 'rifle', tier: 2, affixes: [], zone: 4 };   // M6 2.3: 무기는 장비
+  G.parts = 1234.5; G.zone = 4; G.lv.atk = 7; G.gear.weapon = 9; G.own.weapon[9] = 1; G.inv.head[3] = 4;   // M10: 무기는 사다리 칸 번호
   saveError = null; save();
   chk('save() 오류 없음', saveError === null, String(saveError));
   chk('저장 키 생성', !!store[SAVE_KEY], SAVE_KEY);
@@ -36,27 +36,29 @@
   chk('부품 복원 (소수점까지)', G.parts === 1234.5, G.parts);
   chk('구역 복원', G.zone === 4, G.zone);
   chk('능력치 레벨 복원', G.lv.atk === 7, G.lv.atk);
-  chk('무기 등급 복원', G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 2, JSON.stringify(G.gear.weapon));
+  chk('무기 칸 복원', G.gear.weapon === 9 && G.own.weapon[9] === 1 && G.inv.head[3] === 4, JSON.stringify(G.gear));
 
   // --- 망가진 저장 ---
   store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 999 }));
   load();
   chk('모르는 버전 저장은 초기화', G.parts === 0 && G.zone === 1, G.parts + '/' + G.zone);
 
+  /* M10 — v1~v5 옛 저장본은 옛 구조(장비 객체)로 만든다. 무기 소총 2등급(옛 위력 1.45×1.5=2.175)은 v6→v7 에서 위력이 가장 가까운 칸 6(1.15^6=2.31)이 된다 */
+  const before6 = Object.assign({}, before, { gear: { weapon: { slot: 'weapon', type: 'rifle', tier: 2, affixes: [], zone: 4 } }, bag: [], inv: undefined, own: undefined, fresh: undefined, medals: undefined, rebirths: undefined });
   // M2: v1(M1) 저장본은 초기화하지 않고 v2 로 끌어올린다 — 사람의 15분이 날아가면 안 된다
-  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 1, bestZone: undefined }));
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before6, { v: 1, bestZone: undefined }));
   loadError = null;                       // 앞 항목의 실패 문구가 남지 않게 (24차 부수 지적 3: load() 는 loadError 를 스스로 비우지 않는다)
   load();
-  chk('v1 저장본이 최신으로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.bestZone + '/' + loadError);
+  chk('v1 저장본이 최신으로 이어진다', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.bestZone === 4 && G.gear.weapon === 6 && loadError === null, G.v + '/' + G.zone + '/' + G.bestZone + '/' + loadError);
 
   // M3 5 — v2 (M2 저장본) 도 설계도 0 으로 이어져야 한다. 무기는 이미 가진 것을 잃지 않는다.
-  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 2, plans: undefined }));
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before6, { v: 2, plans: undefined }));
   loadError = null;
   load();
-  chk('v2 저장본이 최신으로 이어진다 (설계도 0)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 0 && G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 2 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + loadError);
+  chk('v2 저장본이 최신으로 이어진다 (설계도 0)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === 0 && G.gear.weapon === 6 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + loadError);
 
   // M4 1 — v3 (M3 저장본) 도 일일 상태가 붙어 이어져야 한다.
-  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 3, plans: 77, day: undefined, keys: undefined }));
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before6, { v: 3, plans: 77, day: undefined, keys: undefined }));
   loadError = null;
   load();
   // M6 7 — v3 의 설계도 77 은 '돈' 이라 v5→v6 에서 옛 1회 값으로 나눠 개수가 된다(수입 레벨 0). 시험도 같은 식으로 센다 — 게임 식을 베끼는 게 아니라 이전 규칙을 밝혀 둔다.
@@ -64,23 +66,34 @@
   chk('v3 저장본이 최신으로 이어진다 (일일 붙음)', G.v === SAVE_VERSION && G.parts === 1234.5 && G.zone === 4 && G.plans === plans77 && G.keys === KEY_MAX && G.login.streak === 0 && loadError === null, G.v + '/' + G.zone + '/' + G.plans + '/' + G.keys + '/' + loadError);
 
   // M6 2.3 — v4 (M4·M5 저장본) 의 owned/weapon 은 gear.weapon 과 가방으로 옮겨진다. 가진 무기를 하나도 안 잃는다.
-  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 4, gear: {}, bag: [], owned: { pipe: 1, rifle: 3, shotgun: 1 }, weapon: 'rifle', gachaLv: undefined }));
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before6, { v: 4, gear: {}, bag: [], owned: { pipe: 1, rifle: 3, shotgun: 1 }, weapon: 'rifle', gachaLv: undefined }));
   loadError = null;
   load();
-  chk('v4 저장본이 최신으로 이어진다 (무기 → 장비)', G.v === SAVE_VERSION && G.gear.weapon.type === 'rifle' && G.gear.weapon.tier === 3
-      && G.bag.length === 2 && G.parts === 1234.5 && G.owned === undefined && G.gachaXp === 0 && loadError === null,   // 지시 #150: 가방이 돌아왔다 — 옛 무기 둘(쇠파이프·산탄총)은 팔지 않고 가방에 남는다   // M6 재설계: 가방은 없다 — 옛 무기는 팔려 부품이 된다
-      G.gear.weapon.type + '/' + G.gear.weapon.tier + '/' + G.bag.length + '/' + Math.round(G.parts));
+  /* M10: 소총 3등급(1.45×2.25=3.26) → 칸 8, 가방의 권총 1등급(1.0) → 칸 0, 산탄총 1등급(1.9) → 칸 5. 가방은 없어지고 개수로 */
+  chk('v4 저장본이 최신으로 이어진다 (무기 → 장비 → 칸)', G.v === SAVE_VERSION && G.gear.weapon === 8 && G.inv.weapon[0] === 1 && G.inv.weapon[5] === 1 && G.own.weapon[8] === 1
+      && G.bag === undefined && G.parts === 1234.5 && G.owned === undefined && G.gachaXp === 0 && loadError === null,   // 지시 #150: 가방이 돌아왔다 — 옛 무기 둘(쇠파이프·산탄총)은 팔지 않고 가방에 남는다   // M6 재설계: 가방은 없다 — 옛 무기는 팔려 부품이 된다
+      G.gear.weapon + '/' + G.inv.weapon.slice(0, 9).join(',') + '/' + Math.round(G.parts));
 
   // M6 7 — v5 (M6 2~6 저장본) 의 설계도 '돈' 은 옛 1회 값으로 나눠 개수가 되고(상한 50), 뽑기 강화 단계 3 은 입수 Lv3 문턱 경험치가 된다.
-  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before, { v: 5, plans: 1e12, gachaLv: 3, gachaXp: undefined }));
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before6, { v: 5, plans: 1e12, gachaLv: 3, gachaXp: undefined }));
   loadError = null;
   load();
   chk('v5 저장본이 최신으로 이어진다 (설계도 개수·입수 레벨)', G.v === SAVE_VERSION && G.plans === 50 && G.gachaXp === GACHA_XP_NEEDS[2] && curGachaLv() === 3 && G.gachaLv === undefined && loadError === null,
       G.v + '/' + G.plans + '/' + G.gachaXp + '/' + curGachaLv());
 
+  // M10 1.2 — v6 (M6~M9) 의 낀 장비·가방은 사다리 칸 개수로. 옵션은 버린다. 방어구는 그 등급의 3단계 칸, 낀 것은 그 칸을 낀다(개수에서 빠진다)
+  store[SAVE_KEY] = JSON.stringify(Object.assign({}, before6, { v: 6,
+    gear: { weapon: { slot: 'weapon', type: 'pipe', tier: 1, affixes: [], zone: 1 }, head: { slot: 'head', shape: 1, tier: 3, affixes: [{ id: 'atk', mult: 1.2 }], zone: 3 } },
+    bag: [{ slot: 'head', shape: 0, tier: 3, affixes: [], zone: 3 }, { slot: 'head', shape: 2, tier: 3, affixes: [], zone: 3 }, { slot: 'feet', shape: 0, tier: 8, affixes: [], zone: 9 }] }));
+  loadError = null;
+  load();
+  chk('v6 저장본이 최신으로 이어진다 (장비 → 칸 개수)', G.v === SAVE_VERSION && G.gear.weapon === 0 && G.gear.head === idxOf(3, 3) && G.inv.head[idxOf(3, 3)] === 2
+      && G.own.head[idxOf(3, 3)] === 1 && G.inv.feet[idxOf(8, 3)] === 1 && G.bag === undefined && G.medals === 0 && loadError === null,
+      JSON.stringify(G.gear) + '/' + G.inv.head[idxOf(3, 3)] + '/' + G.inv.feet[idxOf(8, 3)]);
+
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();
-  chk('항목이 빠진 저장 보정', G.zone === 1 && G.lv.reg === 0 && G.gear.weapon.type === 'pipe', JSON.stringify(G.lv));
+  chk('항목이 빠진 저장 보정', G.zone === 1 && G.lv.reg === 0 && G.gear.weapon === 0 && G.inv.feet.length === LADDER && G.own.weapon[0] === 1, JSON.stringify(G.lv));
 
   store[SAVE_KEY] = '{{{깨진';
   loadError = null;                       // 불러오기 실패는 saveError 가 아니라 loadError 다 (11차 감사 뒤)
