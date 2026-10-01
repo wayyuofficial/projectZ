@@ -22,11 +22,16 @@ SHEETS = {
                               [("bolt", 18), ("grenade", 9)], [(None, 0), ("sawblade", 15)]],
     "sheet_flash_impact.png": [("muzzle", 4, 18), ("impact", 4, 18)],
     "sheet_explosion.png": [("boom", 6, 46)],
+    "sheet_flame.png": [("flame", 6, 26)],                  # 화염방사기 불덩이 6프레임(불씨→큰 불꽃→잔불→연기). 원본을 좌우 뒤집어 저장(머리가 오른쪽 = 오른쪽으로 날아간다)
 }
 
 
+GAPS = {"sheet_flame.png": 5}
+REVERSE = {"flame"}   # 불꽃 프레임 3·4 사이가 좁다(14 면 붙어 5칸이 된다)
+
+
 def cells(path):
-    a = np.array(Image.open(path).convert("RGBA")); return a, grid_cells(a, 14)
+    a = np.array(Image.open(path).convert("RGBA")); return a, grid_cells(a, GAPS.get(os.path.basename(path), 14))
 
 
 def crop(a, y0, y1, x0, x1):
@@ -57,6 +62,7 @@ def main():
                 assert len(row) == n, "%s %s: 프레임 %d개 (기대 %d)" % (f, name, len(row), n)
                 ims = [crop(a, *c) for c in row]; s = L * K / max(max(i.size) for i in ims)
                 art[name] = [enc(i, s) for i in ims]
+                if name in REVERSE: art[name].reverse()       # 시트를 좌우로 뒤집어 저장해서 읽는 순서도 뒤집혔다
     lines = ",\n".join("  %s: %s" % (k, json.dumps(v, separators=(",", ":"))) for k, v in art.items())
     js = "const FX_ART = {\n" + lines + "\n};"
     replace_block("FX_ART", js)
