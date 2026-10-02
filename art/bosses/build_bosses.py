@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sheet_tools import row_frames, foot_x, webp_uri, replace_block, block_js
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BH, K, Q, FRAMES = 92, 2.5, 82, 4      # 화면 키(논리 px, 예전 보스 도트 96) · 배율 · 품질 · 프레임
+BH, K, Q, FRAMES = 92, 2.5, 72, 4      # 화면 키(논리 px, 예전 보스 도트 96) · 배율 · 품질 · 프레임
 BANDS = ["city", "subway", "factory", "forest", "base", "lab", "school", "mart", "park", "prison", "cruise", "nuclear"]   # M11: 구역 31~60
 
 
