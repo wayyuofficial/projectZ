@@ -133,6 +133,7 @@ SKILL_IDS = [d["id"] for d in SKILLS]
 SKILL_SLOTS = int(num("SKILL_SLOTS")); SKILL_LV_MAX = int(num("SKILL_LV_MAX")); SKILL_LV_STEP = num("SKILL_LV_STEP"); SKILL_POW = num("SKILL_POW")
 BOSS_BOOKS_FIRST = int(num("BOSS_BOOKS_FIRST")); BOSS_BOOKS_AGAIN = int(num("BOSS_BOOKS_AGAIN")); QUEST_BOOKS = int(num("QUEST_BOOKS"))
 SKILL_STRIP_H = num("SKILL_STRIP_H")
+STAGE_WALK_SEC = num("STAGE_WALK_SEC"); ZONE_TRAVEL_SEC = num("ZONE_TRAVEL_SEC")   # M13 (지시 #161) — 걷기·구역 이동 대기
 LOOP_G = num("LOOP_G")                     # M11 1 — 회차 배수(좀비)
 LOOP_RW = num("LOOP_RW")                   # M11 1 — 회차 배수(처치 보상)
 KEY_MAX = int(num("KEY_MAX"))
@@ -234,7 +235,7 @@ def fingerprint(name):
 # 여기 적힌 함수는 아래 파이썬 구현이 **거울**이다.
 # 원본이 바뀌면 c16 이 막는다. 막히면 아래 구현을 손으로 다시 맞춘 뒤 --reseal 한다.
 MIRRORED = {
-    "acceptRevive": "0732d6c748a74f02",
+    "acceptRevive": "35f23f8b65cb26f5",
     "adRowY": "5ed5d78e1b23b919",
     "applyDamage": "44f3fc0acd0ea484",
     "applyOffline": "7c67a2a215adcf54",
@@ -253,7 +254,7 @@ MIRRORED = {
     "dailyQuests": "79f19f9555b60faa",
     "damageZombie": "de858f78fa27b6f3",
     "dayIndex": "e395fb011be7dfbc",
-    "doRebirth": "6b3f6e613bf44bc9",
+    "doRebirth": "9afd103ee351c421",
     "equipBest": "0f92c8c2f2743745",
     "firstClear": "469a179f675bd42f",
     "fitGame": "c865c9f0968c6437",
@@ -273,7 +274,7 @@ MIRRORED = {
     "idxOf": "eef263846326e9ec",
     "isBossKill": "e461a4a51bbb69c5",
     "killReward": "0ef3ffe5d2eb73ba",
-    "killZombie": "a594f13b348eae51",
+    "killZombie": "0ceec43a1e700848",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "85ee3342407d5876",
@@ -283,7 +284,7 @@ MIRRORED = {
     "medalMult": "46c08bcbefe88ff9",
     "medalsFor": "40a1cb07ee003bd6",
     "migrate": "799c9eefd43e4b62",
-    "onDeath": "b20ea8a7475bafbb",
+    "onDeath": "fe28a84205fbfdcd",
     "openSupply": "ef504f009bbf894e",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "pierceShot": "55983a4bf869df04",
@@ -308,7 +309,7 @@ MIRRORED = {
     "statCost": "3915c9b212b37571",
     "statDef": "e7ad6087978fd6ec",
     "statOf": "64433344a9e069b6",
-    "stepCombat": "66a26f6cb3fb4ace",
+    "stepCombat": "bbcec6503ee0a8ff",
     "stepSkills": "e73576e1cfdf7432",
     "tabRowY": "d001ac81a8afa161",
     "takeQuest": "cab3ce03ca945559",
@@ -431,6 +432,7 @@ class Sim(object):
         self.listMax = 0.0
         self.skillRt = dict(cd={}, act={}, pierce=0, turretAcc=0.0, fireAcc=0.0, fireT=0.0, tT=0.0)   # M12 — 발동 상태(저장 안 함)
         self.skillPopup = None
+        self.moveT = 0.0                 # M13 — 걷기·구역 이동 남은 시간(저장 안 함)
         self.dmgShot = 0.0; self.dmgSkill = 0.0   # 포트에만 있는 계수기 — 스킬 피해 몫(tools/skill_share.py)
 
     # ---- 저장 ----
@@ -651,6 +653,7 @@ class Sim(object):
         self.G["hp"] = self.maxHP()
         self.killIndex = 0; self.zombies = []; self.reviveOffer = None
         self.skillRt = dict(cd={}, act={}, pierce=0, turretAcc=0.0, fireAcc=0.0, fireT=0.0, tT=0.0)   # M12
+        self.moveT = 0.0                                   # M13
         return gain
 
     def hitDamage(self):
@@ -1202,6 +1205,7 @@ class Sim(object):
         if (self.killIndex % self.stageKills(self.G["zone"]) == 0
                 and self.killIndex < self.zoneKills(self.G["zone"])):
             self.questProgress("stage", 1)
+            self.moveT = STAGE_WALK_SEC                    # M13 — 다음 단계까지 걷는다
             # M6 2.1 — 단계 드랍 없음
             first = self.firstClear(self.G["zone"] * STAGES_PER_ZONE + self.killIndex // self.stageKills(self.G["zone"]))
             self.G["plans"] = self.G.get("plans", 0.0) + (STAGE_PLANS if first else RECLEAR_PLANS)   # M6 7.1 — 개수(광고·수입 안 곱함)
@@ -1212,6 +1216,7 @@ class Sim(object):
             self.G["books"] = (self.G.get("books") or 0) + (BOSS_BOOKS_FIRST if first else BOSS_BOOKS_AGAIN) + max(0, (self.G.get("loop") or 1) - 1)   # M12
         if self.killIndex >= self.zoneKills(self.G["zone"]):
             self.killIndex = 0
+            self.moveT = ZONE_TRAVEL_SEC if self.G["zone"] < ZONE_COUNT else STAGE_WALK_SEC   # M13 — 다음 구역으로
             if self.G["zone"] < ZONE_COUNT:
                 self.G["zone"] += 1
                 self.questProgress("zone", 1)
@@ -1223,12 +1228,15 @@ class Sim(object):
 
     def stepCombat(self, dt):
         hadTarget = len(self.zombies) > 0
+        if self.moveT > 0:
+            self.moveT = max(0.0, self.moveT - dt)   # M13
 
         self.spawnTimer -= dt
         ttk = self.zoneHP(self.G["zone"]) / max(1e-6, self.playerDPS())
         spawnGap = min(2.0, max(0.35, ttk * 0.9))
-        remaining = self.zoneKills(self.G["zone"]) - self.killIndex   # M2: 벽 구역은 처치 수 x3
-        if self.spawnTimer <= 0 and len(self.zombies) < min(MAX_ONSCREEN_ZOMBIES, remaining):
+        sk = self.stageKills(self.G["zone"])
+        remaining = min(self.zoneKills(self.G["zone"]) - self.killIndex, sk - self.killIndex % sk)   # M2 벽 · M13 지금 단계에 남은 만큼만
+        if self.moveT <= 0 and self.spawnTimer <= 0 and len(self.zombies) < min(MAX_ONSCREEN_ZOMBIES, remaining):
             self.spawnZombie()
             self.spawnTimer = spawnGap
 
@@ -1296,6 +1304,7 @@ class Sim(object):
             self.G["zone"] -= 1
         self.killIndex = 0
         self.G["kills"] = 0
+        self.moveT = 0.0                                   # M13
         self.reviveOffer = {"zone": frm, "t": 0.0}
 
     def acceptRevive(self):
@@ -1307,6 +1316,7 @@ class Sim(object):
         self.G["hp"] = self.maxHP()
         self.killIndex = 0
         self.G["kills"] = 0
+        self.moveT = 0.0                                   # M13
         del self.zombies[:]
         self.shots = 0
         self.reviveOffer = None
