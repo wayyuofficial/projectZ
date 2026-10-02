@@ -236,7 +236,23 @@ const ZONE_RW0 = 12,  ZONE_RW_G = 1.29;   /* M12·M13 3.2: 1.28 → 1.29 (위 �
 const WALL_EVERY = 5, WALL_KILL_MULT = 1, WALL_START = 10;   // M14 1.2 (지시 #163): 처치 수 ×2 → ×1 — 벽은 보스·보강(아래 FARM_)으로 버티는 구간. 이력: 지시 #63 구역 10 부터 x2/÷2
 /* M14 1.2 — 보강: 죽으면 한 구역 물러나(지시 #35 그대로) 그 구역을 **되풀이**하다가, DPS 가 죽었을 때의 ×FARM_GAIN 이 되거나 FARM_MAX_SEC 가 지나면 다시 도전한다.
    전엔 물러나자마자 다시 올라가 같은 벽에서 또 죽었다 — 한 판 사망 약 180번, 벽 앞 구역 재진입 29번(거울 진단). 저장하지 않는다. */
-const FARM_GAIN = 1.1, FARM_MAX_SEC = 90;
+const FARM_GAIN = 1.5, FARM_MAX_SEC = 150;   // M15 1.2 (격자 grid-rhythm r1~r5): 1.1·90 → 1.5·150 — 한 판 사망 130 → 약 90. 강해질 때까지 더 오래 보강한다
+/* M15 1 (지시 #164, M14-P1 반증 조건) — 벽을 처치 수가 아니라 **체력**으로: 벽 구역(10·15·…) 좀비 체력 × WALL_HP_MULT.
+   HP_KNOTS — [구역, 배수] 매듭. 사이는 로그로 잇는다(끝 밖은 끝 값). 곡선 모양이 '1~3 느림 · 4~21 빠름 · 22~40 느림' 이라
+   거듭제곱 하나로는 못 맞춰서 표로 둔다(A4). 값은 거울 격자로 고른다(tools/grid_rhythm.py). */
+const WALL_HP_MULT = 1;   // M15 1.2: 0.9 는 벽이 약하고(벽 비 중앙 1.4) 1.05 는 너무 세다(2.9, 최대 4.2) — 1 그대로
+const HP_KNOTS = [
+  [1, 0.55], [3, 0.85], [5, 1.5], [13, 1.95], [20, 1.7], [25, 1.3], [40, 1.15], [60, 1.35]   // M15 1.2 (격자 r3~r7): 구역 2 도달비 1.92 → 1.17 · 구역 13 매듭(사람 지시 #166: 10~15 체력 올려 누적 도달 ±20% 맞추기) — 도달 밖 5 → 3
+];
+function hpKnot(z) {
+  const k = HP_KNOTS;
+  if (z <= k[0][0]) return k[0][1];
+  for (let i = 1; i < k.length; i++) if (z <= k[i][0]) {
+    const f = (z - k[i - 1][0]) / (k[i][0] - k[i - 1][0]);
+    return Math.exp(Math.log(k[i - 1][1]) * (1 - f) + Math.log(k[i][1]) * f);
+  }
+  return k[k.length - 1][1];
+}
 let farm = null;   // { zone: 죽은 구역, dps: 다시 도전할 DPS, t: 흐른 초 }
 const ZOMBIE_DPS_RATIO = 0.2;   /* 2026-09-08 지시 #23 재보정.
      접촉 판정을 위치 기준으로 고치면서 때리는 좀비가 최대 8마리에서 3마리로 줄었다.
@@ -686,7 +702,8 @@ function playerDPS() { return expectedHit() * attacksPerSec(); }   // M6 1.2: �
 function maxHP() { return statOf('hp'); }
 function regenPerSec() { return statOf('reg'); }
 
-function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1) * loopMult(); }   // M11: 회차 배수(회차 1 은 ×1)
+function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1) * hpKnot(z) * (isWallZone(z) ? WALL_HP_MULT : 1) * loopMult(); }   // M15 1: 구역별 체력 매듭(HP_KNOTS) · 벽 체력(WALL_HP_MULT)
+function isWallZone(z) { return z >= WALL_START && z % WALL_EVERY === 0; }   // M11: 회차 배수(회차 1 은 ×1)
 function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO; }
 function zoneKills(z) { return KILLS_PER_ZONE * ((z >= WALL_START && z % WALL_EVERY === 0) ? WALL_KILL_MULT : 1); }   // M2 벽: 처치 수만 늘어난다
 function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z) * loopRwMult(); }   // M2 벽: 처치당 보상 ÷2 — 벽의 총수입은 보통 구역과 같다 (M2-B2‴, 지시 #63)

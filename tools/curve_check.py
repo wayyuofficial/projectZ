@@ -58,9 +58,14 @@ def target_arrive(z):
 END_PARTS, DEATHS = None, None
 
 
-def measure(seeds, wall=True, max_min=900):
+def measure(seeds, wall=True, max_min=900, over=None):
     # 2026-09-18 병렬(지시 #130): 벽 끄기는 자식 안에서 (overrides)
-    rows = SP.run_many(seeds, kw={"max_min": max_min}, overrides=({"WALL_KILL_MULT": 1} if not wall else None))
+    # 2026-10-02 (M15 4.1, 사례 28 후보): --rw·--selftest 는 부모의 SP.ZONE_RW_G 만 바꿔서 병렬 뒤로 **아무 일도 안 했다**
+    # (보상 성장 1.20 으로 쟀는데 정상 빌드와 같은 322.9분). 덮어쓸 값은 반드시 overrides 로 자식에 넘긴다.
+    o = dict(over or {})
+    if not wall:
+        o["WALL_KILL_MULT"] = 1
+    rows = SP.run_many(seeds, kw={"max_min": max_min}, overrides=(o or None))
     stay = {}
     for z in range(1, SP.ZONE_COUNT):
         d = [r["zone_min"][z + 1] - r["zone_min"][z] for r in rows if z + 1 in r["zone_min"]]
@@ -107,12 +112,8 @@ def main(argv):
 
     if a.selftest:
         # R003: 이 검사가 떨어질 수 있는가. 보상 성장을 1.20 으로 낮추면 뒤 구역이 곡선 밖으로 나가야 한다.
-        keep = SP.ZONE_RW_G; SP.ZONE_RW_G = 1.20
         WALL_ON = False
-        try:
-            stay, reach = measure(list(range(1, 6)), wall=False, max_min=600)
-        finally:
-            SP.ZONE_RW_G = keep
+        stay, reach = measure(list(range(1, 6)), wall=False, max_min=600, over={"ZONE_RW_G": 1.20})
         _, outside, _ = report(stay, reach, list(range(1, 6)), False)
         ok = len(outside) >= 6
         print("자가진단: 보상 성장 1.20 으로 낮추니 곡선 밖 구역 %d개 (6 이상이어야 검사가 살아 있다) → %s" % (len(outside), "통과" if ok else "실패"))
@@ -121,9 +122,9 @@ def main(argv):
     assert not SP.drift(), "포트가 게임과 어긋났다 — 먼저 맞춰라"
     seeds = list(range(1, a.seeds + 1))
     if a.rw:
-        SP.ZONE_RW_G = a.rw
+        SP.ZONE_RW_G = a.rw          # 기록의 '보상성장_사용' 칸용 — 실제 측정에는 아래 over 로 넘긴다
     WALL_ON = not a.no_wall
-    stay, reach = measure(seeds, wall=not a.no_wall, max_min=a.max_min)
+    stay, reach = measure(seeds, wall=not a.no_wall, max_min=a.max_min, over=({"ZONE_RW_G": a.rw} if a.rw else None))
     rows, outside, walls = report(stay, reach, seeds, not a.no_wall)
     print("목표 체류(z) = %.2f x %.2f^(z-1) 분 [정본] · 허용 ±%d%% · 구역 %d~%d · %d시드 · 벽 %s"
           % (TARGET_BASE, TARGET_G, TOL * 100, Z_FROM, Z_TO, len(seeds), "켬" if not a.no_wall else "끔"))

@@ -106,6 +106,8 @@ ZONE_HP0, ZONE_HP_G = num("ZONE_HP0"), num("ZONE_HP_G")
 ZONE_RW0, ZONE_RW_G = num("ZONE_RW0"), num("ZONE_RW_G")
 WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_KILL_MULT")), int(num("WALL_START"))   # M2 벽 (처치 수, 구역 10 부터) · M14 ×1
 FARM_GAIN, FARM_MAX_SEC = num("FARM_GAIN"), num("FARM_MAX_SEC")   # M14 — 보강
+WALL_HP_MULT = num("WALL_HP_MULT")   # M15 1 — 벽 체력
+HP_KNOTS = matrix("HP_KNOTS")        # M15 1 — 구역별 체력 매듭
 ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
 STAGES_PER_ZONE = int(num("STAGES_PER_ZONE"))
 STAGE_BONUS_RATIO = num("STAGE_BONUS_RATIO")
@@ -271,9 +273,11 @@ MIRRORED = {
     "gearScore": "2d4b4f6590669ec3",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "86e5dbdf14ea5395",
+    "hpKnot": "33a629695dd9f1af",
     "hurtZombie": "5deea434c00ebeef",
     "idxOf": "eef263846326e9ec",
     "isBossKill": "e461a4a51bbb69c5",
+    "isWallZone": "6f63f1e3b34209a7",
     "killReward": "0ef3ffe5d2eb73ba",
     "killZombie": "45f4e077279fdda4",
     "layout": "a6a07a236eb89472",
@@ -320,7 +324,7 @@ MIRRORED = {
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "8fcbdfc907029bf9",
     "zoneDPS": "9abab3ae0b004352",
-    "zoneHP": "f22aa0d1cae9de6c",
+    "zoneHP": "bdeda52960435a6b",
     "zoneReward": "fc08ad169107745f",
 }
 
@@ -815,7 +819,22 @@ class Sim(object):
         return self.statOf("reg")
 
     def zoneHP(self, z):
-        return ZONE_HP0 * (ZONE_HP_G ** (z - 1)) * self.loopMult()   # M11: 회차 배수
+        return ZONE_HP0 * (ZONE_HP_G ** (z - 1)) * Sim.hpKnot(z) * (WALL_HP_MULT if Sim.isWallZone(z) else 1) * self.loopMult()   # M11 회차 · M15 휨·벽
+
+    @staticmethod
+    def hpKnot(z):
+        k = HP_KNOTS
+        if z <= k[0][0]:
+            return k[0][1]
+        for i in range(1, len(k)):
+            if z <= k[i][0]:
+                f = (z - k[i - 1][0]) / (k[i][0] - k[i - 1][0])
+                return math.exp(math.log(k[i - 1][1]) * (1 - f) + math.log(k[i][1]) * f)
+        return k[-1][1]
+
+    @staticmethod
+    def isWallZone(z):
+        return z >= WALL_START and z % WALL_EVERY == 0
 
     def zoneDPS(self, z):
         return self.zoneHP(z) * ZOMBIE_DPS_RATIO
