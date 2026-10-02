@@ -15,6 +15,19 @@ PRIORITY = 1
 
 import io, os, re, math
 
+def hp_knot(t, z):
+    """M15 — 게임 ZONE_HP_KNOTS(log 체력 오프셋 매듭)를 읽어 hpKnot(z) 와 같은 값을 낸다. 상수가 없으면 0(예전 곡선)."""
+    m = re.search(r"const\s+ZONE_HP_KNOTS\s*=\s*\[(.*?)\n\];", t, re.S)
+    if not m:
+        return 0.0
+    K = [[float(v) for v in re.findall(r"-?[\d.]+", r)] for r in re.findall(r"\[([^\[\]]*)\]", re.sub(r"//[^\n]*", "", m.group(1)))]
+    if z <= K[0][0]:
+        return K[0][1]
+    for i in range(1, len(K)):
+        if z <= K[i][0]:
+            return K[i - 1][1] + (K[i][1] - K[i - 1][1]) * (z - K[i - 1][0]) / (K[i][0] - K[i - 1][0])
+    return K[-1][1]
+
 
 def run(root):
     game = os.path.join(root, "game", "index.html")
@@ -60,8 +73,9 @@ def run(root):
             bad.append("%d번째 행의 칸이 모자라다: %s" % (i + 1, line))
             continue
         z = i + 1
-        want_hp = round(hp0 * hpg ** (z - 1))   # M2 벽은 HP 가 아니라 처치 수라 표의 HP 는 기본 곡선이다
-        want_dps = round(hp0 * hpg ** (z - 1) * dpr)
+        kz = math.exp(hp_knot(t, z))   # M15 — 체력 곡선 모양(게임 zoneHP 와 같은 식)
+        want_hp = round(hp0 * hpg ** (z - 1) * kz)   # M2 벽은 HP 가 아니라 처치 수라 표의 HP 는 기본 곡선이다
+        want_dps = round(hp0 * hpg ** (z - 1) * kz * dpr)
         want_rw = round(rw0 * rwg ** (z - 1) / (wall_kills if (z >= wall_start and z % wall_every == 0) else 1), 1)   # M2 벽 (구역 10 부터)
         try:
             got_hp, got_dps, got_rw = int(cols[1]), int(cols[2]), float(cols[3])

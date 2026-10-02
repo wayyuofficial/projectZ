@@ -103,6 +103,7 @@ ZONE_COUNT = int(num("ZONE_COUNT"))
 TIER_MAX = int(num("TIER_MAX"))
 MAX_ONSCREEN_ZOMBIES = int(num("MAX_ONSCREEN_ZOMBIES"))
 ZONE_HP0, ZONE_HP_G = num("ZONE_HP0"), num("ZONE_HP_G")
+ZONE_HP_KNOTS = matrix("ZONE_HP_KNOTS")   # M15 — 체력 곡선 모양(log 오프셋 매듭)
 ZONE_RW0, ZONE_RW_G = num("ZONE_RW0"), num("ZONE_RW_G")
 WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_KILL_MULT")), int(num("WALL_START"))   # M2 벽 (처치 수, 구역 10 부터) · M14 ×1
 FARM_GAIN, FARM_MAX_SEC = num("FARM_GAIN"), num("FARM_MAX_SEC")   # M14 — 보강
@@ -271,6 +272,7 @@ MIRRORED = {
     "gearScore": "2d4b4f6590669ec3",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "86e5dbdf14ea5395",
+    "hpKnot": "6541184d72805022",
     "hurtZombie": "5deea434c00ebeef",
     "idxOf": "eef263846326e9ec",
     "isBossKill": "e461a4a51bbb69c5",
@@ -320,7 +322,7 @@ MIRRORED = {
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "8fcbdfc907029bf9",
     "zoneDPS": "9abab3ae0b004352",
-    "zoneHP": "f22aa0d1cae9de6c",
+    "zoneHP": "90b84084b7233d22",
     "zoneReward": "fc08ad169107745f",
 }
 
@@ -814,8 +816,18 @@ class Sim(object):
     def regenPerSec(self):
         return self.statOf("reg")
 
+    @staticmethod
+    def hpKnot(z):   # M15 — 원본 hpKnot 와 같은 식(매듭 사이 직선, 앞·뒤는 끝값)
+        K = ZONE_HP_KNOTS
+        if z <= K[0][0]:
+            return K[0][1]
+        for i in range(1, len(K)):
+            if z <= K[i][0]:
+                return K[i - 1][1] + (K[i][1] - K[i - 1][1]) * (z - K[i - 1][0]) / (K[i][0] - K[i - 1][0])
+        return K[-1][1]
+
     def zoneHP(self, z):
-        return ZONE_HP0 * (ZONE_HP_G ** (z - 1)) * self.loopMult()   # M11: 회차 배수
+        return ZONE_HP0 * (ZONE_HP_G ** (z - 1)) * math.exp(self.hpKnot(z)) * self.loopMult()   # M11: 회차 배수 · M15: 곡선 모양
 
     def zoneDPS(self, z):
         return self.zoneHP(z) * ZOMBIE_DPS_RATIO
