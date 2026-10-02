@@ -1,10 +1,8 @@
 {
-  "approved_at": "2026-10-02T08:39:47",
+  "approved_at": "2026-10-02T12:30:20",
   "approved_by": "황창식",
   "stdin_is_tty": true,
-  "changed_since_last": [
-    "10-scope.md"
-  ],
+  "changed_since_last": [],
   "note": "사람이 승인한 정본 상태. AI가 이 파일을 갱신하면 감시가 무의미해진다. approved_by 는 사람이 직접 타이핑한 값이다 — 터미널이 아니면 도구가 거부한다.",
   "hashes": {
     "00-identity.md": "4b9d7a194a137f35c1d50b02e9f1e160ad18c40e8da2c726eb9edfebd4170840",
