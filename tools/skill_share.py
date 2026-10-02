@@ -14,7 +14,7 @@ import sim_port as SP
 def one(seed):
     r = SP.auto_run(seed=seed, max_min=900); s = r["sim"]
     tot = s.dmgShot + s.dmgSkill
-    return dict(seed=seed, final_zone=r["final_zone"], reach_min=r["zone_min"].get(SP.ZONE_COUNT),
+    return dict(seed=seed, final_zone=r["final_zone"], reach_min=r["zone_min"].get(SP.ZONE_COUNT), deaths=r["deaths"],
                 share=(s.dmgSkill / tot) if tot else 0.0, lv=dict(s.G["skills"]["lv"]), books=s.G.get("books"))
 
 
@@ -24,7 +24,7 @@ def main():
     with Pool(min(8, os.cpu_count() or 1)) as p:
         rows = p.map(one, range(1, a.seeds + 1))
     for r in rows:
-        print("시드 %d: 구역 %d · %s분 · 스킬 몫 %.1f%% · 레벨 %s" % (r["seed"], r["final_zone"], r["reach_min"], r["share"] * 100, r["lv"]))
+        print("시드 %d: 구역 %d · %s분 · 사망 %d · 스킬 몫 %.1f%% · 레벨 %s" % (r["seed"], r["final_zone"], r["reach_min"], r["deaths"], r["share"] * 100, r["lv"]))
     med = statistics.median(r["share"] for r in rows)
     print("스킬 몫 중앙 %.1f%% (M12-P1: 20~35%%)" % (med * 100))
     if a.out:

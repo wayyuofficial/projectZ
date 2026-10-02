@@ -231,7 +231,11 @@ const ZONE_RW0 = 12,  ZONE_RW_G = 1.29;   /* M12·M13 3.2: 1.28 → 1.29 (위 �
    x3/÷3 도 벽 비가 4.1~6.1 이라 반증됐다. 사람이 **x2/÷2 로 내리고(지시 #63) 그대로 두기로((a), 지시 #65)** 정했다 — B2‴ 도 반증이지만
    구속하는 것은 벽이 아니라 무기 값이라는 게 드러났다. 벽 비는 이제 판정선이 아니라 기록이다 (c18 이 정보로 남긴다).
    measurements/balance-M2-curve-wall-2026-09-11.json, -curve-f- */
-const WALL_EVERY = 5, WALL_KILL_MULT = 2, WALL_START = 10;   // 지시 #63: 구역 10 부터, x2/÷2. 1~9 는 M1 그대로
+const WALL_EVERY = 5, WALL_KILL_MULT = 1, WALL_START = 10;   // M14 1.2 (지시 #163): 처치 수 ×2 → ×1 — 벽은 보스·보강(아래 FARM_)으로 버티는 구간. 이력: 지시 #63 구역 10 부터 x2/÷2
+/* M14 1.2 — 보강: 죽으면 한 구역 물러나(지시 #35 그대로) 그 구역을 **되풀이**하다가, DPS 가 죽었을 때의 ×FARM_GAIN 이 되거나 FARM_MAX_SEC 가 지나면 다시 도전한다.
+   전엔 물러나자마자 다시 올라가 같은 벽에서 또 죽었다 — 한 판 사망 약 180번, 벽 앞 구역 재진입 29번(거울 진단). 저장하지 않는다. */
+const FARM_GAIN = 1.1, FARM_MAX_SEC = 90;
+let farm = null;   // { zone: 죽은 구역, dps: 다시 도전할 DPS, t: 흐른 초 }
 const ZOMBIE_DPS_RATIO = 0.2;   /* 2026-09-08 지시 #23 재보정.
      접촉 판정을 위치 기준으로 고치면서 때리는 좀비가 최대 8마리에서 3마리로 줄었다.
      실제 전투 루프로 배수를 훑어 0.07 -> 0.14 를 골랐다 (구역5 10.2분 / 구역10 69.4분).
@@ -1502,6 +1506,15 @@ function killZombie(z) {
   }
   if (killIndex >= zoneKills(G.zone)) {   // M2: 벽 구역은 3배
     killIndex = 0;
+    if (farm && G.zone + 1 === farm.zone) {   // M14 — 보강 중: 아직 약하면 같은 구역을 한 번 더
+      if (playerDPS() < farm.dps && farm.t < FARM_MAX_SEC) {
+        moveT = STAGE_WALK_SEC; moveKind = 'walk';
+        addFloat(GAME_W / 2, ARENA_TOP + 60, '보강 중', PALETTE.parts, 20);
+        G.kills = killIndex;
+        return;
+      }
+      farm = null;
+    }
     moveT = G.zone < ZONE_COUNT ? ZONE_TRAVEL_SEC : STAGE_WALK_SEC; moveKind = G.zone < ZONE_COUNT ? 'zone' : 'walk'; moveFrom = G.zone;   // M13 — 오른쪽으로 나가 다음 구역
     if (G.zone < ZONE_COUNT) {
       G.zone++;
@@ -1524,6 +1537,7 @@ function stepCombat(dt) {
      세션 첫 좀비와 부활 직후 첫 좀비가 공짜로 한 대 맞는다 (2026-09-08 5차 감사). */
   const hadTarget = zombies.length > 0;
   if (moveT > 0) moveT = Math.max(0, moveT - dt);   // M13 — 걷기·구역 이동 중
+  if (farm) farm.t += dt;                            // M14 — 보강 시간
 
   // 스폰 간격을 처치 시간에 맞춘다. 고정 간격이면 초반에 좀비가 쌓여 즉사한다 (WBS 8.1)
   spawnTimer -= dt;
@@ -1621,6 +1635,7 @@ function onDeath() {
   zombies.length = 0; shots.length = 0;
   if (G.zone > 1) G.zone--;
   killIndex = 0; G.kills = 0; moveT = 0;   // M13 — 물러날 때는 바로
+  if (G.zone < from) farm = { zone: from, dps: playerDPS() * FARM_GAIN, t: 0 };   // M14 — 강해질 때까지 보강
   reviveOffer = { zone: from, t: 0 };
   addFloat(GAME_W / 2, ARENA_TOP + 60,
     G.zone < from ? zoneName(G.zone) + ' 로 후퇴' : '버텼다', PALETTE.warn, 22);
@@ -1633,7 +1648,7 @@ function acceptRevive() {
   G.zone = Math.min(ZONE_COUNT, reviveOffer.zone);
   G.bestZone = Math.max(G.bestZone, G.zone);
   G.hp = maxHP();
-  killIndex = 0; G.kills = 0; moveT = 0;
+  killIndex = 0; G.kills = 0; moveT = 0; farm = null;   // M14 — 광고 부활은 바로 그 구역
   zombies.length = 0; shots.length = 0;
   reviveOffer = null;
   addFloat(GAME_W / 2, ARENA_TOP + 60, zoneName(G.zone) + ' 복귀', PALETTE.gold, 22);
@@ -1665,7 +1680,7 @@ function doRebirth() {
   G.hp = maxHP();
   killIndex = 0; zombies.length = 0; shots.length = 0; reviveOffer = null;
   skillRt = { cd: {}, act: {}, pierce: 0, turretAcc: 0, fireAcc: 0, fireT: 0 };   // M12 — 발동 상태만(스킬 레벨·칸은 남는다)
-  moveT = 0;   // M13
+  moveT = 0; farm = null;   // M13 · M14
   addFloat(GAME_W / 2, ARENA_TOP + 60, G.loop + '회차 — 훈장 +' + gain, PALETTE.gold, 24);
   save();
   return gain;
@@ -2397,7 +2412,7 @@ function drawHUD() {
   ctx.fillText(zoneName(G.zone), GAME_W - 24, 52);
   ctx.fillStyle = PALETTE.parts;
   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
-  ctx.fillText(currentStage() + ' / ' + STAGES_PER_ZONE + ' 단계', GAME_W - 24, 68);
+  ctx.fillText(farm ? '보강 중 · ' + Math.max(0, Math.ceil(FARM_MAX_SEC - farm.t)) + '초' : currentStage() + ' / ' + STAGES_PER_ZONE + ' 단계', GAME_W - 24, 68);   // M14
 
   const px = 24, pw = GAME_W - 48;
   // M3 4.1 — 진행 막대를 단계 수만큼 쪼갠다. 한 칸이 한 단계다.
