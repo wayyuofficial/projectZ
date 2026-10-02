@@ -15,7 +15,8 @@ def one(seed):
     r = SP.auto_run(seed=seed, max_min=900); s = r["sim"]
     tot = s.dmgShot + s.dmgSkill
     return dict(seed=seed, final_zone=r["final_zone"], reach_min=r["zone_min"].get(SP.ZONE_COUNT), deaths=r["deaths"],
-                share=(s.dmgSkill / tot) if tot else 0.0, lv=dict(s.G["skills"]["lv"]), books=s.G.get("books"))
+                share=(s.dmgSkill / tot) if tot else 0.0, lv=dict(s.G["skills"]["lv"]), books=s.G.get("books"),
+                eq_lv=sum(s.skillLv(x) for x in s.G["skills"]["slots"] if x) / max(1, len([x for x in s.G["skills"]["slots"] if x])))
 
 
 def main():
@@ -26,7 +27,7 @@ def main():
     for r in rows:
         print("시드 %d: 구역 %d · %s분 · 사망 %d · 스킬 몫 %.1f%% · 레벨 %s" % (r["seed"], r["final_zone"], r["reach_min"], r["deaths"], r["share"] * 100, r["lv"]))
     med = statistics.median(r["share"] for r in rows)
-    print("스킬 몫 중앙 %.1f%% (M12-P1: 20~35%%)" % (med * 100))
+    print("스킬 몫 중앙 %.1f%% (M12-P1: 20~35%%) · 낀 스킬 평균 레벨 중앙 %.1f (M14-P2: 8 이상)" % (med * 100, statistics.median(r["eq_lv"] for r in rows)))
     if a.out:
         stamp = hashlib.sha256(io.open(SP.GAME, "rb").read()).hexdigest()[:16]
         json.dump({"측정일": datetime.date.today().isoformat(), "도구": "tools/skill_share.py", "빌드도장": stamp, "시드": a.seeds,

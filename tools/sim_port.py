@@ -132,7 +132,7 @@ MEDAL_PER = num("MEDAL_PER")
 SKILLS = table("SKILLS")                   # M12 (지시 #160) — 스킬 8개
 SKILL_IDS = [d["id"] for d in SKILLS]
 SKILL_SLOTS = int(num("SKILL_SLOTS")); SKILL_LV_MAX = int(num("SKILL_LV_MAX")); SKILL_LV_STEP = num("SKILL_LV_STEP"); SKILL_POW = num("SKILL_POW")
-BOSS_BOOKS_FIRST = int(num("BOSS_BOOKS_FIRST")); BOSS_BOOKS_AGAIN = int(num("BOSS_BOOKS_AGAIN")); QUEST_BOOKS = int(num("QUEST_BOOKS"))
+BOSS_BOOKS_FIRST = int(num("BOSS_BOOKS_FIRST")); BOSS_BOOKS_AGAIN = int(num("BOSS_BOOKS_AGAIN")); QUEST_BOOKS = int(num("QUEST_BOOKS")); ZONE_BOOKS = int(num("ZONE_BOOKS"))
 SKILL_STRIP_H = num("SKILL_STRIP_H")
 STAGE_WALK_SEC = num("STAGE_WALK_SEC"); ZONE_TRAVEL_SEC = num("ZONE_TRAVEL_SEC")   # M13 (지시 #161) — 걷기·구역 이동 대기
 LOOP_G = num("LOOP_G")                     # M11 1 — 회차 배수(좀비)
@@ -275,7 +275,7 @@ MIRRORED = {
     "idxOf": "eef263846326e9ec",
     "isBossKill": "e461a4a51bbb69c5",
     "killReward": "0ef3ffe5d2eb73ba",
-    "killZombie": "73cba834756ef140",
+    "killZombie": "45f4e077279fdda4",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "85ee3342407d5876",
@@ -305,6 +305,7 @@ MIRRORED = {
     "skillSpdMult": "5b142d6cdf65193e",
     "skillToggle": "b0d0a29dc3a841e4",
     "skillUp": "44ab1591608f7c97",
+    "skillUpCost": "f6bfc45233684273",
     "spawnZombie": "d4054c63f48a4d4a",
     "stageKills": "4cb2b09008d21635",
     "statCost": "3915c9b212b37571",
@@ -684,7 +685,7 @@ class Sim(object):
         return SKILL_POW * (1 + SKILL_LV_STEP * (max(1, self.skillLv(sid)) - 1))
 
     def skillUpCost(self, sid):
-        return max(1, self.skillLv(sid))
+        return max(1, -(-self.skillLv(sid) // 2))   # M14 2.1 — ⌈L/2⌉
 
     def skillHit(self):
         return self.playerDPS()   # M12 3.2 — 1초 피해 단위
@@ -1227,6 +1228,8 @@ class Sim(object):
                 self.G["zone"] += 1
                 self.questProgress("zone", 1)
                 self.G["bestZone"] = max(self.G["bestZone"], self.G["zone"])
+                if self.G["zone"] > (self.G.get("peakZone") or 1):
+                    self.G["books"] = (self.G.get("books") or 0) + ZONE_BOOKS   # M14 2.1
                 self.G["peakZone"] = max(self.G.get("peakZone") or 1, self.G["zone"]); self.unlockSkills()   # M12
                 del self.zombies[:]
                 self.shots = 0

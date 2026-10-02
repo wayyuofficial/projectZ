@@ -1,0 +1,153 @@
+{
+ "측정일": "2026-10-02",
+ "도구": "tools/skill_share.py",
+ "빌드도장": "20ea9dcb97b76fb5",
+ "시드": 8,
+ "행": [
+  {
+   "seed": 1,
+   "final_zone": 60,
+   "reach_min": 322.1,
+   "deaths": 131,
+   "share": 0.2734323212574244,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 3,
+    "molotov": 4,
+    "pierce": 4,
+    "turret": 4,
+    "strike": 5
+   },
+   "books": 2
+  },
+  {
+   "seed": 2,
+   "final_zone": 60,
+   "reach_min": 305.1,
+   "deaths": 120,
+   "share": 0.2857174713520386,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 3,
+    "molotov": 4,
+    "pierce": 4,
+    "turret": 4,
+    "strike": 5
+   },
+   "books": 3
+  },
+  {
+   "seed": 3,
+   "final_zone": 60,
+   "reach_min": 314.9,
+   "deaths": 123,
+   "share": 0.28377679238279013,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 3,
+    "molotov": 4,
+    "pierce": 4,
+    "turret": 4,
+    "strike": 4
+   },
+   "books": 2
+  },
+  {
+   "seed": 4,
+   "final_zone": 60,
+   "reach_min": 306.1,
+   "deaths": 118,
+   "share": 0.27498101513688383,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 3,
+    "molotov": 4,
+    "pierce": 4,
+    "turret": 4,
+    "strike": 4
+   },
+   "books": 3
+  },
+  {
+   "seed": 5,
+   "final_zone": 60,
+   "reach_min": 386.9,
+   "deaths": 163,
+   "share": 0.28025363468358916,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 3,
+    "molotov": 5,
+    "pierce": 5,
+    "turret": 5,
+    "strike": 5
+   },
+   "books": 0
+  },
+  {
+   "seed": 6,
+   "final_zone": 60,
+   "reach_min": 373.2,
+   "deaths": 154,
+   "share": 0.29179928681276807,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 3,
+    "molotov": 5,
+    "pierce": 5,
+    "turret": 5,
+    "strike": 6
+   },
+   "books": 4
+  },
+  {
+   "seed": 7,
+   "final_zone": 60,
+   "reach_min": 312.9,
+   "deaths": 124,
+   "share": 0.2708240851780056,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 2,
+    "molotov": 4,
+    "pierce": 4,
+    "turret": 4,
+    "strike": 5
+   },
+   "books": 3
+  },
+  {
+   "seed": 8,
+   "final_zone": 60,
+   "reach_min": 356.8,
+   "deaths": 145,
+   "share": 0.27383220900294125,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 3,
+    "molotov": 4,
+    "pierce": 4,
+    "turret": 4,
+    "strike": 5
+   },
+   "books": 2
+  }
+ ],
+ "스킬몫_중앙": 0.2776173249102365
+}

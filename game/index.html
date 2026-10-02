@@ -323,8 +323,8 @@ const SKILLS = [
   { id: 'turret',  name: '자동 포탑', unlock: 30, cd: 30, dur: 8, pow: 0.5 },    // 내 DPS × pow 를 더 쏜다
   { id: 'strike',  name: '지원 사격', unlock: 40, cd: 40, pow: 6 }               // 화면 전체 — 1초 피해(DPS) × pow
 ];
-const SKILL_SLOTS = 4, SKILL_LV_MAX = 30, SKILL_LV_STEP = 0.1, SKILL_POW = 1;   // SKILL_POW — 전체 배수(측정으로 맞춘다)
-const BOSS_BOOKS_FIRST = 2, BOSS_BOOKS_AGAIN = 1, QUEST_BOOKS = 1;
+const SKILL_SLOTS = 4, SKILL_LV_MAX = 10, SKILL_LV_STEP = 0.1, SKILL_POW = 1;   // M14 2.1: 상한 30 → 10 (한 판 끝 레벨이 2~4 였다)   // SKILL_POW — 전체 배수(측정으로 맞춘다)
+const BOSS_BOOKS_FIRST = 2, BOSS_BOOKS_AGAIN = 1, QUEST_BOOKS = 1, ZONE_BOOKS = 1;   // M14 2.1 — 구역을 처음 깨면 +ZONE_BOOKS
 function freshSkills() { const lv = {}; for (const d of SKILLS) lv[d.id] = 0; lv.focus = 1; return { lv: lv, slots: ['focus', null, null, null] }; }
 const DAY_MS = 86400000;
 /* 몫은 **합이 1.0 을 안 넘게** 나눈다 — 과제 0.55 + 상자 0.20 + 접속 최대 0.25 = 1.00.
@@ -1312,7 +1312,7 @@ let spawnTimer = 0, attackTimer = 0, killIndex = 0;
 function skillDef(id) { return SKILLS.find((d) => d.id === id); }
 function skillLv(id) { return ((G.skills || {}).lv || {})[id] || 0; }
 function skillLvMult(id) { return SKILL_POW * (1 + SKILL_LV_STEP * (Math.max(1, skillLv(id)) - 1)); }
-function skillUpCost(id) { return Math.max(1, skillLv(id)); }
+function skillUpCost(id) { return Math.max(1, Math.ceil(skillLv(id) / 2)); }   // M14 2.1 — L → L+1 에 ⌈L/2⌉권(1·1·2·2·3…). 이력: L권
 /* M12 3.2 — 스킬 피해 단위 = **1초 피해(DPS)**. 처음엔 '한 발'(공격력 × 위력)이었는데 공격속도가 초당 37발까지 올라 수류탄 ×8 이 사격 0.2초 몫이었다(스킬 몫 0.1%) */
 function skillHit() { return playerDPS(); }
 /* 발동 중 상태(저장 안 함). cd[id] = 남은 쿨, act[id] = 남은 지속, pierce = 남은 관통 발 수, turretAcc·fireAcc = 모아 쏘는 피해 */
@@ -1520,6 +1520,7 @@ function killZombie(z) {
       G.zone++;
       questProgress('zone', 1);            // M4 1.2
       G.bestZone = Math.max(G.bestZone, G.zone);
+      if (G.zone > (G.peakZone || 1)) { G.books = (G.books || 0) + ZONE_BOOKS; addFloat(GAME_W / 2, ARENA_TOP + 90, '스킬북 +' + ZONE_BOOKS, PALETTE.goldInk, 16); }   // M14 2.1 — 처음 깬 구역
       G.peakZone = Math.max(G.peakZone || 1, G.zone); unlockSkills();   // M12 — 처음 깬 구역이면 스킬 해금
       addFloat(GAME_W / 2, ARENA_TOP + 60, zoneName(G.zone), PALETTE.gold, 26);
       zombies.length = 0; shots.length = 0;
