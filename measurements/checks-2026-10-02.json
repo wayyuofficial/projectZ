@@ -1,7 +1,7 @@
 {
-  "ran_at": "2026-10-02T03:39:08",
+  "ran_at": "2026-10-02T04:14:34",
   "blocking": 0,
-  "warn": 1,
+  "warn": 3,
   "skip": 0,
   "results": [
     {
@@ -79,6 +79,7 @@
     {
       "status": "warn",
       "detail": [
+        "balance-M12-curve-2026-10-02.json 가 게임 파일보다 낡았다 — 게임을 고치고 곡선을 다시 안 쟀다",
         "balance-M12-curve-2026-10-02.json: 체류가 목표의 ±20% 밖인 구역 42개 [1, 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 24, 25, 26, 30, 31, 32, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 46, 47, 49, 51, 52, 54, 56, 57] (선: 4개 미만 — M3-B1)",
         "도달 밖 [2, 3, 4, 5, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 31, 36, 40, 41, 42] · 벽 비 {'10': 1.83, '15': 3.81, '20': 1.61, '25': 4.95, '30': 6.93, '35': 5.24, '40': 3.58, '45': 3.69, '50': 4.84, '55': 5.7} · 골짜기 {'10': 1.0, '15': 1.0, '20': 0.49, '25': 0.32, '30': 0.34, '35': 0.16, '40': 0.09, '45': 0.11, '50': 0.15, '55': 0.37} (전부 정보 — 판정선은 체류다)"
       ],
@@ -114,9 +115,9 @@
       "priority": 1
     },
     {
-      "status": "ok",
+      "status": "warn",
       "detail": [
-        "upgrade-cadence-M12-2026-10-02.json — 상한 3초 안",
+        "upgrade-cadence-M12-2026-10-02.json 가 게임 파일보다 낡았다 — 게임을 고치고 간격을 다시 안 쟀다",
         "구역 59개 · 매수 16~130회 (하한 3) · 간격 0~17초 [정보 — 중앙이 0 인 구역 9개]"
       ],
       "check": "c21_upgrade_cadence.py",
@@ -171,7 +172,7 @@
     {
       "status": "ok",
       "detail": [
-        "index.html : 4.67MB / 상한 5.00MB — WEAPON_ART 52K · GEAR_ART 65K · UI_ART 199K · HERO_ANIM 415K · ZOMBIE_ART 1358K · BOSS_ART 546K · FX_ART 146K · BG_IMG_SRC 1642K"
+        "index.html : 4.51MB / 상한 5.00MB — WEAPON_ART 52K · GEAR_ART 65K · UI_ART 199K · HERO_ANIM 257K · ZOMBIE_ART 1358K · BOSS_ART 546K · FX_ART 146K · BG_IMG_SRC 1642K"
       ],
       "check": "c27_asset_budget.py",
       "name": "게임 파일 크기 예산(그림 data URI)",
@@ -241,9 +242,10 @@
       "priority": 2
     },
     {
-      "status": "ok",
+      "status": "warn",
       "detail": [
-        "측정 기록 최신: balance-M12-curve-2026-10-02.json, storage-m10-2026-10-01.json"
+        "index.html 가 밸런스 기록(balance-M12-curve-2026-10-02.json)보다 새롭다 — 다시 재라",
+        "index.html 가 저장·오프라인 기록(storage-m10-2026-10-01.json)보다 새롭다 — 다시 재라"
       ],
       "check": "c9_measurement_freshness.py",
       "name": "게임을 고치고 측정을 다시 안 했는지",
