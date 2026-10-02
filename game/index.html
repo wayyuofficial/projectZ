@@ -311,13 +311,13 @@ const FOCUS_SEC = 3, FOCUS_MULT = 1.12, FOCUS_COOL_SEC = 45;   /* 2x·20초는 �
 /* M12 스킬 표 — 설명은 아래 stepSkills 위 주석. freshState 가 먼저 불리므로 여기(위쪽)에 둔다. */
 const SKILLS = [
   { id: 'focus',   name: '집중 사격', unlock: 0,  cd: 45, dur: 3, pow: 0.12 },   // 공격속도 ×(1 + pow)
-  { id: 'grenade', name: '수류탄',   unlock: 3,  cd: 8,  n: 3,   pow: 8 },      // 앞 n 마리 — 한 발 × pow
+  { id: 'grenade', name: '수류탄',   unlock: 3,  cd: 8,  n: 3,   pow: 2 },      // 앞 n 마리 — 1초 피해(DPS) × pow
   { id: 'adren',   name: '아드레날린', unlock: 6, cd: 20, dur: 5, pow: 0.5 },    // 공격속도 ×(1 + pow)
   { id: 'aid',     name: '응급처치', unlock: 10, cd: 25, pow: 0.3 },             // 최대체력 × pow 회복 (체력 70% 아래일 때만)
-  { id: 'molotov', name: '화염병',   unlock: 15, cd: 15, dur: 4, pow: 3 },       // 접촉한 좀비 전부 — 초당 한 발 × pow
-  { id: 'pierce',  name: '관통탄',   unlock: 20, cd: 18, n: 10,  pow: 1 },       // 다음 n 발이 두 번째 좀비에게도 × pow
+  { id: 'molotov', name: '화염병',   unlock: 15, cd: 15, dur: 4, pow: 1 },       // 접촉한 좀비 전부 — 초당 DPS × pow
+  { id: 'pierce',  name: '관통탄',   unlock: 20, cd: 18, dur: 4, pow: 0.6 },     // dur 초 동안 모든 탄이 두 번째 좀비에게도 × pow
   { id: 'turret',  name: '자동 포탑', unlock: 30, cd: 30, dur: 8, pow: 0.5 },    // 내 DPS × pow 를 더 쏜다
-  { id: 'strike',  name: '지원 사격', unlock: 40, cd: 40, pow: 20 }              // 화면 전체 — 한 발 × pow
+  { id: 'strike',  name: '지원 사격', unlock: 40, cd: 40, pow: 6 }               // 화면 전체 — 1초 피해(DPS) × pow
 ];
 const SKILL_SLOTS = 4, SKILL_LV_MAX = 30, SKILL_LV_STEP = 0.1, SKILL_POW = 1;   // SKILL_POW — 전체 배수(측정으로 맞춘다)
 const BOSS_BOOKS_FIRST = 2, BOSS_BOOKS_AGAIN = 1, QUEST_BOOKS = 1;
@@ -1309,7 +1309,8 @@ function skillDef(id) { return SKILLS.find((d) => d.id === id); }
 function skillLv(id) { return ((G.skills || {}).lv || {})[id] || 0; }
 function skillLvMult(id) { return SKILL_POW * (1 + SKILL_LV_STEP * (Math.max(1, skillLv(id)) - 1)); }
 function skillUpCost(id) { return Math.max(1, skillLv(id)); }
-function skillHit() { return statOf('atk') * weaponPower() * (1 + Math.min(1, statOf('crit')) * (statOf('cdmg') - 1)); }
+/* M12 3.2 — 스킬 피해 단위 = **1초 피해(DPS)**. 처음엔 '한 발'(공격력 × 위력)이었는데 공격속도가 초당 37발까지 올라 수류탄 ×8 이 사격 0.2초 몫이었다(스킬 몫 0.1%) */
+function skillHit() { return playerDPS(); }
 /* 발동 중 상태(저장 안 함). cd[id] = 남은 쿨, act[id] = 남은 지속, pierce = 남은 관통 발 수, turretAcc·fireAcc = 모아 쏘는 피해 */
 let skillRt = { cd: {}, act: {}, pierce: 0, turretAcc: 0, fireAcc: 0, fireT: 0 };
 function skillActive(id) { return (skillRt.act[id] || 0) > 0; }
@@ -1346,12 +1347,12 @@ function skillCell(i) { const gap = 8, w = (GAME_W - 48 - gap * (SKILL_SLOTS - 1
 function skillEffect(d) {   // 효과 숫자(지금 레벨) — 칩·글자 공용
   const lm = skillLvMult(d.id);
   return d.id === 'focus' || d.id === 'adren' ? '공속 ×' + (1 + d.pow * lm).toFixed(2) + ' ' + d.dur + '초'
-       : d.id === 'grenade' ? d.n + '마리 ×' + (d.pow * lm).toFixed(1)
+       : d.id === 'grenade' ? d.n + '마리 · DPS×' + (d.pow * lm).toFixed(1)
        : d.id === 'aid' ? '체력 ' + Math.round(d.pow * lm * 100) + '%'
-       : d.id === 'molotov' ? '불 ' + d.dur + '초 ×' + (d.pow * lm).toFixed(1) + '/초'
-       : d.id === 'pierce' ? d.n + '발 관통 ×' + (d.pow * lm).toFixed(1)
+       : d.id === 'molotov' ? '불 ' + d.dur + '초 · DPS×' + (d.pow * lm).toFixed(1)
+       : d.id === 'pierce' ? d.dur + '초 관통 ' + Math.round(d.pow * lm * 100) + '%'
        : d.id === 'turret' ? 'DPS ' + Math.round(d.pow * lm * 100) + '% ' + d.dur + '초'
-       : '전체 ×' + (d.pow * lm).toFixed(1);
+       : '전체 · DPS×' + (d.pow * lm).toFixed(1);
 }
 function skillText(d) { return skillEffect(d) + ' · 쿨 ' + d.cd + '초'; }
 function skillChips(d) { return [{ t: skillEffect(d), c: PALETTE.better }, { i: 'clock', t: d.cd + '초' }, { i: 'k:book', t: skillLv(d.id) >= SKILL_LV_MAX ? '최대' : skillUpCost(d.id) + '권', c: (G.books || 0) >= skillUpCost(d.id) ? PALETTE.gold : PALETTE.dim }]; }
@@ -1364,7 +1365,6 @@ function castSkill(d) {
   const lm = skillLvMult(d.id);
   if (d.id === 'grenade') { const tg = zombies.slice().sort((a, b) => a.x - b.x).slice(0, d.n); for (const z of tg) hurtZombie(z, skillHit() * d.pow * lm, true); if (tg[0]) skillFx.push({ k: 'throw', x0: SURVIVOR_X + 20, y0: GROUND_Y - 50, x: tg[0].x, y: tg[0].y - 20, t: 0 }); shake = Math.max(shake, 4); }
   else if (d.id === 'aid') { G.hp = Math.min(maxHP(), G.hp + maxHP() * d.pow * lm); skillFx.push({ k: 'heal', x: SURVIVOR_X, y: GROUND_Y - 60, t: 0 }); }
-  else if (d.id === 'pierce') skillRt.pierce = d.n;
   else if (d.id === 'strike') { for (const z of zombies.slice()) hurtZombie(z, skillHit() * d.pow * lm, true); skillFx.push({ k: 'strike', x: GAME_W * 0.6, y: GROUND_Y - 40, t: 0 }); shake = Math.max(shake, 8); }
   if (d.dur) skillRt.act[d.id] = d.dur;
   skillRt.cd[d.id] = d.cd;
@@ -1400,9 +1400,8 @@ function stepSkills(dt) {
     }
   } else { skillRt.turretAcc = 0; skillRt.tT = 0; }
 }
-function pierceShot(dmg) {   // 관통탄 — 두 번째로 가까운 좀비에게도
-  if (skillRt.pierce <= 0 || zombies.length < 2) return;
-  skillRt.pierce--;
+function pierceShot(dmg) {   // 관통탄 — 지속 중 모든 탄이 두 번째로 가까운 좀비에게도
+  if (!skillActive('pierce') || zombies.length < 2) return;
   const s = zombies.slice().sort((a, b) => a.x - b.x)[1];
   if (s) hurtZombie(s, dmg * skillDef('pierce').pow * skillLvMult('pierce'), false);
 }

@@ -247,7 +247,7 @@ MIRRORED = {
     "canEquipBetter": "66a45cfc3ca1b1d8",
     "canFuse": "236dc9baad626747",
     "canRebirth": "a66b83d63aeb50bb",
-    "castSkill": "78b4d73c6448fba3",
+    "castSkill": "fc1f134eca259221",
     "curGachaLv": "e40d82faf896292f",
     "curWeapon": "837d285bf3118179",
     "dailyBudget": "51f1b98162132ed0",
@@ -287,7 +287,7 @@ MIRRORED = {
     "onDeath": "fe28a84205fbfdcd",
     "openSupply": "ef504f009bbf894e",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
-    "pierceShot": "55983a4bf869df04",
+    "pierceShot": "9db3268bc8df46f8",
     "playerDPS": "06d866ae2129b84d",
     "pullGacha": "851dba3af0fc6fb0",
     "questBand": "47a268e16a55bfbd",
@@ -299,7 +299,7 @@ MIRRORED = {
     "rollTier": "802162caae06b933",
     "rollTierOdds": "ed4822ee0404a536",
     "rolloverDay": "9ddc72a3bfa1d93a",
-    "skillHit": "080d8e7b2f29a294",
+    "skillHit": "4484ba6971cb2fad",
     "skillLvMult": "8a2e2daddc0980dc",
     "skillSpdMult": "5b142d6cdf65193e",
     "skillToggle": "b0d0a29dc3a841e4",
@@ -684,7 +684,7 @@ class Sim(object):
         return max(1, self.skillLv(sid))
 
     def skillHit(self):
-        return self.statOf("atk") * self.weaponPower() * (1 + min(1.0, self.statOf("crit")) * (self.statOf("cdmg") - 1))
+        return self.playerDPS()   # M12 3.2 — 1초 피해 단위
 
     def skillActive(self, sid):
         return (self.skillRt["act"].get(sid) or 0) > 0
@@ -734,8 +734,6 @@ class Sim(object):
                 self.hurtZombie(z, self.skillHit() * d["pow"] * lm, True)
         elif d["id"] == "aid":
             self.G["hp"] = min(self.maxHP(), self.G["hp"] + self.maxHP() * d["pow"] * lm)
-        elif d["id"] == "pierce":
-            self.skillRt["pierce"] = int(d["n"])
         elif d["id"] == "strike":
             for z in list(self.zombies):
                 self.hurtZombie(z, self.skillHit() * d["pow"] * lm, True)
@@ -786,9 +784,8 @@ class Sim(object):
             rt["turretAcc"] = 0.0; rt["tT"] = 0.0
 
     def pierceShot(self, dmg):
-        if self.skillRt["pierce"] <= 0 or len(self.zombies) < 2:
+        if not self.skillActive("pierce") or len(self.zombies) < 2:
             return
-        self.skillRt["pierce"] -= 1
         s = sorted(self.zombies, key=lambda z: z["x"])[1]
         self.hurtZombie(s, dmg * self.skillDef("pierce")["pow"] * self.skillLvMult("pierce"), False)
 
@@ -1494,6 +1491,10 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
 
                 # M6 7.2 — 뽑기 강화 매수는 없어졌다(입수 레벨은 설계도 사용량).
                 # M6 2.2/4.1 — 설계도는 뽑기에 쓴다. 10회가 되면 10회, 아니면 1회. 뽑은 뒤 ▲(더 좋은 것)를 낀다.
+                # M12 3.2 — 가짜 사람은 가장 늦게 해금된(센) 스킬 4개를 낀다
+                want = sorted([d["id"] for d in SKILLS if s.skillLv(d["id"])], key=lambda sid: -s.skillDef(sid)["unlock"])[:SKILL_SLOTS]
+                if set(x for x in s.G["skills"]["slots"] if x) != set(want):
+                    s.G["skills"]["slots"] = want + [None] * (SKILL_SLOTS - len(want))
                 # M12 — 스킬북: 낀 스킬 중 레벨이 가장 낮은 것부터 올린다(해금되면 게임이 빈 칸에 낀다)
                 eq = [sid for sid in s.G["skills"]["slots"] if sid and s.skillLv(sid) < SKILL_LV_MAX]
                 if eq:
