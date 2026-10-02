@@ -108,7 +108,6 @@ WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_K
 ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
 STAGES_PER_ZONE = int(num("STAGES_PER_ZONE"))
 STAGE_BONUS_RATIO = num("STAGE_BONUS_RATIO")
-FOCUS_MULT = num("FOCUS_MULT")
 TIER_MAX_PORT = int(num("TIER_MAX"))
 GEAR_SHAPES = int(num("GEAR_SHAPES"))
 GEAR_AFFIXES = int(num("GEAR_AFFIXES"))
@@ -129,6 +128,11 @@ SLOT_STAT = _dict("SLOT_STAT")
 SLOT_EQUIP_G = _dict("SLOT_EQUIP_G")
 REBIRTH_MIN_ZONE = int(num("REBIRTH_MIN_ZONE"))
 MEDAL_PER = num("MEDAL_PER")
+SKILLS = table("SKILLS")                   # M12 (지시 #160) — 스킬 8개
+SKILL_IDS = [d["id"] for d in SKILLS]
+SKILL_SLOTS = int(num("SKILL_SLOTS")); SKILL_LV_MAX = int(num("SKILL_LV_MAX")); SKILL_LV_STEP = num("SKILL_LV_STEP"); SKILL_POW = num("SKILL_POW")
+BOSS_BOOKS_FIRST = int(num("BOSS_BOOKS_FIRST")); BOSS_BOOKS_AGAIN = int(num("BOSS_BOOKS_AGAIN")); QUEST_BOOKS = int(num("QUEST_BOOKS"))
+SKILL_STRIP_H = num("SKILL_STRIP_H")
 LOOP_G = num("LOOP_G")                     # M11 1 — 회차 배수(좀비)
 LOOP_RW = num("LOOP_RW")                   # M11 1 — 회차 배수(처치 보상)
 KEY_MAX = int(num("KEY_MAX"))
@@ -234,25 +238,27 @@ MIRRORED = {
     "adRowY": "5ed5d78e1b23b919",
     "applyDamage": "44f3fc0acd0ea484",
     "applyOffline": "7c67a2a215adcf54",
-    "attacksPerSec": "62c1a324deffd5c2",
+    "attacksPerSec": "0639c7d834dcbe23",
     "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "2c69b126a7a6a576",
+    "buildButtons": "38ef2d78ef06d73f",
     "buyStat": "e92f891d410963f4",
     "canEquipBetter": "66a45cfc3ca1b1d8",
     "canFuse": "236dc9baad626747",
     "canRebirth": "a66b83d63aeb50bb",
+    "castSkill": "78b4d73c6448fba3",
     "curGachaLv": "e40d82faf896292f",
     "curWeapon": "837d285bf3118179",
     "dailyBudget": "51f1b98162132ed0",
     "dailyQuests": "79f19f9555b60faa",
     "damageZombie": "de858f78fa27b6f3",
     "dayIndex": "e395fb011be7dfbc",
-    "doRebirth": "5b76769d9e01760c",
+    "doRebirth": "6b3f6e613bf44bc9",
     "equipBest": "0f92c8c2f2743745",
     "firstClear": "469a179f675bd42f",
     "fitGame": "c865c9f0968c6437",
-    "freshState": "5ade04503149ba86",
+    "freshSkills": "d57168837a130519",
+    "freshState": "2ff6f279558f1312",
     "fuseAll": "82b2582d09c7805e",
     "gachaCost": "b5e4af366ce8db89",
     "gachaLevel": "17ab77ebf0a0fe9d",
@@ -263,22 +269,24 @@ MIRRORED = {
     "gearScore": "2d4b4f6590669ec3",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "86e5dbdf14ea5395",
+    "hurtZombie": "5deea434c00ebeef",
     "idxOf": "eef263846326e9ec",
     "isBossKill": "e461a4a51bbb69c5",
     "killReward": "0ef3ffe5d2eb73ba",
-    "killZombie": "375971d82ed16341",
+    "killZombie": "a594f13b348eae51",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
-    "listTopY": "69408f80ab6e2751",
+    "listTopY": "85ee3342407d5876",
     "loopMult": "72fea6b1ab010c6d",
     "loopRwMult": "d559223a9b92f280",
     "maxHP": "85e54826f897f7c7",
     "medalMult": "46c08bcbefe88ff9",
     "medalsFor": "40a1cb07ee003bd6",
-    "migrate": "5a38d6762bfbf69e",
+    "migrate": "799c9eefd43e4b62",
     "onDeath": "b20ea8a7475bafbb",
     "openSupply": "ef504f009bbf894e",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
+    "pierceShot": "55983a4bf869df04",
     "playerDPS": "06d866ae2129b84d",
     "pullGacha": "851dba3af0fc6fb0",
     "questBand": "47a268e16a55bfbd",
@@ -290,15 +298,22 @@ MIRRORED = {
     "rollTier": "802162caae06b933",
     "rollTierOdds": "ed4822ee0404a536",
     "rolloverDay": "9ddc72a3bfa1d93a",
+    "skillHit": "080d8e7b2f29a294",
+    "skillLvMult": "8a2e2daddc0980dc",
+    "skillSpdMult": "5b142d6cdf65193e",
+    "skillToggle": "b0d0a29dc3a841e4",
+    "skillUp": "44ab1591608f7c97",
     "spawnZombie": "d4054c63f48a4d4a",
     "stageKills": "4cb2b09008d21635",
     "statCost": "3915c9b212b37571",
     "statDef": "e7ad6087978fd6ec",
     "statOf": "64433344a9e069b6",
-    "stepCombat": "477e00f37b335b3e",
+    "stepCombat": "66a26f6cb3fb4ace",
+    "stepSkills": "e73576e1cfdf7432",
     "tabRowY": "d001ac81a8afa161",
-    "takeQuest": "dba6cbbc58e50f5e",
+    "takeQuest": "cab3ce03ca945559",
     "todayQuests": "5da0fbfeb4eb3edf",
+    "unlockSkills": "d2185638165f6aeb",
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "8fcbdfc907029bf9",
     "zoneDPS": "9abab3ae0b004352",
@@ -414,12 +429,16 @@ class Sim(object):
         self.tab = "stat"
         self.listScroll = 0.0
         self.listMax = 0.0
+        self.skillRt = dict(cd={}, act={}, pierce=0, turretAcc=0.0, fireAcc=0.0, fireT=0.0, tT=0.0)   # M12 — 발동 상태(저장 안 함)
+        self.skillPopup = None
+        self.dmgShot = 0.0; self.dmgSkill = 0.0   # 포트에만 있는 계수기 — 스킬 피해 몫(tools/skill_share.py)
 
     # ---- 저장 ----
     def freshState(self):
         return dict(v=SAVE_VERSION, parts=0.0, plans=0.0, zone=1, kills=0,
                     gear=dict(weapon=0), inv=self.emptyInv(), own=dict(self.emptyInv(), weapon=[1] + [0] * (LADDER - 1)), fresh={},   # M10
                     medals=0, rebirths=0, loop=1,
+                    skills=self.freshSkills(), books=0, peakZone=1,   # M12
                     day=0, maxDay=0, quest={}, questTaken={},   # 지시 #151
                     login=dict(streak=0, lastDay=-1), keys=KEY_MAX,
                     lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0),
@@ -479,6 +498,14 @@ class Sim(object):
             raw.pop("bag", None)
         if raw.get("v") == 7:                 # M11: 회차 = 환생 수 + 1
             raw = dict(raw, v=8, loop=(raw.get("rebirths") or 0) + 1)
+        if raw.get("v") == 8:                 # M12: 간 깊이까지 해금, 앞 칸부터
+            pk = max(1, raw.get("bestZone") or 1, raw.get("zone") or 1); sk = self.freshSkills()
+            for d in SKILLS:
+                if pk > d["unlock"] and not sk["lv"][d["id"]]:
+                    sk["lv"][d["id"]] = 1
+                    if None in sk["slots"]:
+                        sk["slots"][sk["slots"].index(None)] = d["id"]
+            raw = dict(raw, v=9, skills=sk, books=0, peakZone=pk)
         if raw.get("v") != SAVE_VERSION:
             return self.freshState()
         s = self.freshState()
@@ -491,6 +518,14 @@ class Sim(object):
             s["inv"][sl] = [max(0, int(((s.get("inv") or {}).get(sl) or [])[k] if k < len(((s.get("inv") or {}).get(sl) or [])) else 0)) for k in range(LADDER)]
             s["own"][sl] = [1 if (k < len(((s.get("own") or {}).get(sl) or [])) and ((s.get("own") or {}).get(sl) or [])[k]) else 0 for k in range(LADDER)]
         s["own"]["weapon"][int(s["gear"]["weapon"])] = 1
+        sk = s.get("skills") if isinstance(s.get("skills"), dict) else {}   # M12 — 스킬 칸 모양을 맞춘다
+        lvs = {d["id"]: max(0, min(SKILL_LV_MAX, int((sk.get("lv") or {}).get(d["id"]) or 0))) for d in SKILLS}
+        lvs["focus"] = max(1, lvs["focus"]); slots = []
+        for i in range(SKILL_SLOTS):
+            sid = (sk.get("slots") or [None] * SKILL_SLOTS)[i] if i < len(sk.get("slots") or []) else None
+            slots.append(sid if sid and lvs.get(sid, 0) > 0 and sid not in slots else None)
+        s["skills"] = dict(lv=lvs, slots=slots)
+        s["books"] = max(0, int(s.get("books") or 0)); s["peakZone"] = max(1, s.get("peakZone") or 1, s.get("bestZone") or 1)
         # 옛 저장본에는 inc 가 없다. 0 으로 채운다 (원본과 같다)
         lv = dict(atk=0, spd=0, hp=0, reg=0, inc=0)
         lv.update(raw.get("lv") or {})
@@ -615,6 +650,7 @@ class Sim(object):
             self.G["lv"][k] = 0
         self.G["hp"] = self.maxHP()
         self.killIndex = 0; self.zombies = []; self.reviveOffer = None
+        self.skillRt = dict(cd={}, act={}, pierce=0, turretAcc=0.0, fireAcc=0.0, fireT=0.0, tT=0.0)   # M12
         return gain
 
     def hitDamage(self):
@@ -623,11 +659,135 @@ class Sim(object):
         return self.statOf("atk") * self.weaponPower() * (1 + p * (self.statOf("cdmg") - 1))
 
     def attacksPerSec(self):
-        """M4 2 — 원본과 **같은 구조**로 옮긴다: 집중 사격 중이면 x FOCUS_MULT.
-           다만 시뮬의 기본은 `self.focus = False` 다 — 사람이 탭해야 켜지는 것이라
-           `auto_run` 은 '안 누르는 쪽' 을 잰다. 그게 M4-B2 의 기준선이다.
-           **배수를 아예 안 옮기면** 나중에 원본이 바뀌어도 c16 이 못 잡는다. 그래서 구조를 옮긴다."""
-        return self.statOf("spd") * (FOCUS_MULT if getattr(self, "focus", False) else 1)
+        return self.statOf("spd") * self.skillSpdMult()   # M12: 집중 사격·아드레날린(자동 스킬). M4 의 탭 집중 사격은 없어졌다
+
+    # ---- M12 스킬 (원본과 같은 구조) ----
+    @staticmethod
+    def freshSkills():
+        lv = {d["id"]: 0 for d in SKILLS}; lv["focus"] = 1
+        return dict(lv=lv, slots=["focus"] + [None] * (SKILL_SLOTS - 1))
+
+    @staticmethod
+    def skillDef(sid):
+        return next((d for d in SKILLS if d["id"] == sid), None)
+
+    def skillLv(self, sid):
+        return ((self.G.get("skills") or {}).get("lv") or {}).get(sid) or 0
+
+    def skillLvMult(self, sid):
+        return SKILL_POW * (1 + SKILL_LV_STEP * (max(1, self.skillLv(sid)) - 1))
+
+    def skillUpCost(self, sid):
+        return max(1, self.skillLv(sid))
+
+    def skillHit(self):
+        return self.statOf("atk") * self.weaponPower() * (1 + min(1.0, self.statOf("crit")) * (self.statOf("cdmg") - 1))
+
+    def skillActive(self, sid):
+        return (self.skillRt["act"].get(sid) or 0) > 0
+
+    def skillSpdMult(self):
+        m = 1.0
+        if self.skillActive("focus"):
+            m *= 1 + self.skillDef("focus")["pow"] * self.skillLvMult("focus")
+        if self.skillActive("adren"):
+            m *= 1 + self.skillDef("adren")["pow"] * self.skillLvMult("adren")
+        return m
+
+    def unlockSkills(self):
+        for d in SKILLS:
+            if (self.G.get("peakZone") or 1) > d["unlock"] and not self.skillLv(d["id"]):
+                self.G["skills"]["lv"][d["id"]] = 1
+                sl = self.G["skills"]["slots"]
+                if None in sl:
+                    sl[sl.index(None)] = d["id"]
+
+    def skillUp(self, sid):
+        c = self.skillUpCost(sid)
+        if not self.skillLv(sid) or self.skillLv(sid) >= SKILL_LV_MAX or (self.G.get("books") or 0) < c:
+            return False
+        self.G["books"] -= c; self.G["skills"]["lv"][sid] += 1
+        return True
+
+    def skillToggle(self, sid):
+        sl = self.G["skills"]["slots"]
+        if sid in sl:
+            sl[sl.index(sid)] = None; return True
+        if not self.skillLv(sid) or None not in sl:
+            return False
+        sl[sl.index(None)] = sid; self.skillRt["cd"][sid] = max(self.skillRt["cd"].get(sid) or 0, 0)
+        return True
+
+    def hurtZombie(self, z, dmg, show=False):
+        self.dmgSkill += min(dmg, max(0.0, z["hp"]))   # 계수기(원본에 없다)
+        z["hp"] -= dmg
+        if z["hp"] <= 0:
+            self.killZombie(z)
+
+    def castSkill(self, d):
+        lm = self.skillLvMult(d["id"])
+        if d["id"] == "grenade":
+            for z in sorted(self.zombies, key=lambda z: z["x"])[:int(d["n"])]:
+                self.hurtZombie(z, self.skillHit() * d["pow"] * lm, True)
+        elif d["id"] == "aid":
+            self.G["hp"] = min(self.maxHP(), self.G["hp"] + self.maxHP() * d["pow"] * lm)
+        elif d["id"] == "pierce":
+            self.skillRt["pierce"] = int(d["n"])
+        elif d["id"] == "strike":
+            for z in list(self.zombies):
+                self.hurtZombie(z, self.skillHit() * d["pow"] * lm, True)
+        if d.get("dur"):
+            self.skillRt["act"][d["id"]] = d["dur"]
+        self.skillRt["cd"][d["id"]] = d["cd"]
+        self.questProgress("skill", 1)
+
+    def stepSkills(self, dt):
+        rt = self.skillRt
+        for sid in list(rt["act"].keys()):
+            rt["act"][sid] = max(0.0, rt["act"][sid] - dt)
+        for sid in self.G["skills"]["slots"]:
+            if not sid:
+                continue
+            d = self.skillDef(sid)
+            if not d:
+                continue
+            rt["cd"][sid] = (rt["cd"].get(sid) or 0) - dt
+            if rt["cd"][sid] > 0:
+                continue
+            want = self.G["hp"] < self.maxHP() * 0.7 if sid == "aid" else len(self.zombies) > 0
+            if want:
+                self.castSkill(d)
+            else:
+                rt["cd"][sid] = 0
+        if self.skillActive("molotov") and self.zombies:
+            rt["fireAcc"] += self.skillHit() * self.skillDef("molotov")["pow"] * self.skillLvMult("molotov") * dt; rt["fireT"] += dt
+            if rt["fireT"] >= 0.5:
+                hit = [z for z in self.zombies if z["x"] <= CONTACT_X + CONTACT_REACH + 0.5]
+                for z in list(hit):
+                    self.hurtZombie(z, rt["fireAcc"], True)
+                rt["fireAcc"] = 0.0; rt["fireT"] = 0.0
+        else:
+            rt["fireAcc"] = 0.0; rt["fireT"] = 0.0
+        if self.skillActive("turret") and self.zombies:
+            rt["turretAcc"] += self.playerDPS() * self.skillDef("turret")["pow"] * self.skillLvMult("turret") * dt
+            rt["tT"] = rt["tT"] + dt
+            if rt["turretAcc"] > 0 and rt["tT"] >= 0.25:
+                tg = None
+                for z in self.zombies:
+                    if tg is None or z["x"] < tg["x"]:
+                        tg = z
+                if tg is not None:
+                    self.shots += 1; self.hurtZombie(tg, rt["turretAcc"], True)
+                rt["turretAcc"] = 0.0; rt["tT"] = 0.0
+        else:
+            rt["turretAcc"] = 0.0; rt["tT"] = 0.0
+
+    def pierceShot(self, dmg):
+        if self.skillRt["pierce"] <= 0 or len(self.zombies) < 2:
+            return
+        self.skillRt["pierce"] -= 1
+        s = sorted(self.zombies, key=lambda z: z["x"])[1]
+        self.hurtZombie(s, dmg * self.skillDef("pierce")["pow"] * self.skillLvMult("pierce"), False)
 
     def playerDPS(self):
         return self.hitDamage() * self.attacksPerSec()
@@ -827,6 +987,7 @@ class Sim(object):
             return False
         self.G.setdefault("questTaken", {})[qid] = 1
         self.G["plans"] = self.G.get("plans", 0.0) + QUEST_PLANS   # M6 7.1 — 과제 하나에 설계도 QUEST_PLANS 개
+        self.G["books"] = (self.G.get("books") or 0) + QUEST_BOOKS   # M12
         return self.grant(self.dailyBudget() * float(q["share"]))
 
     def openSupply(self):
@@ -854,7 +1015,7 @@ class Sim(object):
         return L["PANEL_TOP"]
 
     def listTopY(self):
-        return L["PANEL_TOP"] + ROW_H + 8 + (EQUIP_STRIP_H + 8 if self.tab == "gear" else 0)   # M5 2.4
+        return L["PANEL_TOP"] + ROW_H + 8 + (EQUIP_STRIP_H + 8 if self.tab == "gear" else SKILL_STRIP_H + 8 if self.tab == "skill" else 0)   # M5 2.4 · M12
 
     def adRowY(self):
         return L["GAME_H"] - ROW_H - 10
@@ -897,10 +1058,22 @@ class Sim(object):
                 b(kind, 24, dy, GAME_W - 48, ROW_H, tone, en, wid); dy += ROW_PITCH
             b("daily_close", 186, dy + 10, 168, ROW_H, "ghost")
             return bs
-        TW, TG = 160, 6                       # 지시 #151: 탭 셋(일일 탭이 빠졌다)
-        for i, tid in enumerate(("stat", "rebirth", "gear")):   # M10: 무기 탭 → 환생 탭
+        if self.skillPopup:                   # M12 — 스킬 팝업: 끼기/빼기 · 올리기 · 닫기
+            sid = self.skillPopup["id"]; on = sid in self.G["skills"]["slots"]; full = None not in self.G["skills"]["slots"]
+            b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
+            py = L["GAME_H"] / 2 + 20
+            b("skill_toggle", 48, py, GAME_W - 96, ROW_H, "ghost" if on else "buy", on or not full)
+            b("skill_up", 48, py + ROW_PITCH, GAME_W - 96, ROW_H, "buy", self.skillLv(sid) < SKILL_LV_MAX and (self.G.get("books") or 0) >= self.skillUpCost(sid))
+            b("skill_close", 48, py + ROW_PITCH * 2, GAME_W - 96, ROW_H, "ghost")
+            return bs
+        TW, TG = 118, 6                       # M12: 탭 넷 (540 - 48 - 18) / 4
+        for i, tid in enumerate(("stat", "skill", "gear", "rebirth")):   # M12: 능력치·스킬·장비·환생
             b("tab_" + tid, 24 + i * (TW + TG), self.tabRowY(), TW, ROW_H,
               "on" if self.tab == tid else "off")
+        if self.tab == "skill":               # M12 — 장착 4칸 띠(누르면 뺀다)
+            gap = 8; cw = (GAME_W - 48 - gap * (SKILL_SLOTS - 1)) / SKILL_SLOTS
+            for i in range(SKILL_SLOTS):
+                b("skill_slot_%d" % i, 24 + i * (cw + gap), self.tabRowY() + ROW_H + 8, cw, SKILL_STRIP_H, "hit", bool(self.G["skills"]["slots"][i]))
         b("daily_btn", GAME_W - 24 - 58, L["ARENA_BOT"] - 58 - 8, 58, 58, "mini")   # 지시 #151 — 전투 화면 오른쪽 아래
 
         top, bot = self.listTopY(), self.listBotY()
@@ -928,6 +1101,11 @@ class Sim(object):
             put_row("gacha_lv", "ghost", False, None)                    # M6 7.2 — 입수 레벨 줄(정보) · 3.2 확률 보기
             put_row("odds_view", "off", True, None)
             # M6 재설계 — 가방·자동 판매 줄 없음
+        elif self.tab == "skill":             # M12 — 스킬북 한 줄 · 스킬 8줄(누르면 팝업)
+            put_row("skill_books", "equipped", False, None)
+            for d in SKILLS:
+                lv = self.skillLv(d["id"]); on = d["id"] in self.G["skills"]["slots"]
+                put_row("skill", "equipped" if on else ("buy" if lv else "off"), lv > 0, d["id"])
         elif self.tab == "stat":
             for s in [x for x in STATS if x["id"] not in GEAR_ONLY_STATS]:   # M4 4.3
                 cost = self.statCost(s["id"])
@@ -1028,14 +1206,17 @@ class Sim(object):
             first = self.firstClear(self.G["zone"] * STAGES_PER_ZONE + self.killIndex // self.stageKills(self.G["zone"]))
             self.G["plans"] = self.G.get("plans", 0.0) + (STAGE_PLANS if first else RECLEAR_PLANS)   # M6 7.1 — 개수(광고·수입 안 곱함)
         if z["boss"]:
-            if self.firstClear(self.G["zone"] * STAGES_PER_ZONE + STAGES_PER_ZONE):
+            first = self.firstClear(self.G["zone"] * STAGES_PER_ZONE + STAGES_PER_ZONE)
+            if first:
                 self.G["plans"] = self.G.get("plans", 0.0) + BOSS_PLANS
+            self.G["books"] = (self.G.get("books") or 0) + (BOSS_BOOKS_FIRST if first else BOSS_BOOKS_AGAIN) + max(0, (self.G.get("loop") or 1) - 1)   # M12
         if self.killIndex >= self.zoneKills(self.G["zone"]):
             self.killIndex = 0
             if self.G["zone"] < ZONE_COUNT:
                 self.G["zone"] += 1
                 self.questProgress("zone", 1)
                 self.G["bestZone"] = max(self.G["bestZone"], self.G["zone"])
+                self.G["peakZone"] = max(self.G.get("peakZone") or 1, self.G["zone"]); self.unlockSkills()   # M12
                 del self.zombies[:]
                 self.shots = 0
         self.G["kills"] = self.killIndex
@@ -1087,9 +1268,13 @@ class Sim(object):
                     best, target = z["x"], z
             if target is not None:
                 self.shots += 1
-                self.applyDamage(self.hitDamage())
+                dmg = self.hitDamage()
+                self.dmgShot += dmg                          # 계수기(원본에 없다)
+                self.applyDamage(dmg)
+                self.pierceShot(dmg)                         # M12 관통탄
         if not self.zombies:
             self.attackTimer = interval
+        self.stepSkills(dt)                                  # M12 — 스킬 자동 발동
 
         self.G["hp"] = min(self.maxHP(),
                            self.G["hp"] + self.regenPerSec() * dt - contactDPS * dt)
@@ -1299,6 +1484,12 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
 
                 # M6 7.2 — 뽑기 강화 매수는 없어졌다(입수 레벨은 설계도 사용량).
                 # M6 2.2/4.1 — 설계도는 뽑기에 쓴다. 10회가 되면 10회, 아니면 1회. 뽑은 뒤 ▲(더 좋은 것)를 낀다.
+                # M12 — 스킬북: 낀 스킬 중 레벨이 가장 낮은 것부터 올린다(해금되면 게임이 빈 칸에 낀다)
+                eq = [sid for sid in s.G["skills"]["slots"] if sid and s.skillLv(sid) < SKILL_LV_MAX]
+                if eq:
+                    low = min(eq, key=lambda sid: s.skillLv(sid))
+                    if s.skillUp(low):
+                        bought = True
                 n = 10 if s.G.get("plans", 0.0) >= s.gachaCost(10) else (1 if s.G.get("plans", 0.0) >= s.gachaCost(1) else 0)
                 if n and s.pullGacha(n):
                     bought = True
