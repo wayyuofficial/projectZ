@@ -44,6 +44,7 @@ def main():
         pass
 
     print("정본 승인 — 아래 파일들의 현재 상태를 '사람이 확인했다' 로 기록한다.")
+    print("  (먼저 git pull 로 최신 정본을 받았는가? 받기 전에 승인하면 받은 뒤 다시 승인해야 한다 — 2026-10-02)")
     for p in files:
         print("  %s" % os.path.basename(p))
     print()

@@ -4,4 +4,5 @@ __pycache__/
 zombie-survival-debug.apk
 .selftest-running
 .env
-*.env
+*.env# M14 5.2 — 검사 실행 기록(checks/run.py 가 매번 다시 쓴다). git 에 두면 정본 승인(로컬)과 클라우드 커밋이 이 파일에서 충돌했다(2026-10-02)
+measurements/checks-*.json
