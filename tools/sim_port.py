@@ -103,6 +103,7 @@ ZONE_COUNT = int(num("ZONE_COUNT"))
 TIER_MAX = int(num("TIER_MAX"))
 MAX_ONSCREEN_ZOMBIES = int(num("MAX_ONSCREEN_ZOMBIES"))
 ZONE_HP0, ZONE_HP_G = num("ZONE_HP0"), num("ZONE_HP_G")
+ZONE_HP_KNOTS = matrix("ZONE_HP_KNOTS")   # M15 — 체력 곡선 모양(log 오프셋 매듭)
 ZONE_RW0, ZONE_RW_G = num("ZONE_RW0"), num("ZONE_RW_G")
 WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_KILL_MULT")), int(num("WALL_START"))   # M2 벽 (처치 수, 구역 10 부터) · M14 ×1
 FARM_GAIN, FARM_MAX_SEC = num("FARM_GAIN"), num("FARM_MAX_SEC")   # M14 — 보강
@@ -243,7 +244,7 @@ MIRRORED = {
     "attacksPerSec": "0639c7d834dcbe23",
     "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "38ef2d78ef06d73f",
+    "buildButtons": "78738ee6b5e0f1ff",
     "buyStat": "e92f891d410963f4",
     "canEquipBetter": "66a45cfc3ca1b1d8",
     "canFuse": "236dc9baad626747",
@@ -260,7 +261,7 @@ MIRRORED = {
     "firstClear": "469a179f675bd42f",
     "fitGame": "c865c9f0968c6437",
     "freshSkills": "d57168837a130519",
-    "freshState": "2ff6f279558f1312",
+    "freshState": "142af2bb358bc4fb",
     "fuseAll": "82b2582d09c7805e",
     "gachaCost": "b5e4af366ce8db89",
     "gachaLevel": "17ab77ebf0a0fe9d",
@@ -271,6 +272,7 @@ MIRRORED = {
     "gearScore": "2d4b4f6590669ec3",
     "hitButton": "8564f49dbd9cc319",
     "hitDamage": "86e5dbdf14ea5395",
+    "hpKnot": "6541184d72805022",
     "hurtZombie": "5deea434c00ebeef",
     "idxOf": "eef263846326e9ec",
     "isBossKill": "e461a4a51bbb69c5",
@@ -284,7 +286,7 @@ MIRRORED = {
     "maxHP": "85e54826f897f7c7",
     "medalMult": "46c08bcbefe88ff9",
     "medalsFor": "40a1cb07ee003bd6",
-    "migrate": "799c9eefd43e4b62",
+    "migrate": "b01e7bde5c46647d",
     "onDeath": "bd9a06f0be2dbe37",
     "openSupply": "ef504f009bbf894e",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
@@ -320,7 +322,7 @@ MIRRORED = {
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "8fcbdfc907029bf9",
     "zoneDPS": "9abab3ae0b004352",
-    "zoneHP": "f22aa0d1cae9de6c",
+    "zoneHP": "90b84084b7233d22",
     "zoneReward": "fc08ad169107745f",
 }
 
@@ -444,6 +446,7 @@ class Sim(object):
                     gear=dict(weapon=0), inv=self.emptyInv(), own=dict(self.emptyInv(), weapon=[1] + [0] * (LADDER - 1)), fresh={},   # M10
                     medals=0, rebirths=0, loop=1,
                     skills=self.freshSkills(), books=0, peakZone=1,   # M12
+                    seen={}, rec=dict(loop=1, sec=0.0, zone=1, sec60=None, list=[]),   # M15 — 재화 안내 · 회차 기록
                     day=0, maxDay=0, quest={}, questTaken={},   # 지시 #151
                     login=dict(streak=0, lastDay=-1), keys=KEY_MAX,
                     lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0),
@@ -511,6 +514,10 @@ class Sim(object):
                     if None in sk["slots"]:
                         sk["slots"][sk["slots"].index(None)] = d["id"]
             raw = dict(raw, v=9, skills=sk, books=0, peakZone=pk)
+        if raw.get("v") == 9:                 # M15: 가진 재화는 안내를 본 것으로, 기록은 지금 회차부터
+            sn = dict(parts=1, plans=1 if (raw.get("plans") or 0) > 0 or (raw.get("gachaXp") or 0) > 0 else 0,
+                      books=1 if (raw.get("books") or 0) > 0 or (raw.get("peakZone") or 1) > 5 else 0, medals=1 if (raw.get("medals") or 0) > 0 else 0)
+            raw = dict(raw, v=10, seen=sn, rec=dict(loop=raw.get("loop") or 1, sec=0.0, zone=max(1, raw.get("bestZone") or 1), sec60=None, list=[]))
         if raw.get("v") != SAVE_VERSION:
             return self.freshState()
         s = self.freshState()
@@ -531,6 +538,13 @@ class Sim(object):
             slots.append(sid if sid and lvs.get(sid, 0) > 0 and sid not in slots else None)
         s["skills"] = dict(lv=lvs, slots=slots)
         s["books"] = max(0, int(s.get("books") or 0)); s["peakZone"] = max(1, s.get("peakZone") or 1, s.get("bestZone") or 1)
+        r = s.get("rec") if isinstance(s.get("rec"), dict) else {}   # M15 — 기록·안내 모양을 맞춘다
+        s60 = r.get("sec60")
+        s["rec"] = dict(loop=max(1, int(r.get("loop") or s.get("loop") or 1)), sec=max(0.0, float(r.get("sec") or 0)), zone=max(1, int(r.get("zone") or 1)),
+                        sec60=(float(s60) if isinstance(s60, (int, float)) and s60 >= 0 else None),
+                        list=[e for e in (r.get("list") if isinstance(r.get("list"), list) else []) if isinstance(e, dict) and (e.get("l") or 0) >= 1][-20:])
+        if not isinstance(s.get("seen"), dict):
+            s["seen"] = {}
         # 옛 저장본에는 inc 가 없다. 0 으로 채운다 (원본과 같다)
         lv = dict(atk=0, spd=0, hp=0, reg=0, inc=0)
         lv.update(raw.get("lv") or {})
@@ -802,8 +816,18 @@ class Sim(object):
     def regenPerSec(self):
         return self.statOf("reg")
 
+    @staticmethod
+    def hpKnot(z):   # M15 — 원본 hpKnot 와 같은 식(매듭 사이 직선, 앞·뒤는 끝값)
+        K = ZONE_HP_KNOTS
+        if z <= K[0][0]:
+            return K[0][1]
+        for i in range(1, len(K)):
+            if z <= K[i][0]:
+                return K[i - 1][1] + (K[i][1] - K[i - 1][1]) * (z - K[i - 1][0]) / (K[i][0] - K[i - 1][0])
+        return K[-1][1]
+
     def zoneHP(self, z):
-        return ZONE_HP0 * (ZONE_HP_G ** (z - 1)) * self.loopMult()   # M11: 회차 배수
+        return ZONE_HP0 * (ZONE_HP_G ** (z - 1)) * math.exp(self.hpKnot(z)) * self.loopMult()   # M11: 회차 배수 · M15: 곡선 모양
 
     def zoneDPS(self, z):
         return self.zoneHP(z) * ZOMBIE_DPS_RATIO
@@ -1118,6 +1142,8 @@ class Sim(object):
             # M10 2.2 — 환생 탭: 훈장 · 환생하기 · 남는 것 · 처음으로
             put_row("rebirth_info", "equipped", False, None)
             put_row("rebirth_go", "buy", self.canRebirth(), None)
+            put_row("rebirth_title", "ghost", False, None)    # M15 — 칭호(보기만)
+            put_row("rebirth_record", "ghost", False, None)   # M15 — 기록판(보기만)
             put_row("rebirth_keep", "ghost", False, None)
             put_row("rebirth_reset", "ghost", False, None)
         self.listMax = max(0.0, cy[0] - (bot - top))

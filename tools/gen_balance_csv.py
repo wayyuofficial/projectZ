@@ -15,6 +15,19 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 HEADER = "구역,좀비HP,좀비DPS,처치보상_부품,필요DPS_3초컷,필요공격레벨,누적업그레이드비용,처치수"
 
+def hp_knot(t, z):
+    """M15 — 게임 ZONE_HP_KNOTS(log 체력 오프셋 매듭)를 읽어 hpKnot(z) 와 같은 값을 낸다. 상수가 없으면 0(예전 곡선)."""
+    m = re.search(r"const\s+ZONE_HP_KNOTS\s*=\s*\[(.*?)\n\];", t, re.S)
+    if not m:
+        return 0.0
+    K = [[float(v) for v in re.findall(r"-?[\d.]+", r)] for r in re.findall(r"\[([^\[\]]*)\]", re.sub(r"//[^\n]*", "", m.group(1)))]
+    if z <= K[0][0]:
+        return K[0][1]
+    for i in range(1, len(K)):
+        if z <= K[i][0]:
+            return K[i - 1][1] + (K[i][1] - K[i - 1][1]) * (z - K[i - 1][0]) / (K[i][0] - K[i - 1][0])
+    return K[-1][1]
+
 
 def read_consts(root):
     """게임 파일에서 곡선 상수를 읽는다. 못 읽으면 예외를 낸다 — 조용히 넘어가지 않는다."""
@@ -40,6 +53,7 @@ def read_consts(root):
         "WALL_START": int(num(r"WALL_START\s*=\s*(\d+)")),
         "KILLS": int(num(r"const KILLS_PER_ZONE\s*=\s*(\d+)")),
     }
+    c["KNOT"] = lambda z, _t=t: hp_knot(_t, z)   # M15 — 체력 곡선 모양
     m = re.search(r"\{\s*id:\s*'atk'.*?base:\s*([\d.]+).*?growth:\s*([\d.]+)"
                   r".*?cost0:\s*([\d.]+).*?costG:\s*([\d.]+)", t, re.S)
     if not m:
@@ -52,7 +66,7 @@ def read_consts(root):
 def rows(c):
     out = []
     for z in range(1, c["ZONES"] + 1):
-        hp = c["ZONE_HP0"] * c["ZONE_HP_G"] ** (z - 1)
+        hp = c["ZONE_HP0"] * c["ZONE_HP_G"] ** (z - 1) * math.exp(c["KNOT"](z))   # M15 — 게임 zoneHP 와 같은 식
         dps = hp * c["DPS_RATIO"]
         kills = c["KILLS"] * (c["WALL_KILLS"] if (z >= c["WALL_START"] and z % c["WALL_EVERY"] == 0) else 1)   # M2 벽 — 구역 10 부터
         rw = c["ZONE_RW0"] * c["ZONE_RW_G"] ** (z - 1) * c["KILLS"] / kills   # M2 벽: 처치당 보상 ÷3
