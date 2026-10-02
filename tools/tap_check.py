@@ -20,7 +20,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # cp949 콘솔에�
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sim_port as S
 
-TABS = ("stat", "rebirth", "gear", "daily")   # 지시 #151: "daily" 는 이제 탭이 아니라 미션 팝업 상태 · M10: 무기 탭 → 환생 탭
+TABS = ("stat", "skill", "gear", "rebirth", "daily")   # M12: 스킬 탭   # 지시 #151: "daily" 는 이제 탭이 아니라 미션 팝업 상태 · M10: 무기 탭 → 환생 탭
 # M10 — 부위 사다리 팝업(40칸)은 거울에 없다(그리기·입력 쪽). 브라우저에서 잰다: tools/ladder_tap.js
 
 

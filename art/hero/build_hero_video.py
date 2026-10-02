@@ -22,6 +22,7 @@ CLIPS = {
     "stand": ("veo_raise.mp4", list(range(0, 21, 2))),                                  # 숨쉬기 — 앞뒤로 왕복 재생
     "raise": ("veo_raise.mp4", list(range(50, 59, 2)) + [82, 84]),                      # 팔 올리기. 60~80 은 주먹을 얼굴 앞에 모으는 권투 자세라 뺀다
     "fire":  ("veo_shoot.mp4", list(range(29, 58, 2))),                                 # 연사 — 29 와 58 자세가 같아 끊김 없이 돈다
+    "walk":  ("veo_walk.mp4", list(range(136, 161, 2))),                                # M13 1.2 (지시 #161) — 제자리 걷기 한 주기(136 ≈ 161, 실루엣 차이가 가장 작은 25프레임)
 }
 WEAPON_MID = 31              # 기본 무기 사각형(fy-34, 높이 6)의 가운데 = 바닥 위 31px
 FIRE_REF = ("veo_shoot.mp4", 29)  # 이 프레임 주먹 오른끝 = SURVIVOR_X + 15 (무기 사각형이 x+12 에서 시작)
@@ -128,10 +129,10 @@ def main():
     atlas, cw, ch, lx, dh, meta = build()
     b = io.BytesIO(); atlas.save(b, "WEBP", quality=88, method=6)
     clips = {c: [i for i, m in enumerate(meta) if m[0] == c] for c in CLIPS}
-    js = ("const HERO_ANIM = { cw: %d, ch: %d, k: %d, lx: %s, stand: %s, raise: %s, fire: %s,\n"
+    js = ("const HERO_ANIM = { cw: %d, ch: %d, k: %d, lx: %s, stand: %s, raise: %s, fire: %s, walk: %s,\n"
           "  fist: %s, gun: %s,\n"
           "  src: 'data:image/webp;base64,%s' };" % (
-              cw, ch, K, lx, json.dumps(clips["stand"]), json.dumps(clips["raise"]), json.dumps(clips["fire"]),
+              cw, ch, K, lx, json.dumps(clips["stand"]), json.dumps(clips["raise"]), json.dumps(clips["fire"]), json.dumps(clips["walk"]),
               json.dumps([[float(m[1]), float(m[2])] for m in meta], separators=(",", ":")),
               json.dumps([1 if m[3] else 0 for m in meta], separators=(",", ":")),
               base64.b64encode(b.getvalue()).decode("ascii")))
@@ -142,7 +143,7 @@ def main():
     print("ok atlas %dx%d · %d frames (cell %dx%d) · %d bytes · lx=%s" % (atlas.width, ch, len(meta), cw, ch, len(b.getvalue()), lx))
     if "--preview" in sys.argv:
         out = sys.argv[sys.argv.index("--preview") + 1]
-        st = clips["stand"]; seq = st + st[::-1] + clips["raise"] + clips["fire"] * 2 + clips["raise"][::-1] + st
+        st = clips["stand"]; seq = clips["walk"] * 3 + st + st[::-1] + clips["raise"] + clips["fire"] * 2 + clips["raise"][::-1] + st
         fr = []
         for i in seq:
             bg = Image.new("RGBA", (cw, ch), (48, 52, 46, 255)); bg.alpha_composite(atlas.crop((i * cw, 0, (i + 1) * cw, ch)))

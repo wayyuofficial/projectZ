@@ -99,6 +99,15 @@
   chk('v7 저장본이 최신으로 이어진다 (회차 = 환생 + 1)', G.v === SAVE_VERSION && G.loop === 3 && G.medals === 40 && G.gear.weapon === 4 && G.parts === 55 && loadError === null,
       G.v + '/' + G.loop + '/' + G.medals + '/' + G.gear.weapon);
 
+  // M12 1.1 — v8 (M11) 에는 스킬이 없다. 지금까지 간 깊이(bestZone 16)까지 해금: 집중 사격·수류탄·아드레날린·응급처치·화염병 → 앞 4개가 칸에
+  store[SAVE_KEY] = JSON.stringify({ v: 8, parts: 7, zone: 16, bestZone: 16, loop: 2, lv: { atk: 3 }, gear: { weapon: 4 }, inv: emptyInv(), own: Object.assign(emptyInv(), { weapon: ladderArr(0).map((_, k) => (k === 4 ? 1 : 0)) }),
+    fresh: {}, medals: 5, rebirths: 1, plans: 3, gachaXp: 0, lastSeen: Date.now() });
+  loadError = null;
+  load();
+  chk('v8 저장본이 최신으로 이어진다 (스킬 해금 = 간 깊이)', G.v === SAVE_VERSION && G.skills.lv.molotov === 1 && G.skills.lv.pierce === 0 && G.skills.slots.join(',') === 'focus,grenade,adren,aid'
+      && G.books === 0 && G.peakZone === 16 && G.loop === 2 && loadError === null,
+      G.v + '/' + JSON.stringify(G.skills) + '/' + G.peakZone);
+
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();
   chk('항목이 빠진 저장 보정', G.zone === 1 && G.lv.reg === 0 && G.gear.weapon === 0 && G.inv.feet.length === LADDER && G.own.weapon[0] === 1, JSON.stringify(G.lv));

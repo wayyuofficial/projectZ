@@ -22,7 +22,8 @@ SHEETS = {
                               [("bolt", 18), ("grenade", 9)], [(None, 0), ("sawblade", 15)]],
     "sheet_flash_impact.png": [("muzzle", 4, 18), ("impact", 4, 18)],
     "sheet_explosion.png": [("boom", 6, 46)],
-    "sheet_flame.png": [("flame", 6, 26)],                  # 화염방사기 불덩이 6프레임(불씨→큰 불꽃→잔불→연기). 원본을 좌우 뒤집어 저장(머리가 오른쪽 = 오른쪽으로 날아간다)
+    "sheet_flame.png": [("flame", 6, 26)],
+    "sheet_skills.png": [[("sk_grenade", 9), ("sk_heal", 26)], [("sk_turret", 24), ("sk_shell", 20)]],   # M12 2.2 (지시 #160) — 수류탄·회복 십자 / 포탑·떨어지는 포탄                  # 화염방사기 불덩이 6프레임(불씨→큰 불꽃→잔불→연기). 원본을 좌우 뒤집어 저장(머리가 오른쪽 = 오른쪽으로 날아간다)
 }
 
 
@@ -52,6 +53,7 @@ def main():
         assert len(rows) == len(spec), "%s: 줄 %d개 (기대 %d)" % (f, len(rows), len(spec))
         for row, sp in zip(rows, spec):
             if isinstance(sp, list):                       # 낱개들
+                row = merge_to(row, len(sp))               # M12 — 흩어진 빛 입자(회복 십자)가 칸을 늘리면 가까운 이웃끼리 합친다
                 assert len(row) == len(sp), "%s: 칸 %d개 (기대 %d)" % (f, len(row), len(sp))
                 for c, (name, L) in zip(row, sp):
                     if not name: continue

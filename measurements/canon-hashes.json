@@ -1,12 +1,15 @@
 {
-  "approved_at": "2026-10-02T12:30:20",
+  "approved_at": "2026-10-02T12:35:11",
   "approved_by": "황창식",
   "stdin_is_tty": true,
-  "changed_since_last": [],
+  "changed_since_last": [
+    "00-identity.md",
+    "10-scope.md"
+  ],
   "note": "사람이 승인한 정본 상태. AI가 이 파일을 갱신하면 감시가 무의미해진다. approved_by 는 사람이 직접 타이핑한 값이다 — 터미널이 아니면 도구가 거부한다.",
   "hashes": {
-    "00-identity.md": "4b9d7a194a137f35c1d50b02e9f1e160ad18c40e8da2c726eb9edfebd4170840",
-    "10-scope.md": "6c9c5250d5a3f80003f0e32d43a629cbb582db48b544ddfb9361a499becaefcf",
+    "00-identity.md": "9de353155035929cb6753cbd6b5a319f67307ced639849a518716166aee966ba",
+    "10-scope.md": "1b0c754f7fcd91338d02d0cfd6a6ee4524d3979540f800e8bed9958914db472f",
     "20-principles.md": "20af86ca5ad9cddef5123da58f9146064b7f6c42d8430f3f261ef82279eb78ee",
     "30-forbidden.md": "596798c5023910ea7559cc80cd0bb51eb51a2ce49ad6058f42f829b398cb4376",
     "README.md": "32523329426f82a74e01ae3d9939eae652609335a74c6226ee41281b8258781c"
