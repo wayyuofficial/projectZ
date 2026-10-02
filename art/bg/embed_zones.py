@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """M8 (지시 #147) — art/bg/zones/z01~z30.png 를 게임에 넣는다. 도트 그림이라 업스케일(AI)은 안 한다(도트를 뭉갠다) — 512px 원본을 WebP 로.
    게임은 지금 구역 그림만 디코드하고 다음 구역 하나를 미리 읽는다(30장을 한꺼번에 풀지 않는다). 다시 돌려도 같은 결과(멱등).
+   M15: art/bg/wide/zNN.png(파노라마, 끝과 처음이 이어진다)가 있으면 그것을 넣는다 — 게임은 가로로 긴 그림을 뒤집어 붙이지 않고 그대로 흘린다.
    쓰는 법: python art/bg/embed_zones.py"""
 import io, os, re, base64
 from PIL import Image
@@ -9,7 +10,9 @@ P = os.path.join(ROOT, "game", "index.html")
 t = io.open(P, encoding="utf-8-sig").read()
 rows, total = [], 0
 for z in range(1, 61):   # M11: 구역 60
-    f = os.path.join(HERE, "zones", "z%02d.png" % z)
+    f = os.path.join(HERE, "wide", "z%02d.png" % z)   # M15 (분석 B2) — 가로로 긴 이어지는 그림이 있으면 그것(art/bg/gen_wide.py)
+    if not os.path.exists(f):
+        f = os.path.join(HERE, "zones", "z%02d.png" % z)
     if not os.path.exists(f):
         continue
     im = Image.open(f).convert("RGB")

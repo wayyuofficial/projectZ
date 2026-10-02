@@ -9,7 +9,7 @@ Z = {
  'city_police':    'an infected police officer zombie in a torn dark navy police uniform with a cap and badge, grey-green skin',
  'subway_commuter':'an infected commuter zombie in a long beige trench coat with a shoulder bag, grey-green skin',
  'subway_staff':   'an infected subway station staff zombie in a teal-green transit uniform vest and cap, grey-green skin',
- 'subway_homeless':'an infected homeless zombie in layered ragged brown blankets and a beanie, long beard, grey-green skin',
+ 'subway_homeless':'an infected homeless zombie in layered ragged brown blankets and a beanie, long beard, grey-green skin, both arms visibly attached at the shoulders in every frame, in the attack frames the arms raise from the shoulders without hiding under the blanket',   # M15 (분석 B3): 공격 프레임의 손이 떠 보였다
  'factory_worker': 'an infected factory worker zombie in stained orange overalls and a yellow hard hat, grey-green skin',
  'factory_welder': 'an infected welder zombie wearing a dark welding mask pushed up, leather apron and heavy gloves, grey-green skin',
  'factory_hazmat': 'an infected chemical worker zombie in a torn yellow hazmat suit with a cracked gas mask',
@@ -19,7 +19,7 @@ Z = {
  'base_patient':   'an infected hospital patient zombie in a torn pale blue hospital gown with bandages, barefoot, grey-green skin',
  'base_medic':     'an infected field medic zombie in a white protective suit with a red cross armband and face mask',
  'lab_scientist':  'an infected scientist zombie in a torn bloody white lab coat, glasses and ID badge, grey-green skin',
- 'lab_subject':    'a mutated lab test-subject zombie, bald head, pale skin with glowing teal veins all over, numbered grey jumpsuit, BOTH arms equally long and thin with long claws, the same in every frame',
+ 'lab_subject':    'a mutated lab test-subject zombie, bald head, pale skin with glowing teal veins all over, numbered grey jumpsuit, BOTH arms equally long and thin with long claws, the same in every frame, both arms visibly connected to the shoulders in every frame including the raised attack frame (no floating hands)',   # M15 (분석 B3)
  # M11 (지시 #157) — 구역 31~60
  'school_student': 'an infected high school student zombie in a torn navy school uniform blazer and skirt-or-slacks, a backpack strap on one shoulder, grey-green skin',
  'school_teacher': 'an infected teacher zombie in a torn brown cardigan, collared shirt and glasses, holding nothing, grey-green skin',
