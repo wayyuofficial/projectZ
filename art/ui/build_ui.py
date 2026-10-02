@@ -54,6 +54,7 @@ def main():
     strip("crate", "sheet_crate.png", 3, 240)
     icons("sheet_icons_a.png", 4, ["stat", "weapon", "gear", "daily", "c:parts", "c:plans", "s:atk", "s:spd", "s:hp", "s:reg", "s:inc", "s:crit"])
     icons("sheet_icons_b.png", 3, ["s:cdmg", "d:login", "d:quest", "d:supply", "d:reset", "boss", "revive", "clock", "key"])
+    icons("sheet_icons_c.png", 4, ["k:focus", "k:grenade", "k:adren", "k:aid", "k:molotov", "k:pierce", "k:turret", "k:strike", "k:book", "skill", "rebirth"])   # M12 2.1 (지시 #160)
     replace_block("UI_ART", block_js("UI_ART", items))
     print("ok", len(items), "items", [k for k, _ in items], sum(len(v) for _, v in items), "chars")
 
