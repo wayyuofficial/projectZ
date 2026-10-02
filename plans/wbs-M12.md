@@ -41,7 +41,7 @@
 | # | 작업 | 완료 판정 | 선행 | 상태 |
 |---|---|---|---|---|
 | 3.1 | 거울 이식·리실, 가짜 사람(해금되면 낀다·낮은 레벨부터) | c16·c25 통과 | 1.4 | ✅ |
-| 3.2 | `tools/skill_share.py`, 스킬 배수 격자(M12-P1), 구역 상수 다시(M12-P2) | 숫자 기록 | 3.1 | 🔄 |
+| 3.2 | `tools/skill_share.py`, 스킬 배수 격자(M12-P1), 구역 상수 다시(M12-P2) | 숫자 기록 | 3.1 | ⚠️ |
 | 3.3 | focus_check 은퇴, quest_pace·daily_budget 새 미션 | 도구가 돈다 | 3.2 | ⬜ |
 
 ## 4 · 마감
@@ -60,3 +60,4 @@
 - 2026-10-02 2.1 ✅ — `art/ui/gen_icons_c.py`(나노바나나, sheet_icons_a ref) → 아이콘 11개(스킬 8 · 스킬북 · 스킬 탭 · 환생 탭), build_ui 에 등록. 스킬 탭·장착 띠·전투 4칸·팝업 스크린샷.
 - 2026-10-02 2.2 ✅ — `art/fx/gen_skill_fx.py` → 수류탄·회복 십자·포탑·낙하 포탄(build_fx 에 등록, 흩어진 입자는 merge_to). 그림만 시간차: 수류탄 포물선 0.35초 → 폭발, 포탄 4발 낙하 0.4초 → 폭발, 포탑은 지속 중 주인공 옆, 화염병 불길 5개. 동시 발동 이름은 세 줄로 비켜 띄운다. 콘솔 오류 0.
 - 2026-10-02 3.1 ✅ — 거울: SKILLS 표를 게임에서 읽는다, freshSkills·skillLv·skillLvMult·skillHit·skillSpdMult·unlockSkills·skillUp·skillToggle·hurtZombie·castSkill·stepSkills·pierceShot, attacksPerSec(×skillSpdMult), killZombie(스킬북·peakZone·해금), takeQuest(+1권), doRebirth(발동 상태), migrate v8→v9·정리, listTopY·buildButtons(탭 넷·스킬 띠·스킬 줄·스킬 팝업). FOCUS_MULT 안 읽음. 계수기 dmgShot·dmgSkill(원본에 없다). auto_run: 스킬북은 낀 스킬 중 가장 낮은 레벨부터. 리실 **85개 일치**. c16·c25 통과, tap_check(탭 다섯) 통과.
+- 2026-10-02 3.2 ⚠️ — 첫 측정(4시드, 스킬 배수 시작값): **스킬 몫 0.2%**(M12-P1 20~35%). 가짜 사람이 먼저 해금된 4개(집중·수류탄·아드레날린·응급)만 끼고 바꾸지 않고, 수류탄 ×8·8초가 사격에 비해 작다. 구역 60 도달 337~368분. **M13(지시 #161, 구역 이동 연출)이 진행 시간을 바꾸므로 M13 뒤에 같이 맞춘다.**
