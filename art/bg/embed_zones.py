@@ -8,12 +8,12 @@ HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.pat
 P = os.path.join(ROOT, "game", "index.html")
 t = io.open(P, encoding="utf-8-sig").read()
 rows, total = [], 0
-for z in range(1, 31):
+for z in range(1, 61):   # M11: 구역 60
     f = os.path.join(HERE, "zones", "z%02d.png" % z)
     if not os.path.exists(f):
         continue
     im = Image.open(f).convert("RGB")
-    b = io.BytesIO(); im.save(b, "WEBP", quality=82, method=6); total += len(b.getvalue())
+    b = io.BytesIO(); im.save(b, "WEBP", quality=75, method=6); total += len(b.getvalue())   # M14 3.2: 품질 82 → 75 (파일 크기)
     rows.append("  %d: 'data:image/webp;base64,%s'" % (z, base64.b64encode(b.getvalue()).decode("ascii")))
 block = ("/* M8 (2026-10-01, 지시 #146·#147) — 사람: \"구역별로 컨셉\" · \"1구역부터 30구역까지 컨셉에 맞춰 배경 이미지를 도트그래픽으로 나노바나나로 생성해서 적용\".\n"
          "   구역 하나 = 장소 하나(`plans/결정요청-M8-구역별컨셉-2026-10-01.md`). 원본 art/bg/zones/zNN.png(나노바나나 512px, 구역 1 을 ref 로 화풍 통일) → WebP data URI. 파일 하나 규칙(c6) 유지.\n"

@@ -1,0 +1,146 @@
+{
+ "측정일": "2026-10-02",
+ "도구": "tools/skill_share.py",
+ "빌드도장": "614de1c13017d870",
+ "시드": 8,
+ "행": [
+  {
+   "seed": 1,
+   "final_zone": 60,
+   "reach_min": 301.6,
+   "share": 0.28124130251416585,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 2,
+    "molotov": 3,
+    "pierce": 3,
+    "turret": 4,
+    "strike": 4
+   },
+   "books": 1
+  },
+  {
+   "seed": 2,
+   "final_zone": 60,
+   "reach_min": 317.6,
+   "share": 0.29261870500719117,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 3,
+    "molotov": 3,
+    "pierce": 3,
+    "turret": 4,
+    "strike": 4
+   },
+   "books": 0
+  },
+  {
+   "seed": 3,
+   "final_zone": 60,
+   "reach_min": 342.9,
+   "share": 0.2937620600852825,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 2,
+    "molotov": 3,
+    "pierce": 4,
+    "turret": 4,
+    "strike": 4
+   },
+   "books": 1
+  },
+  {
+   "seed": 4,
+   "final_zone": 60,
+   "reach_min": 364.3,
+   "share": 0.3044238690519461,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 3,
+    "molotov": 3,
+    "pierce": 4,
+    "turret": 4,
+    "strike": 4
+   },
+   "books": 0
+  },
+  {
+   "seed": 5,
+   "final_zone": 60,
+   "reach_min": 305.4,
+   "share": 0.2876392999530843,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 2,
+    "molotov": 3,
+    "pierce": 3,
+    "turret": 4,
+    "strike": 4
+   },
+   "books": 2
+  },
+  {
+   "seed": 6,
+   "final_zone": 60,
+   "reach_min": 382.3,
+   "share": 0.2897296451030574,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 2,
+    "molotov": 3,
+    "pierce": 4,
+    "turret": 4,
+    "strike": 4
+   },
+   "books": 1
+  },
+  {
+   "seed": 7,
+   "final_zone": 60,
+   "reach_min": 378.1,
+   "share": 0.3006585284382586,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 2,
+    "molotov": 3,
+    "pierce": 3,
+    "turret": 4,
+    "strike": 4
+   },
+   "books": 2
+  },
+  {
+   "seed": 8,
+   "final_zone": 60,
+   "reach_min": 305.0,
+   "share": 0.2950411096406445,
+   "lv": {
+    "focus": 2,
+    "grenade": 2,
+    "adren": 2,
+    "aid": 3,
+    "molotov": 3,
+    "pierce": 3,
+    "turret": 4,
+    "strike": 4
+   },
+   "books": 1
+  }
+ ],
+ "스킬몫_중앙": 0.29319038254623686,
+ "옛빌드_사유": "잰 뒤 바뀐 것은 회차 배수 LOOP_G·LOOP_RW(30/3 → 100/4)뿐 — 회차 1(환생 전)에서 loopMult()=1 이라 이 측정(환생 없음)에 영향이 없다 (M12 3.2)"
+}

@@ -39,7 +39,7 @@ TOL = 0.20             # M3-B1 의 반증선 (±20%). 예측이 바뀌면 여기
 ARRIVE_TOL = 0.20      # 도달 시각은 정보로 같이 찍는다
 WALL_MULT_TARGET = 2.0   # 지시 #63: 벽 ×2
 WALL_START_TARGET = 10   # 벽은 구역 10 부터 (정본 표)
-Z_FROM, Z_TO = CURVE_FROM, 29   # 30 은 다음 구역이 없어 체류를 못 잰다
+Z_FROM, Z_TO = CURVE_FROM, SP.ZONE_COUNT - 1   # 마지막 구역은 다음 구역이 없어 체류를 못 잰다 (M11: 60)
 
 
 WALL_ON = True     # --no-wall 이면 False. 벽을 끄고 재면 목표에서도 벽을 뺀다 (22차 감사 지적)
@@ -139,7 +139,8 @@ def main(argv):
     arr = {z: ((reach[z] - reach[CURVE_FROM]) / target_arrive(z)) for z in range(CURVE_FROM + 1, SP.ZONE_COUNT + 1) if z in reach and CURVE_FROM in reach and target_arrive(z) > 0}
     arr_out = [z for z, r in arr.items() if abs(math.log(r)) > math.log(1 + ARRIVE_TOL)]
     print("도달 시각 / 목표 누적 (정보):", {z: round(r, 2) for z, r in arr.items()}, "· ±%d%% 밖 %d개 %s (M2-B1‴: 3개 이하, 구역 10 기준 상대)" % (ARRIVE_TOL * 100, len(arr_out), arr_out))
-    print("곡선 밖: %d개 %s · 30 도달(중앙) %s분" % (len(outside), outside, ("%.1f" % reach[30]) if 30 in reach else "-"))
+    ZL = SP.ZONE_COUNT
+    print("곡선 밖: %d개 %s · %d 도달(중앙) %s분" % (len(outside), outside, ZL, ("%.1f" % reach[ZL]) if ZL in reach else "-"))
     if a.out:
         json.dump({"측정일": datetime.date.today().isoformat(), "도구": "tools/curve_check.py", "시드": seeds, "벽": not a.no_wall, "새무기": not a.no_new_weapons,
                    "끝_부품_중앙": END_PARTS, "사망_중앙": DEATHS,     # M6 5.2 / M6-B2
