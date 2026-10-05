@@ -1186,6 +1186,7 @@ const SHOT_FX = {
 let shotFx = [], shotSeen = new WeakSet(), heroMuzzle = null, shotFxAt = 0, shotParity = 0;
 function spawnShotFx(s, now) {
   const cw = curWeapon(), vis = weaponVis(cw.type, cw.tier), d = SHOT_FX[vis] || SHOT_FX.pistol;
+  sfx('shot_' + (SHOT_SND[vis] || 'pistol'));   // M16 — 발사음(새 탄을 그릴 때)
   const m = heroMuzzle || { x: s.x1, y: s.y1, y2: s.y1 + 4 };
   const from = (y) => ({ x: m.x, y });
   const add = (o) => { if (shotFx.length < 90) shotFx.push(Object.assign({ born: now, d }, o)); };
@@ -2100,6 +2101,8 @@ function buildButtons() {
   if (tab === 'gear') GEAR_SLOTS.forEach((sl, i) => { const c = stripCell(i);   // 지시 #150 — 장착 띠 칸을 누르면 그 부위 가방
     btn({ x: c.x, y: c.y, w: c.w, h: c.h, label: '', enabled: true, tone: 'hit', slot: sl.id, onTap: () => openSlot(sl.id) }); });
   /* 지시 #151 — 일일 미션은 전투 화면 오른쪽 아래 작은 버튼. 받을 것이 있으면 빨간 점. 크기 58 = 탭 판정선(29 CSS px) 위 */
+  btn({ x: GAME_W - 24 - 58 - 8 - 58, y: ARENA_BOT - 58 - 8, w: 58, h: 58, label: '', icon: SND_ON ? 'snd_on' : 'snd_off', enabled: true, tone: 'mini',   // M16 — 소리 켜기/끄기
+        onTap: () => { sndSet(!SND_ON); return true; } });
   btn({ x: GAME_W - 24 - 58, y: ARENA_BOT - 58 - 8, w: 58, h: 58, label: '', icon: 'daily', enabled: true, tone: 'mini', dot: dailyDot(),
         onTap: () => { dailyPopup = true; return true; } });
 
@@ -2244,7 +2247,100 @@ function rr(x, y, w, h, r) {
   ctx.closePath();
 }
 
+/* ── M16 소리 (지시 #171) ─────────────────────────────────────────────
+   WebAudio 로 **코드가 소리를 만든다**(파일 없음 — 단일 파일·용량 유지, c6·c27). 웹뷰·브라우저는 사람의 손이 닿기 전 소리를 막으므로
+   첫 터치(pointerdown)에서 켠다. 소리는 **그리기 쪽에서만** 건다 — 전투 함수(거울 c16 이 따라 하는 것)는 안 건드린다:
+   발사는 새 탄을 감지하는 spawnShotFx, 나머지는 sndWatch() 가 프레임마다 처치 수·구역·보스·사망·뽑기·능력치 레벨 합·스킬 쿨타임을 앞 프레임과 견준다.
+   종류마다 최소 간격(gap)과 동시에 울리는 음원 상한(SND_MAX_LIVE)으로 시끄럽지 않게. 켜짐/꺼짐은 게임 저장 칸이 아니라 따로 저장(SAVE_VERSION 무관). */
+const SND_KEY = 'zombie-idle-sound', SND_VOL = 0.5, SND_MAX_LIVE = 8;
+let SND_ON = true;
+try { SND_ON = localStorage.getItem(SND_KEY) !== 'off'; } catch (e) {}
+let actx = null, sndOut = null, noiseBuf = null, sndLive = 0, sndLog = [];
+const sndLast = {};
+function sndInit() {
+  try {
+    if (actx) { if (actx.state === 'suspended') actx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    actx = new AC();
+    const comp = actx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 6;
+    sndOut = actx.createGain(); sndOut.gain.value = SND_VOL; sndOut.connect(comp); comp.connect(actx.destination);
+    const n = Math.floor(actx.sampleRate * 0.6); noiseBuf = actx.createBuffer(1, n, actx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  } catch (e) { actx = null; }
+}
+function sndSet(on) { SND_ON = !!on; try { localStorage.setItem(SND_KEY, SND_ON ? 'on' : 'off'); } catch (e) {} if (SND_ON) { sndInit(); sfx('tap'); } }
+function sTone(at, type, f0, f1, dur, vol) {
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0, at); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), at + dur);
+  g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0008, at + dur);
+  o.connect(g); g.connect(sndOut); sndLive++; o.onended = () => { sndLive--; }; o.start(at); o.stop(at + dur + 0.02);
+}
+function sNoise(at, dur, vol, ftype, f0, f1) {
+  const s = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+  s.buffer = noiseBuf; f.type = ftype; f.frequency.setValueAtTime(f0, at); if (f1) f.frequency.exponentialRampToValueAtTime(f1, at + dur);
+  g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0008, at + dur);
+  s.connect(f); f.connect(g); g.connect(sndOut); sndLive++; s.onended = () => { sndLive--; }; s.start(at); s.stop(at + dur + 0.02);
+}
+/* 소리 표 — gap = 같은 소리 사이 최소 초. 발사 소리는 무기 그림 11가지를 9가지로 묶는다(SHOT_SND). */
+const SFX = {
+  shot_pistol:  { gap: 0.06, play: (t) => { sNoise(t, 0.06, 0.35, 'highpass', 1800); sTone(t, 'square', 220, 90, 0.04, 0.12); } },
+  shot_rifle:   { gap: 0.06, play: (t) => { sNoise(t, 0.08, 0.45, 'bandpass', 2500, 900); sTone(t, 'square', 160, 60, 0.06, 0.15); } },
+  shot_mg:      { gap: 0.07, play: (t) => { sNoise(t, 0.05, 0.3, 'highpass', 2200); } },
+  shot_shotgun: { gap: 0.12, play: (t) => { sNoise(t, 0.18, 0.55, 'lowpass', 2500, 400); sTone(t, 'sine', 120, 50, 0.12, 0.3); } },
+  shot_flame:   { gap: 0.18, play: (t) => { sNoise(t, 0.25, 0.25, 'bandpass', 800, 400); } },
+  shot_bolt:    { gap: 0.1,  play: (t) => { sTone(t, 'triangle', 900, 300, 0.08, 0.2); sNoise(t, 0.03, 0.15, 'highpass', 4000); } },
+  shot_boom:    { gap: 0.15, play: (t) => { sTone(t, 'sine', 140, 40, 0.25, 0.45); sNoise(t, 0.3, 0.35, 'lowpass', 1200, 200); } },
+  shot_saw:     { gap: 0.12, play: (t) => { sTone(t, 'sawtooth', 700, 500, 0.12, 0.12); } },
+  shot_rail:    { gap: 0.15, play: (t) => { sTone(t, 'sine', 300, 1800, 0.15, 0.2); sTone(t + 0.1, 'square', 1800, 2400, 0.05, 0.06); } },
+  kill:         { gap: 0.05, play: (t) => { sTone(t, 'square', 320, 110, 0.07, 0.12); } },
+  boss_in:      { gap: 2,    play: (t) => { sTone(t, 'sawtooth', 70, 60, 0.7, 0.25); sTone(t, 'sawtooth', 105, 95, 0.7, 0.18); } },
+  boss_kill:    { gap: 1,    play: (t) => { sNoise(t, 0.6, 0.6, 'lowpass', 1500, 120); sTone(t, 'sine', 90, 30, 0.8, 0.5); } },
+  zone:         { gap: 0.5,  play: (t) => { [523, 659, 784].forEach((f, i) => sTone(t + i * 0.08, 'square', f, f, 0.12, 0.12)); } },
+  death:        { gap: 1,    play: (t) => { sTone(t, 'triangle', 440, 110, 0.6, 0.3); } },
+  gacha:        { gap: 0.3,  play: (t, tier) => {   // 가장 높은 등급만큼 음이 오른다. 영웅(5) 이상은 반짝임
+    const k = Math.max(1, Math.min(8, tier || 1)), notes = [523, 587, 659, 784, 880, 1047, 1175, 1319];
+    for (let i = 0; i < Math.min(4, k); i++) sTone(t + i * 0.07, 'triangle', notes[i + Math.max(0, k - 4)], notes[i + Math.max(0, k - 4)], 0.14, 0.14);
+    if (k >= 5) { sTone(t + 0.3, 'sine', 1568, 1568, 0.4, 0.1); sTone(t + 0.34, 'sine', 2093, 2093, 0.45, 0.08); }
+  } },
+  buy:          { gap: 0.04, play: (t) => { sTone(t, 'sine', 660, 990, 0.07, 0.12); } },
+  skill:        { gap: 0.15, play: (t) => { sNoise(t, 0.25, 0.3, 'bandpass', 400, 2400); sTone(t, 'triangle', 300, 600, 0.12, 0.1); } },
+  tap:          { gap: 0.03, play: (t) => { sTone(t, 'square', 1200, 1200, 0.02, 0.05); } }
+};
+const SHOT_SND = { pistol: 'pistol', dual: 'pistol', rifle: 'rifle', mg: 'mg', shotgun: 'shotgun', flamer: 'flame', crossbow: 'bolt', mine: 'boom', launcher: 'boom', saw: 'saw', rail: 'rail' };
+function sfx(name, arg) {
+  if (!SND_ON || !actx || actx.state !== 'running') return false;
+  const d = SFX[name]; if (!d) return false;
+  const now = actx.currentTime;
+  if (sndLast[name] != null && now - sndLast[name] < d.gap) return false;
+  if (sndLive >= SND_MAX_LIVE) return false;
+  sndLast[name] = now;
+  if (sndLog.length < 400) sndLog.push(name);
+  try { d.play(now + 0.005, arg); } catch (e) { return false; }
+  return true;
+}
+/* 프레임마다 앞 프레임과 견줘 사건 소리 — 전투 함수는 안 건드린다 */
+let sndPrev = null;
+function sndWatch() {
+  if (!SND_ON) { sndPrev = null; return; }
+  let lv = 0; for (const k in (G.lv || {})) lv += G.lv[k] || 0;
+  let boss = false; for (const z of zombies) if (z.boss) { boss = true; break; }
+  const cd = {}; for (const k in ((typeof skillRt !== 'undefined' && skillRt.cd) || {})) cd[k] = skillRt.cd[k];
+  const cur = { kills: G.totalKills || 0, zone: G.zone, boss: boss, death: deathFlash || 0, gacha: gachaResult, lv: lv, cd: cd, loop: G.loop || 1 };
+  const p = sndPrev;
+  if (p && p.loop === cur.loop) {
+    if (cur.kills > p.kills) sfx('kill');
+    if (cur.boss && !p.boss) sfx('boss_in');
+    if (p.boss && !cur.boss && cur.kills > p.kills) sfx('boss_kill');
+    if (cur.zone > p.zone) sfx('zone');
+    if (cur.death > p.death + 0.5) sfx('death');
+    if (cur.gacha && cur.gacha !== p.gacha) { let top = 1; for (const it of (cur.gacha.items || [])) top = Math.max(top, (it.g && it.g.tier) || 1); sfx('gacha', top); }
+    if (cur.lv > p.lv) sfx('buy');
+    for (const k in cur.cd) if ((cur.cd[k] || 0) > (p.cd[k] || 0) + 0.5) { sfx('skill'); break; }
+  }
+  sndPrev = cur;
+}
 function draw() {
+  sndWatch();                              // M16 — 사건 소리(그리기 쪽 견줌)
   ctx.save();
   if (shake > 0) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
   ctx.fillStyle = PALETTE.sky;
@@ -2994,6 +3090,8 @@ const ICON_PX = {
   'd:supply': ['XXXXXXXX', 'X..XX..X', 'XXXXXXXX', 'X......X', 'X.XXXX.X', 'X......X', 'X......X', 'XXXXXXXX'],
   'd:reset': ['..XXXX..', 'XXXXXXXX', '.XXXXXX.', '.X.XX.X.', '.X.XX.X.', '.X.XX.X.', '.X.XX.X.', '.XXXXXX.'],
   'lock': ['..XXXX..', '.X....X.', '.X....X.', 'XXXXXXXX', 'XXXXXXXX', 'XXX..XXX', 'XXX..XXX', 'XXXXXXXX'],
+  'snd_on':  ['...X....', '..XX..X.', 'XXXX.X..', 'XXXX.X.X', 'XXXX.X.X', 'XXXX.X..', '..XX..X.', '...X....'],   // M16
+  'snd_off': ['...X....', '..XX....', 'XXXX.X.X', 'XXXX..X.', 'XXXX..X.', 'XXXX.X.X', '..XX....', '...X....'],
   'check': ['........', '.......X', '......XX', '.....XX.', 'X...XX..', 'XX.XX...', '.XXX....', '..X.....'],
   'clock': ['..XXXX..', '.X....X.', 'X..X...X', 'X..X...X', 'X..XXX.X', 'X......X', '.X....X.', '..XXXX..'],   // 지시 #149
   'key':   ['........', '..XX....', '.X..X...', '.X..XXXX', '.X..X.X.', '..XX..X.', '........', '........'],   // M6 6.2 — 장착 중 표시
@@ -3541,8 +3639,10 @@ function frame(now) {
    0.3초 뒤부터 frame() 의 반복이 산다. */
 canvas.addEventListener('pointerdown', (e) => {
   e.preventDefault();
+  sndInit();                                   // M16 — 첫 터치에서 소리를 켠다(웹뷰가 그 전에는 막는다)
   const p = toCanvas(e.clientX, e.clientY);
   const b = hitButton(p);
+  if (b && b.tone !== 'scrim' && b.tone !== 'hit') sfx('tap');
   const inList = p.y >= listTopY() && p.y <= listBotY() && !offlineReport && !gachaResult && !oddsPopup;
 
   if (inList) {

@@ -245,7 +245,7 @@ MIRRORED = {
     "attacksPerSec": "0639c7d834dcbe23",
     "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "78738ee6b5e0f1ff",
+    "buildButtons": "0041f8d10abc9176",
     "buyStat": "e92f891d410963f4",
     "canEquipBetter": "66a45cfc3ca1b1d8",
     "canFuse": "236dc9baad626747",
@@ -1109,6 +1109,7 @@ class Sim(object):
             gap = 8; cw = (GAME_W - 48 - gap * (SKILL_SLOTS - 1)) / SKILL_SLOTS
             for i in range(SKILL_SLOTS):
                 b("skill_slot_%d" % i, 24 + i * (cw + gap), self.tabRowY() + ROW_H + 8, cw, SKILL_STRIP_H, "hit", bool(self.G["skills"]["slots"][i]))
+        b("snd_btn", GAME_W - 24 - 58 - 8 - 58, L["ARENA_BOT"] - 58 - 8, 58, 58, "mini")   # M16 — 소리 켜기/끄기(원본과 같은 자리)
         b("daily_btn", GAME_W - 24 - 58, L["ARENA_BOT"] - 58 - 8, 58, 58, "mini")   # 지시 #151 — 전투 화면 오른쪽 아래
 
         top, bot = self.listTopY(), self.listBotY()
