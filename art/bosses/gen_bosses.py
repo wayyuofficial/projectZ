@@ -17,7 +17,10 @@ B = {
  'park':    'a giant amusement park mascot bear zombie, a huge torn brown bear costume ripped open with zombie flesh showing, one button eye hanging',
  'prison':  'a towering muscular prisoner zombie in a ripped orange jumpsuit, broken shackles and heavy chains hanging from both wrists, swinging the chains',
  'cruise':  'a giant cruise ship captain zombie in a torn white captain uniform and cap, covered in barnacles and seaweed, dragging a rusty anchor',
- 'nuclear': 'the final boss: a towering radioactive giant zombie, lumpy mutated body glowing toxic GREEN from cracks in its skin, glowing green eyes, remains of a yellow radiation suit',
+ 'nuclear': 'a towering radioactive giant zombie, lumpy mutated body glowing toxic GREEN from cracks in its skin, glowing green eyes, remains of a yellow radiation suit',
+ # M29 (지시 #194) — 구역 65·70
+ 'bunker': 'a giant armored commander zombie in a heavy bulletproof exosuit with a cracked helmet, huge armored steel gauntlets on BOTH fists, military insignia, NO shield and nothing held in the hands in every frame',
+ 'core':   'the true final boss: the Source, a towering grotesque mass of crimson flesh and bone with a half-human torso, many writhing red tendrils, exposed ribs and a glowing red heart in its chest',
 }
 TPL=("Pixel art game SPRITE SHEET of a BOSS ZOMBIE: {d}, glowing red eyes, menacing and much bulkier than a normal zombie. Exactly 4 frames in ONE horizontal row, "
      "evenly spaced with clear gaps, identical character design, size and scale in every frame, full body, pure side view FACING RIGHT. "
@@ -26,7 +29,7 @@ TPL=("Pixel art game SPRITE SHEET of a BOSS ZOMBIE: {d}, glowing red eyes, menac
      "No text, no labels, no frame borders, no ground shadows, no motion lines.")
 def run(k):
     if os.path.exists(f'{OUT}/{k}.png') and '--force' not in sys.argv: return k,'skip'
-    r=subprocess.run(['python3',ROOT+'/nanobanana/nanobanana.py',TPL.format(d=B[k]),'--ref',ROOT+'/art/zombies/city_civilian.png','--model','flash','--size','512px','--aspect','21:9','--transparent','--no-trim','--out',f'{OUT}/{k}.png'],capture_output=True,text=True)
+    r=subprocess.run([sys.executable,(os.path.join('D:'+os.sep,'nanobanana','nanobanana.py') if os.name=='nt' else ROOT+'/nanobanana/nanobanana.py'),TPL.format(d=B[k]),'--ref',ROOT+'/art/zombies/city_civilian.png','--model','flash','--size','512px','--aspect','21:9','--transparent','--no-trim','--out',f'{OUT}/{k}.png'],capture_output=True,text=True,encoding='utf-8',errors='replace')
     return k,[l for l in (r.stdout+r.stderr).splitlines() if '저장' in l or '오류' in l][-1:]
 keys=[k for k in B if len([a for a in sys.argv[1:] if not a.startswith('--')])==0 or k in sys.argv[1:]]
 with ThreadPoolExecutor(3) as ex:

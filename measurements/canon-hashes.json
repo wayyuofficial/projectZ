@@ -1,5 +1,5 @@
 {
-  "approved_at": "2026-10-02T15:51:10",
+  "approved_at": "2026-10-09T09:53:49",
   "approved_by": "황창식",
   "stdin_is_tty": true,
   "changed_since_last": [
@@ -8,7 +8,7 @@
   "note": "사람이 승인한 정본 상태. AI가 이 파일을 갱신하면 감시가 무의미해진다. approved_by 는 사람이 직접 타이핑한 값이다 — 터미널이 아니면 도구가 거부한다.",
   "hashes": {
     "00-identity.md": "9de353155035929cb6753cbd6b5a319f67307ced639849a518716166aee966ba",
-    "10-scope.md": "f0ac839b652c1bcf7308b2320d2ca3474d8fd9ba2fea4f74b0e9e1569bda152d",
+    "10-scope.md": "239ac47642dba42c9f2e0269072674cfa47c9cf6eceddd7501e5451e649ccac0",
     "20-principles.md": "20af86ca5ad9cddef5123da58f9146064b7f6c42d8430f3f261ef82279eb78ee",
     "30-forbidden.md": "596798c5023910ea7559cc80cd0bb51eb51a2ce49ad6058f42f829b398cb4376",
     "README.md": "32523329426f82a74e01ae3d9939eae652609335a74c6226ee41281b8258781c"

@@ -1,0 +1,59 @@
+{
+ "type": "bgm",
+ "desc": "쉴 새 없이 싸우는 방치형 전투",
+ "mood": {
+  "name": "전투 (메인 루프)",
+  "desc": "쉴 새 없이 싸우는 방치형 전투",
+  "bpm": 112,
+  "root": 40,
+  "scale": "aeolian",
+  "prog": [
+   0,
+   5,
+   2,
+   6
+  ],
+  "chordBars": 1,
+  "lead": {
+   "wave": "pulse",
+   "density": 0.5,
+   "echo": 0.15
+  },
+  "arp": {
+   "wave": "square",
+   "rate": 16,
+   "pattern": "up",
+   "oct": 1
+  },
+  "bass": {
+   "style": "drive8",
+   "wave": "pulse"
+  },
+  "pad": true,
+  "drums": {
+   "k": "x.....x.x.......",
+   "s": "....x.......x...",
+   "h": "x.x.x.x.x.x.x.xo",
+   "fill": true,
+   "crash": true
+  },
+  "drone": false,
+  "wind": 0.25,
+  "clang": 0.15
+ },
+ "cfg": {
+  "seed": 7,
+  "bars": 16,
+  "transpose": 3,
+  "grit": 0.25,
+  "reverb": 0.45,
+  "bpm": 112,
+  "vol": {
+   "lead": 0.75,
+   "bass": 0.45,
+   "drums": 0.55,
+   "arp": 0.7,
+   "pad": 0.5
+  }
+ }
+}

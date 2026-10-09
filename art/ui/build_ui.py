@@ -24,6 +24,14 @@ def frame(name, sheet, W):
     items.append((name, json.dumps({"w": im.width, "h": im.height, "inset": inset, "src": webp_uri(im, q=90)}, separators=(",", ":"))))
 
 
+def tile(name, sheet, W):
+    """이음새 없는 무늬 한 장 — 가로세로 W 로 줄인다(바탕에 createPattern 으로 깐다)."""
+    p = os.path.join(HERE, sheet)
+    if not os.path.exists(p): return
+    im = Image.open(p).convert("RGB").resize((W, W), Image.LANCZOS)
+    items.append((name, json.dumps({"w": W, "h": W, "src": webp_uri(im, q=80)}, separators=(",", ":"))))
+
+
 def strip(name, sheet, n, H):
     """한 줄 n 프레임 애니메이션(보급 상자). 같은 배율, 가로 가운데·바닥 맞춤, 칸 = 가장 큰 프레임."""
     p = os.path.join(HERE, sheet)
@@ -50,7 +58,8 @@ def icons(sheet, cols, kinds, L=24, K=4):
 
 def main():
     frame("card", "sheet_card_frame.png", 120)
-    frame("btn", "sheet_btn_frame.png", 220)
+    frame("btn", "sheet_btn_frame_rust.png", 220)   # M21 (지시 #185) — 녹슨 철판 틀. 옛 강철 틀은 sheet_btn_frame.png
+    tile("rust", "sheet_rust_tile.png", 192)        # M21 — 이음새 없는 녹 무늬(버튼·탭·상단 바·아래 판 바탕)
     strip("crate", "sheet_crate.png", 3, 240)
     icons("sheet_icons_a.png", 4, ["stat", "weapon", "gear", "daily", "c:parts", "c:plans", "s:atk", "s:spd", "s:hp", "s:reg", "s:inc", "s:crit"])
     icons("sheet_icons_b.png", 3, ["s:cdmg", "d:login", "d:quest", "d:supply", "d:reset", "boss", "revive", "clock", "key"])

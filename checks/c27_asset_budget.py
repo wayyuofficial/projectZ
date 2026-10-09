@@ -36,6 +36,9 @@ def run(root):
             j = txt.find("};", m.start()); j = len(txt) if j < 0 else j   # 블록 끝(HERO_ANIM 은 같은 줄에서 닫힌다)
             n = sum(len(u) for u in re.findall(r"data:image/[a-z]+;base64,[A-Za-z0-9+/=]+", txt[m.start():j]))
             if n: parts.append("%s %.0fK" % (name, n / 1000))
+        idir = os.path.join(os.path.dirname(p), "img")   # M25 (지시 #190) — 그림을 뺀 뒤엔 img 폴더 합계를 같이 적는다(상한은 게임 파일에만)
+        if os.path.isdir(idir):
+            fs = os.listdir(idir); parts.append("img/ %d개 %.2fMB" % (len(fs), sum(os.path.getsize(os.path.join(idir, f)) for f in fs) / 1e6))
         line = "%s : %.2fMB / 상한 %.2fMB — %s" % (base, size / 1e6, limit / 1e6, " · ".join(parts) or "그림 블록 없음")
         (bad if size > limit else info).append(line)
     if bad:

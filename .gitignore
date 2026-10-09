@@ -1,8 +1,15 @@
 measurements/tmp-*
 *.pyc
 __pycache__/
-zombie-survival-debug.apk
+apocalypse-survivor-debug.apk
 .selftest-running
 .env
 *.env# M14 5.2 — 검사 실행 기록(checks/run.py 가 매번 다시 쓴다). git 에 두면 정본 승인(로컬)과 클라우드 커밋이 이 파일에서 충돌했다(2026-10-02)
 measurements/checks-*.json
+source/sound/bgm/cand/
+
+# 2026-10-09 — 소리 원본 중 큰 것은 이 PC 에만(게임에는 game/snd 의 OGG·index.html 의 효과음만 들어간다)
+source/sound/bgm/.soundgen/*.wav
+source/sound/bgm/bgm_combat_v1_peaceful.wav
+source/sound/bgm/bgm_apocalypse.wav
+source/sound/build/

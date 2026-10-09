@@ -108,6 +108,15 @@
       && G.books === 0 && G.peakZone === 16 && G.loop === 2 && loadError === null,
       G.v + '/' + JSON.stringify(G.skills) + '/' + G.peakZone);
 
+  // M15 — v9 (M12~M14) 에는 재화 안내·회차 기록이 없다. 이미 가진 재화(설계도·스킬북·훈장)는 본 것으로, 기록은 지금 회차·최고 구역부터
+  store[SAVE_KEY] = JSON.stringify({ v: 9, parts: 9, zone: 22, bestZone: 24, loop: 3, lv: { atk: 3 }, gear: { weapon: 4 }, inv: emptyInv(), own: Object.assign(emptyInv(), { weapon: ladderArr(0).map((_, k) => (k === 4 ? 1 : 0)) }),
+    fresh: {}, medals: 12, rebirths: 2, plans: 0, gachaXp: 5, books: 0, peakZone: 30, skills: freshSkills(), lastSeen: Date.now() });
+  loadError = null;
+  load();
+  chk('v9 저장본이 최신으로 이어진다 (안내 본 것 · 기록 시작)', G.v === SAVE_VERSION && G.seen.plans === 1 && G.seen.books === 1 && G.seen.medals === 1 && G.rec.loop === 3 && G.rec.zone === 24
+      && G.rec.sec === 0 && G.rec.sec60 === null && G.rec.list.length === 0 && G.loop === 3 && G.medals === 12 && loadError === null,
+      G.v + '/' + JSON.stringify(G.seen) + '/' + JSON.stringify(G.rec));
+
   store[SAVE_KEY] = JSON.stringify({ v: SAVE_VERSION, parts: 50 });
   load();
   chk('항목이 빠진 저장 보정', G.zone === 1 && G.lv.reg === 0 && G.gear.weapon === 0 && G.inv.feet.length === LADDER && G.own.weapon[0] === 1, JSON.stringify(G.lv));

@@ -1,0 +1,77 @@
+{
+ "측정일": "2026-10-08",
+ "대상": "효과음 19·배경음악 다시 만들기(지시 #180) — game-sound 스킬(D:/bgmcreator/soundgen.py)",
+ "빌드도장": "9d8be635c75a409a",
+ "만든것": {
+  "효과음": "source/sound/sfx/*.wav (레시피 .soundgen/) — 공통 질감 grit .25·drive .15. 프리셋: pistol(합성, 안 씀)·boom/boss_kill(explosion)·rail(laser)·zone(clear)·gacha(reward)·gacha_shine(magic)·buy(upgrade)·skill·tap(click). 직접 설계: flame·bolt·saw·death·boss_in·kill·rifle·mg·shotgun",
+  "고친것": "분석에서 소총·기관총·산탄총·보스 등장의 120Hz 이하 비율이 84~96% — 폰 스피커가 못 내는 대역이라 200~500Hz 몸통(square)을 넣고 초저음을 줄여 50~60%(기관총 19%)로. 처치음은 최대까지 150ms 걸려 타격이 약해 살 타격+짧은 신음으로 다시(어택 0ms)",
+  "배경음악": "combat 16마디·112BPM·시드 7·transpose +3·grit .25·lead .75 bass .45 drums .55 arp .7 pad .5 — 처음 판은 500Hz 이하 93%·2kHz 이상 2% 라 베이스·드럼을 줄이고 음역을 올림(80%·밝기 463Hz)"
+ },
+ "게임에_넣기": "tools/build_sound.py — 효과음 22kHz 모노 WAV(권총만 녹음 32kHz) base64 539,874B · 배경음악 24kHz 모노 OGG Vorbis(압축 0.7) 204,554B(base64 272,738). libsndfile Vorbis 인코더가 윈도우에서 큰 덩어리를 쓰면 스택이 넘쳐 4096 프레임씩 씀. 게임 파일 3.94→4.66MB(c27 상한 5MB) · 지시 #181 뒤 게임 파일 4.62MB",
+ "크기_맞춤": {
+  "방법": "OfflineAudioContext 로 게임 사슬(압축기·키움·리미터)을 거친 소리별 평균 크기(RMS dB)를 재고 SFX_SAMPLE.v 를 두 번 고쳐 맞춤",
+  "목표": {
+   "총": "-12~-15",
+   "처치": -16,
+   "버튼": -20,
+   "구매": -15,
+   "보스": -10
+  },
+  "결과_RMS_dB": {
+   "shot_pistol": -15.6,
+   "shot_rifle": -14.0,
+   "shot_mg": -14.0,
+   "shot_shotgun": -12.8,
+   "shot_flame": -15.2,
+   "shot_bolt": -14.4,
+   "shot_boom": -10.5,
+   "shot_saw": -15.1,
+   "shot_rail": -14.0,
+   "kill": -16.1,
+   "boss_in": -10.1,
+   "boss_kill": -9.8,
+   "zone": -12.1,
+   "death": -12.1,
+   "gacha": -12.1,
+   "buy": -15.2,
+   "skill": -12.7,
+   "tap": -20.4,
+   "기관총연사+처치": -13.2
+  },
+  "최고값_최대_dBFS": -1.5,
+  "배경음악_재생_RMS_dB": -21.5
+ },
+ "배경음악_루프": "풀린 길이 34.286초(원본 34.29) · 이음새 튐 22.9배(원본 WAV 21.2배 — 첫 박 드럼, 스킬 기준 정상)",
+ "에뮬레이터": "adb: 켜고 탭 → 재생 started · 홈으로 내림 → stopped(onAppPause) · 다시 켬 → started",
+ "APK_clean": {
+  "바이트": 11240667,
+  "주의": "M17-P2·M18-P1 의 선 10.88MB 를 넘었다(게임 파일 +0.72MB). 디버그 빌드는 축소(R8)를 안 한다 — 출시 빌드에서 줄일 수 있음. 선은 그대로 둔다(판정은 사람)"
+ },
+ "검사": "c3 통신 0 · c6 단일 파일 · c16 88함수 일치 · c27 4.66/5MB · 저장 25/25 · 콘솔 오류 0",
+ "판정하지_않는다": "듣기는 사람",
+ "배경음악_v2_지시181": {
+  "사람": "배경음악이 너무 평화로워. 아포칼립스 상황에 맞게 더 긴박한 음악으로",
+  "설계": "직접 설계한 분위기 apocalypse_run — phrygian(반음 충돌)·136BPM·i-bII-i-bVII 한 마디씩·톱니 리드(밀도 .4)·16분 오스티나토 아르페지오·갤럽 디스토션 베이스·드론·쇳소리 .3·바람 .3. 레시피 source/sound/bgm/.soundgen/bgm_apocalypse.json",
+  "고친것": "첫 후보 3곡이 120Hz 이하 80%(폰 스피커에선 빈약) — 악기를 하나씩 빼 보니 킥이 주범(드럼 빼면 72→47%). 킥을 'x.......x.x.....' 로 줄이고 drums .35·bass .4·drone .25·lead .85·arp .75·transpose +2 → 시드 11/23/41 중 중역 20% 인 41 선택(120Hz 이하 64%·500Hz 이하 77%·중심 448Hz)",
+  "게임": "24kHz 모노 OGG 173,480B · 풀린 길이 28.235초 · 이음새 튐 16.6배(첫 박 드럼) · SND_BGM_VOL .3→.33(새 곡이 1dB 작아) — 게임 안 평균 약 -21.8dB",
+  "첫곡": "source/sound/bgm/bgm_combat_v1_peaceful.wav(레시피 .soundgen/bgm_combat_v1_peaceful.json) 로 남김. 다른 후보는 source/sound/bgm/cand/(git 제외)",
+  "에뮬레이터": "설치 뒤 탭 → 재생 started"
+ },
+ "배경음악_v3_지시182": {
+  "사람": "배경음악을 만드는 방식을 변경했어. 배경음악을 다시 한번 만들어줘.",
+  "방법": "game-sound 스킬의 새 AI 음악(aimusic.py, 구글 Lyria 3.5, 생성 1회 약 $0.08). 프롬프트: Tense post-apocalyptic zombie survival action music … synth bass ostinato, distorted guitar chugs, industrial drums, staccato strings, eerie pads … chased by a horde … not overwhelming … Minor key · 132BPM",
+  "원본": "122.4초 48kHz 스테레오 — source/sound/bgm/.soundgen/bgm_ai_apocalypse_raw.wav",
+  "루프_비교(무료 재가공)": {
+   "8마디": "14.8초 · 일치도 0.73",
+   "12마디": "22.1초 · 0.55",
+   "16마디": "29.5초 · 0.01",
+   "24마디": "44.3초 · 0.66",
+   "32마디": "59.1초 · 0.71 ← 고름(길어서 덜 질림)"
+  },
+  "분석": "최고 -0.2dBFS · 평균 -14.1dB · 120Hz 이하 67%·500Hz 이하 94%(실제 악기 믹스라 저음이 많다) · 이음새 튐 0.1배(조용한 구간끼리 이어짐)",
+  "게임": "24kHz 모노 OGG 압축 0.7 → 346,079B(base64 461,438) · 게임 파일 4.85MB(c27 상한 5MB — 여유 0.15MB) · 풀린 길이 59.053초 · SND_BGM_VOL .42(게임 안 평균 약 -21.8dB)",
+  "에뮬레이터": "설치 뒤 탭 → 재생 started · PC 스피커로 이음새 확인 파일 12초 재생",
+  "주의": "AI 음원에는 SynthID 워터마크가 들어 있고 상업 이용은 Gemini API 약관을 따른다 — 출시 전 사람이 확인"
+ },
+ "옛빌드_사유": "M16·#180 빌드의 기록. 그 뒤 효과음은 #196(합성 v2)·#197(총기 녹음)·#198(총소리 줄)로 바뀌었고, 사람이 에뮬레이터에서 H2~H5 를 다시 들어 이상없음을 확인했다(통합 점검 2026-10-09). 이 기록의 '소리 묶음이 실린다' 판정 근거는 지금 빌드에서도 브라우저로 18개 다 풀림(지시 #197)으로 이어진다."
+}

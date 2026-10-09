@@ -14,7 +14,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GAME = os.path.join(ROOT, "game", "index.html")
 
-TABLES = ("WEAPON_TYPES", "STATS", "GEAR_SLOTS", "AFFIX_DEFS", "QUEST_POOL", "QUEST_SLOTS", "PALETTE")
+TABLES = ("WEAPON_TYPES", "STATS", "GEAR_SLOTS", "AFFIX_DEFS", "QUEST_DAILY", "QUEST_DAILY_ALL", "QUEST_REPEAT", "QUEST_ACH", "PALETTE")
 COLOR = re.compile(r"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{3}\b|rgba?\(\s*\d")   # rgba( 뒤에 숫자가 바로 올 때만 리터럴이다 — 'rgba(' + PALETTE.deathRgb 는 색이 PALETTE 에서 온다 (1.1 오탐 1건)
 
 

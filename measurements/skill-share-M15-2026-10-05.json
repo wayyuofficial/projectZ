@@ -1,0 +1,162 @@
+{
+ "측정일": "2026-10-05",
+ "도구": "tools/skill_share.py",
+ "빌드도장": "d055d1a95c2202bc",
+ "시드": 8,
+ "행": [
+  {
+   "seed": 1,
+   "final_zone": 60,
+   "reach_min": 291.2,
+   "deaths": 80,
+   "share": 0.3169070764230656,
+   "lv": {
+    "focus": 5,
+    "grenade": 4,
+    "adren": 5,
+    "aid": 6,
+    "molotov": 9,
+    "pierce": 9,
+    "turret": 9,
+    "strike": 9
+   },
+   "books": 1,
+   "eq_lv": 9.0
+  },
+  {
+   "seed": 2,
+   "final_zone": 60,
+   "reach_min": 335.1,
+   "deaths": 90,
+   "share": 0.31680960070336084,
+   "lv": {
+    "focus": 5,
+    "grenade": 4,
+    "adren": 5,
+    "aid": 6,
+    "molotov": 9,
+    "pierce": 9,
+    "turret": 9,
+    "strike": 10
+   },
+   "books": 4,
+   "eq_lv": 9.25
+  },
+  {
+   "seed": 3,
+   "final_zone": 60,
+   "reach_min": 319.5,
+   "deaths": 85,
+   "share": 0.31555744765457217,
+   "lv": {
+    "focus": 5,
+    "grenade": 4,
+    "adren": 5,
+    "aid": 6,
+    "molotov": 9,
+    "pierce": 9,
+    "turret": 9,
+    "strike": 9
+   },
+   "books": 2,
+   "eq_lv": 9.0
+  },
+  {
+   "seed": 4,
+   "final_zone": 60,
+   "reach_min": 374.5,
+   "deaths": 103,
+   "share": 0.31424944225569124,
+   "lv": {
+    "focus": 5,
+    "grenade": 4,
+    "adren": 5,
+    "aid": 6,
+    "molotov": 9,
+    "pierce": 9,
+    "turret": 9,
+    "strike": 10
+   },
+   "books": 3,
+   "eq_lv": 9.25
+  },
+  {
+   "seed": 5,
+   "final_zone": 60,
+   "reach_min": 347.1,
+   "deaths": 95,
+   "share": 0.3159826186402322,
+   "lv": {
+    "focus": 5,
+    "grenade": 4,
+    "adren": 5,
+    "aid": 6,
+    "molotov": 9,
+    "pierce": 9,
+    "turret": 9,
+    "strike": 9
+   },
+   "books": 1,
+   "eq_lv": 9.0
+  },
+  {
+   "seed": 6,
+   "final_zone": 60,
+   "reach_min": 307.3,
+   "deaths": 85,
+   "share": 0.3178476572515586,
+   "lv": {
+    "focus": 5,
+    "grenade": 4,
+    "adren": 5,
+    "aid": 6,
+    "molotov": 9,
+    "pierce": 9,
+    "turret": 10,
+    "strike": 10
+   },
+   "books": 3,
+   "eq_lv": 9.5
+  },
+  {
+   "seed": 7,
+   "final_zone": 60,
+   "reach_min": 371.5,
+   "deaths": 100,
+   "share": 0.3130175224943658,
+   "lv": {
+    "focus": 5,
+    "grenade": 4,
+    "adren": 5,
+    "aid": 6,
+    "molotov": 9,
+    "pierce": 10,
+    "turret": 10,
+    "strike": 10
+   },
+   "books": 2,
+   "eq_lv": 9.75
+  },
+  {
+   "seed": 8,
+   "final_zone": 60,
+   "reach_min": 313.8,
+   "deaths": 85,
+   "share": 0.3077216697234409,
+   "lv": {
+    "focus": 5,
+    "grenade": 4,
+    "adren": 5,
+    "aid": 6,
+    "molotov": 8,
+    "pierce": 8,
+    "turret": 8,
+    "strike": 9
+   },
+   "books": 2,
+   "eq_lv": 8.25
+  }
+ ],
+ "스킬몫_중앙": 0.31577003314740215,
+ "옛빌드_사유": "M15 마감 시점 빌드(d055d1a9)의 기록 — wbs-M15 의 근거로 그대로 둔다. M16(소리·버튼 하나, 전투 무변경) 빌드에서 곡선 327.3분·매수 3회 미만 0 으로 같게 다시 쟀다(balance-M16-curve-2026-10-05.json, upgrade-cadence-M16-2026-10-05.json)."
+}
