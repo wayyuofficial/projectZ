@@ -12,7 +12,10 @@
    - Organization Identifier: `com.silogames` (번들 ID 가 `com.silogames.ApocalypseSurvivor` 가 된다)
    - 저장 위치: 이 저장소의 `ios/` 폴더(‘Create Git repository’ 는 끈다)
 2. Xcode 가 만든 `ApocalypseSurvivorApp.swift` 와 `ContentView.swift` 를 **지우고**, 이 폴더의 `ApocalypseSurvivor/ApocalypseSurvivorApp.swift` 를 프로젝트에 끌어다 넣는다(‘Copy items if needed’ 끔, Target 체크).
-3. 저장소의 **`game` 폴더를 프로젝트 탐색기에 끌어다 넣는다** — 창에서 **‘Create folder references’(파란 폴더)** 를 고른다. 노란 그룹(Create groups)으로 넣으면 `img/`·`snd/` 경로가 깨져 그림·배경음악이 안 나온다. ‘Copy items if needed’ 는 **끈다**(게임을 고치면 그대로 따라오게).
+3. **`game` 폴더를 앱에 넣는다** — 탐색기에 끌어다 넣는 방식은 새 Xcode 에서 폴더가 흩어지기 쉬워(실제로 'game 폴더가 앱에 안 들어 있다'가 떴다) 아래 방식으로 한다(2026-10-09 맥에서 확인):
+   - 프로젝트(파란 아이콘) → TARGETS **ApocalypseSurvivor** → **Build Phases** → **Copy Bundle Resources** 펼치기 → **+** → **Add Other… → Add Files…** → 저장소의 `game` 폴더를 (들어가지 말고) 한 번 클릭 → Open → **Create folder references** → Finish
+   - 목록에 **파란 폴더 `game` 한 줄**이면 맞다. `index.html`·그림이 여러 줄로 따로 보이면 지우고(−) 다시.
+   - 그 뒤 **Product → Clean Build Folder**(⇧⌘K) → 아이폰의 앱 지우기 → ▶
 4. 프로젝트 → Target **ApocalypseSurvivor** →
    - **General**: Minimum Deployments **iOS 16.0** · Device Orientation **Portrait 만** · Status Bar Style 기본
    - **Info**: `Status bar is initially hidden` = YES 추가 · (선택) `Bundle display name` = `아포칼립스 서바이버`
@@ -26,6 +29,6 @@
 
 ## 알아 둘 것
 - **광고**: iOS 엔 아직 광고가 없다 — 광고 버튼을 누르면 광고 없이 보상이 바로 들어온다(시험용). 출시 전 AdMob iOS SDK 와 iOS 광고 단위 ID 를 붙인다.
-- **게임을 고친 뒤**: 저장소를 맥에서 받아(git pull) Xcode 에서 다시 ▶ 하면 된다(파란 폴더라 새 게임이 그대로 들어간다).
+- **게임을 고친 뒤**: 저장소를 맥에서 받아(git pull) Xcode 에서 다시 ▶ 한다. `game` 을 복사해 넣었다면 Xcode 쪽 `game` 은 옛것이니 3단계로 다시 넣는다(제자리 참조로 넣었다면 그대로 따라온다).
 - **콘솔 보기**: 맥 사파리 → 설정 → 고급 → ‘웹 개발자용 기능 보기’ → 개발자 메뉴 → 내 아이폰 → index.html.
 - 저장은 안드로이드·PC 와 따로다(기기마다 새 게임).

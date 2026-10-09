@@ -5411,3 +5411,5 @@ M7 1단계: `PALETTE.ramp`(7×4), `pxSprite`/`drawPx`(1px=1칸 오프스크린 �
 
 2026-10-09. 사람: "혹시 아이폰에 설치 할 방법은 없을까?" → "맥북은 있고, xcode는 설치되어있어."
 처리: `ios/` — SwiftUI + WKWebView 껍데기(ApocalypseSurvivorApp.swift: game/index.html 을 파일로 열기 · 소리 자동 재생 허용 · 저장 기본 저장소 · 스크롤·확대 막기 · 내려감/돌아옴 → onAppPause/onAppResume) · 아이콘 1024 · README(프로젝트 만들기·game 을 파란 폴더로·서명·설치 순서). .pbxproj 는 손으로 만들지 않고 Xcode 새 프로젝트에 파일을 넣는 방식(깨지기 쉬운 프로젝트 파일을 AI 가 쓰지 않는다). 광고는 iOS 에 아직 없음 — 보상이 바로 들어온다(시험). 맥에서 빌드·설치는 사람.
+
+2026-10-09 이어서 — 사람: 끌어다 넣기 뒤 'game 폴더가 앱에 안 들어 있다' → Build Phases › Copy Bundle Resources › + › Add Other 로 파란 폴더 참조를 넣어 해결, 사람: "됐어, 시작 화면 잘 나와." (아이폰 실행 확인). README 3단계를 이 방식으로 고침.
