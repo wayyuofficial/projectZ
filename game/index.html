@@ -90,7 +90,7 @@ const PALETTE = {
   better: '#6FD37A', worse: '#E85A4A',
   // M15 (지시 #164) — 칭호 3단(회차 5·10·20). 주인공 색 변형·칭호 글자에 쓴다. 램프(teal·brass·blood)의 하이라이트 그대로
   title: ['#8CD4D6', '#F2D36A', '#E85A4A'],
-  buyOff: 'rgba(0,0,0,.40)',   // 지시 #196 — 못 사는 줄을 통째로 어둡게(글자 색만으로 구분하지 않는다)
+  buyOff: 'rgba(0,0,0,.40)', titleShade: 'rgba(4,4,6,.82)',   // 지시 #199 — 시작 화면 위·아래 어둡게   // 지시 #196 — 못 사는 줄을 통째로 어둡게(글자 색만으로 구분하지 않는다)
   rustDim: 'rgba(12,8,6,.42)', rustDark: 'rgba(8,6,5,.66)', rustHud: 'rgba(14,10,8,.30)',   // M21 — 녹 무늬 위 어둡게(버튼·띠 / 목록 바탕 / 상단 바)
   juBand: 'rgba(8,12,14,.82)', juPress: 'rgba(0,0,0,.28)',   // M19 — 구역 띠·알림 바탕 · 눌린 버튼
   /* M24 (지시 #189) — 이펙트 색. 불꽃·피·얼룩·고리·번쩍, 지역 분위기 입자(묶음마다). 값은 사람이 바꿀 수 있다 — 여기 한 곳 */
@@ -2201,6 +2201,7 @@ function buyStat(id) {
 
 function buildButtons() {
   buttons.length = 0;
+  if (titleOn) { btn({ x: 0, y: 0, w: GAME_W, h: GAME_H, label: '', enabled: true, tone: 'scrim', onTap: titleStart }); return; }   // 지시 #199 — 시작 화면
   if (storyQ.length) {   // 지시 #188 — 줄거리 대화. 떠 있으면 이 버튼뿐(지시 #19) — 누르면 다음 줄
     btn({ x: 0, y: 0, w: GAME_W, h: GAME_H, label: '', enabled: true, tone: 'scrim', onTap: storyNext });
     return;
@@ -3113,6 +3114,72 @@ function vfxDraw(layer) {
     if (kf >= 0 && kf < 1) { ctx.globalAlpha = 0.6 * (1 - kf) * (1 - kf); ctx.fillStyle = 'rgb(' + PALETTE.fx.flashRgb + ')'; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP); }
   }
   ctx.restore();
+}
+/* ── 지시 #199 시작 화면 ── 사람: (다른 게임 시작 화면 두 장 — 로고 + LOADING 막대 → TAP TO START) "게임 처음 시작할 때 시작화면이 있었으면 좋겠어."
+   배경은 나노바나나 키 아트(art/title/title_bg.png → img/), 로고 글자는 글꼴로 그린다(이미지 생성은 한글을 잘 못 쓴다).
+   그림이 다 읽힐 때까지 LOADING 막대 → 다 되면 TAP TO START 깜빡임 → 누르면 게임(그 터치로 소리도 켜진다).
+   떠 있는 동안은 전투를 안 돌린다(frame 이 건너뛴다) — 전투 규칙·저장과 무관, 거울 밖. 주소 ?notitle=1 이면 건너뛴다(시험용). */
+const TITLE_ART = { src: 'img/TITLE_ART-aaed5d52ac.webp', w: 768, h: 1376 };
+const TITLE_MIN_MS = 900, TITLE_MAX_MS = 9000;   // 막대를 최소 이만큼은 보여 주고, 그림이 안 와도 이만큼 지나면 시작할 수 있다
+let titleOn = !(GFX_Q && GFX_Q.get('notitle')), titleAt = performance.now(), titleReadyAt = 0;
+const titleImg = new Image(); titleImg.onload = () => { titleImg.ready = true; }; titleImg.src = TITLE_ART.src;
+function titleProgress() {   // 읽을 그림 중 읽힌 몫(0~1) — UI·주인공·무기·시작 화면
+  const list = [titleImg, heroImg].concat(Object.values(uiImg), Object.values(weaponImg));
+  let n = 0; for (const im of list) if (im && (im.ready || (im.complete && im.naturalWidth))) n++;
+  return list.length ? n / list.length : 1;
+}
+function titleReady() {
+  const now = performance.now();
+  if (!titleReadyAt && now - titleAt > TITLE_MIN_MS && (titleProgress() >= 1 || now - titleAt > TITLE_MAX_MS)) titleReadyAt = now;
+  return !!titleReadyAt;
+}
+function titleStart() { if (!titleReady()) return true; titleOn = false; sndInit(); sndApply(); return true; }
+function drawTitle() {
+  const now = performance.now(), F = '"Segoe UI", "Malgun Gothic", system-ui, sans-serif', H = GAME_H, W = GAME_W;
+  ctx.fillStyle = PALETTE.panel0; ctx.fillRect(0, 0, W, H);
+  if (titleImg.ready) {   // 화면을 꽉 채우게(높이 맞춤, 가로는 가운데 자름) — 아주 천천히 다가온다
+    const z = 1 + Math.min(1, (now - titleAt) / 20000) * 0.04, s = Math.max(H / TITLE_ART.h, W / TITLE_ART.w) * z;
+    const dw = TITLE_ART.w * s, dh = TITLE_ART.h * s;
+    ctx.imageSmoothingEnabled = true; ctx.drawImage(titleImg, (W - dw) / 2, (H - dh) / 2, dw, dh); ctx.imageSmoothingEnabled = false;
+  }
+  // 위·아래를 어둡게 — 로고·막대가 읽히게
+  let g = ctx.createLinearGradient(0, 0, 0, H * 0.42); g.addColorStop(0, PALETTE.titleShade); g.addColorStop(1, PALETTE.clear);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H * 0.42);
+  g = ctx.createLinearGradient(0, H * 0.78, 0, H); g.addColorStop(0, PALETTE.clear); g.addColorStop(1, PALETTE.titleShade);
+  ctx.fillStyle = g; ctx.fillRect(0, H * 0.78, W, H * 0.22);
+  // 로고 — 붉은 칼자국 두 줄 + 굵은 흰 글자(검은 테) + 금색 영문
+  const ly = Math.round(H * 0.13), pulse = 0.75 + 0.25 * Math.sin(now / 700);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+  for (const [x0, y0, x1, y1, w] of [[60, ly + 120, 500, ly - 10, 10], [90, ly + 150, 470, ly + 40, 6]]) {
+    ctx.globalAlpha = 0.35 * pulse; ctx.strokeStyle = PALETTE.title[2]; ctx.lineWidth = w * 3; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    ctx.globalAlpha = 0.9; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.textAlign = 'left'; ctx.lineJoin = 'round';
+  const word = (txt, x, y, size) => {
+    ctx.font = '900 ' + size + 'px ' + F;
+    ctx.lineWidth = 10; ctx.strokeStyle = PALETTE.panel0; ctx.strokeText(txt, x, y);
+    ctx.lineWidth = 4; ctx.strokeStyle = PALETTE.title[2]; ctx.globalAlpha = 0.55; ctx.strokeText(txt, x, y); ctx.globalAlpha = 1;
+    ctx.fillStyle = PALETTE.flash; ctx.fillText(txt, x, y);
+  };
+  word('아포칼립스', 46, ly + 70, 76);
+  word('서바이버', 196, ly + 158, 76);
+  ctx.font = '800 24px ' + F; ctx.textAlign = 'right'; ctx.lineWidth = 5; ctx.strokeStyle = PALETTE.panel0; ctx.strokeText('Apocalypse Survivor', W - 34, ly + 198);   // 두 줄 아래 오른쪽 — 한글과 안 겹치게
+  ctx.fillStyle = PALETTE.gold; ctx.fillText('Apocalypse Survivor', W - 34, ly + 198); ctx.textAlign = 'left';
+  ctx.lineWidth = 1;
+  // 아래 — LOADING 막대 또는 TAP TO START
+  if (!titleReady()) {
+    const pr = Math.min(1, Math.max(titleProgress() * 0.98, Math.min(1, (now - titleAt) / TITLE_MAX_MS))), by = H - 46, bh = 20;
+    ctx.font = '700 15px ' + F; ctx.fillStyle = PALETTE.ink2; ctx.textAlign = 'left'; ctx.fillText('LOADING ...', 18, by - 12);
+    ctx.fillStyle = PALETTE.shade55; ctx.fillRect(0, by, W, bh);
+    ctx.fillStyle = PALETTE.bossCharge; ctx.fillRect(0, by, W * pr, bh);
+    ctx.textAlign = 'right'; ctx.font = '800 16px ' + F; ctx.fillStyle = PALETTE.goldInk; ctx.fillText(Math.floor(pr * 100) + '%', W - 12, by + 16);
+  } else {
+    const a = 0.35 + 0.65 * Math.abs(Math.sin((now - titleReadyAt) / 600));
+    ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.font = '800 26px ' + F;
+    ctx.lineWidth = 5; ctx.strokeStyle = PALETTE.panel0; ctx.strokeText('TAP TO START', W / 2, H * 0.84);
+    ctx.fillStyle = PALETTE.ink; ctx.fillText('TAP TO START', W / 2, H * 0.84); ctx.globalAlpha = 1; ctx.lineWidth = 1;
+  }
 }
 function draw() {
   sndWatch();                              // M16 — 사건 소리(그리기 쪽 견줌)
@@ -4536,6 +4603,7 @@ function frame(now) {
   last = now;
   if (dt > MAX_GAP) dt = MAX_GAP;
   if (dt < 0) dt = 0;
+  if (titleOn) { buildButtons(); drawTitle(); requestAnimationFrame(frame); return; }   // 지시 #199 — 시작 화면(전투는 누른 뒤부터)
 
   if (!offlineReport) {
     acc += dt;

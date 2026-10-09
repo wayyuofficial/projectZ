@@ -238,7 +238,7 @@ MIRRORED = {
     "attacksPerSec": "0639c7d834dcbe23",
     "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "fd880e7210a00541",
+    "buildButtons": "99cc5b010d9fa455",
     "buyPerk": "936716819438d513",
     "buyStat": "e92f891d410963f4",
     "campBuild": "106561b9c0bf0d6a",
