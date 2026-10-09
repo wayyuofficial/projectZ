@@ -238,7 +238,7 @@ MIRRORED = {
     "attacksPerSec": "0639c7d834dcbe23",
     "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "99cc5b010d9fa455",
+    "buildButtons": "22b418ee043cd84e",
     "buyPerk": "936716819438d513",
     "buyStat": "e92f891d410963f4",
     "campBuild": "106561b9c0bf0d6a",
@@ -285,7 +285,7 @@ MIRRORED = {
     "medalsFor": "40a1cb07ee003bd6",
     "migrate": "a92bac796c93ec8c",
     "onDeath": "bd9a06f0be2dbe37",
-    "openSupply": "ef504f009bbf894e",
+    "openSupply": "2d5ea2e0f86d3830",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "pierceShot": "9db3268bc8df46f8",
     "playerDPS": "06d866ae2129b84d",
@@ -311,7 +311,7 @@ MIRRORED = {
     "stepCombat": "77da0715ffc39789",
     "stepSkills": "e73576e1cfdf7432",
     "tabRowY": "d001ac81a8afa161",
-    "takeQuest": "49f5bdc1529732f0",
+    "takeQuest": "529cb3550643d4fb",
     "unlockSkills": "d2185638165f6aeb",
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "8fcbdfc907029bf9",
@@ -1240,6 +1240,7 @@ class Sim(object):
             n = (1 + len(QUEST_DAILY) + 1) if tab == "d" else len(QUEST_REPEAT) if tab == "r" else len(QUEST_ACH)   # 일일: 완료 · 5개 · 보급 상자(접속 줄은 버튼 없음)
             for i in range(n):
                 b("quest_take", px + 14 + (pw - 28) - 108, py + 128 + i * 68 + 3, 100, 58, "hit")
+            b("quest_all", px + pw - 64 - 10 - 156, py + 2, 156, 58, "hit")   # 지시 #201 — 모두 받기
             b("quest_close", px + pw - 64, py + 2, 58, 58, "hit")
             return bs
         if self.skillPopup:                   # M12 — 스킬 팝업: 끼기/빼기 · 올리기 · 닫기
