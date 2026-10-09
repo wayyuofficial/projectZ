@@ -58,14 +58,14 @@ def target_arrive(z):
 END_PARTS, DEATHS = None, None
 
 
-def measure(seeds, wall=True, max_min=900, over=None):
+def measure(seeds, wall=True, max_min=900, over=None, claim=False, camp=False):
     # 2026-09-18 병렬(지시 #130): 벽 끄기는 자식 안에서 (overrides)
     # 2026-10-02 (M15 4.1, 사례 28 후보): --rw·--selftest 는 부모의 SP.ZONE_RW_G 만 바꿔서 병렬 뒤로 **아무 일도 안 했다**
     # (보상 성장 1.20 으로 쟀는데 정상 빌드와 같은 322.9분). 덮어쓸 값은 반드시 overrides 로 자식에 넘긴다.
     o = dict(over or {})
     if not wall:
         o["WALL_KILL_MULT"] = 1
-    rows = SP.run_many(seeds, kw={"max_min": max_min}, overrides=(o or None))
+    rows = SP.run_many(seeds, kw={"max_min": max_min, "claim": claim, "camp": camp}, overrides=(o or None))   # claim — 지시 #187 퀘스트 보상을 바로바로 받는 사람
     stay = {}
     for z in range(1, SP.ZONE_COUNT):
         d = [r["zone_min"][z + 1] - r["zone_min"][z] for r in rows if z + 1 in r["zone_min"]]
@@ -104,6 +104,8 @@ def main(argv):
     ap.add_argument("--max-min", type=int, default=900)
     ap.add_argument("--out", default=None)
     ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--camp", action="store_true", help="캠프를 바로바로 짓는 사람으로 잰다(M28, 지시 #193). 기록 이름을 balance-* 로 하지 말 것")
+    ap.add_argument("--claim", action="store_true", help="퀘스트 보상을 바로바로 받는 사람으로 잰다(지시 #187). 기본 곡선(정본 판정)은 받지 않는다 — 기록 이름을 balance-* 로 하지 말 것(c18 이 기본 곡선으로 읽는다)")
     ap.add_argument("--rw", type=float, default=None, help="보상 성장률을 잠시 바꿔 잰다 (격자용). 게임 파일은 안 건드린다")
     ap.add_argument("--no-new-weapons", action="store_true", help="M2 무기(unlock 있는 것)를 빼고 잰다 — 예측 M2-B3 의 '무기 넣기 전' 곡선")
     a = ap.parse_args(argv)
@@ -124,7 +126,7 @@ def main(argv):
     if a.rw:
         SP.ZONE_RW_G = a.rw          # 기록의 '보상성장_사용' 칸용 — 실제 측정에는 아래 over 로 넘긴다
     WALL_ON = not a.no_wall
-    stay, reach = measure(seeds, wall=not a.no_wall, max_min=a.max_min, over=({"ZONE_RW_G": a.rw} if a.rw else None))
+    stay, reach = measure(seeds, wall=not a.no_wall, max_min=a.max_min, over=({"ZONE_RW_G": a.rw} if a.rw else None), claim=a.claim, camp=a.camp)
     rows, outside, walls = report(stay, reach, seeds, not a.no_wall)
     print("목표 체류(z) = %.2f x %.2f^(z-1) 분 [정본] · 허용 ±%d%% · 구역 %d~%d · %d시드 · 벽 %s"
           % (TARGET_BASE, TARGET_G, TOL * 100, Z_FROM, Z_TO, len(seeds), "켬" if not a.no_wall else "끔"))

@@ -71,6 +71,17 @@ ZONES = {
   58: "nuclear power plant turbine hall, giant turbines, pipes, catwalks, flickering lights, green and black",
   59: "nuclear power plant control room, rows of control panels with blinking lights, broken monitors, green warning glow",
   60: "nuclear reactor core chamber, glowing reactor pool, radioactive green light, cracked containment walls, black and toxic green",
+  # M29 (지시 #194) — 61~65 지하 벙커 상층 · 66~70 벙커 최심부
+  61: "massive steel blast door of an underground military bunker standing half open, concrete tunnel entrance, yellow-black hazard stripes, dim red emergency lights, cold grey",
+  62: "long underground concrete bunker corridor, ceiling pipes and cables, flickering fluorescent tubes, wall sirens, puddles on the floor, grey and dim amber",
+  63: "abandoned bunker barracks, rows of metal bunk beds, toppled lockers, scattered gear, dim red emergency light, concrete walls",
+  64: "underground bunker command room, wall of dead monitors and a big tactical map screen, radio consoles, sparking cables, cold blue and grey",
+  65: "bunker armory, empty weapon racks, ammo crates, heavy security cage doors torn open, red warning lights, concrete and steel",
+  66: "huge freight elevator shaft descending deep underground, steel cage platform, rusty girders, darkness below, faint red glow rising from the depths",
+  67: "underground laboratory with rows of tall broken glass culture tanks filled with murky green liquid, tubes and cables, dark teal and sickly green",
+  68: "deep bunker chamber overgrown with pulsing dark red organic flesh and veins spreading over concrete walls and machines, crimson glow, horror",
+  69: "secret deep underground reactor room, a smaller reactor wrapped in organic red tendrils, cracked shielding, mixed toxic green and crimson light",
+  70: "the deepest cavern of the bunker, a giant pulsating organic heart-like mass fused into machinery and concrete, crimson veins on every surface, dark and ominous",
 }
 os.makedirs(os.path.join(HERE, "zones"), exist_ok=True)
 z1 = os.path.join(HERE, "zones", "z01.png")

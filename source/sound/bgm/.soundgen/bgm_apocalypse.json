@@ -1,0 +1,62 @@
+{
+ "type": "bgm",
+ "desc": "아포칼립스 — 몰려오는 좀비 떼 속 질주. 반음 충돌(phrygian)·갤럽 베이스·톱니 리드·드론·쇳소리",
+ "mood": {
+  "name": "apocalypse_run",
+  "desc": "아포칼립스 — 몰려오는 좀비 떼 속 질주. 반음 충돌(phrygian)·갤럽 베이스·톱니 리드·드론·쇳소리",
+  "bpm": 136,
+  "root": 40,
+  "scale": "phrygian",
+  "prog": [
+   0,
+   1,
+   0,
+   6
+  ],
+  "chordBars": 1,
+  "lead": {
+   "wave": "saw",
+   "density": 0.4,
+   "echo": 0.2
+  },
+  "arp": {
+   "wave": "pulse",
+   "rate": 16,
+   "pattern": "ostinato",
+   "oct": 1
+  },
+  "bass": {
+   "style": "gallop",
+   "wave": "dist"
+  },
+  "pad": false,
+  "drums": {
+   "k": "x.......x.x.....",
+   "s": "....x.......x..x",
+   "h": "x.xxx.xxx.xxx.xo",
+   "fill": true,
+   "crash": true
+  },
+  "drone": true,
+  "wind": 0.3,
+  "rain": 0.0,
+  "clang": 0.3,
+  "radio": false
+ },
+ "cfg": {
+  "seed": 41,
+  "bars": 16,
+  "transpose": 2,
+  "grit": 0.25,
+  "reverb": 0.45,
+  "bpm": 136,
+  "vol": {
+   "lead": 0.85,
+   "bass": 0.4,
+   "drums": 0.35,
+   "arp": 0.75,
+   "drone": 0.25,
+   "clang": 0.6
+  }
+ }
+}

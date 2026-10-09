@@ -98,7 +98,7 @@ def main():
 
         # c11: WebView 의 DOM Storage 를 주석 처리해 fail 이 나야 한다
         act = os.path.join(ROOT, "android", "app", "src", "main", "java",
-                           "com", "wayyu", "zombiesurvival", "MainActivity.java")
+                           "com", "silogames", "apsurvivor", "MainActivity.java")
         act_backup = act + ".selftest-backup"
         if os.path.exists(act):
             shutil.copy2(act, act_backup); made.append(act_backup)
@@ -292,7 +292,7 @@ def main():
             if backup in made:
                 made.remove(backup)
         act = os.path.join(ROOT, "android", "app", "src", "main", "java",
-                           "com", "wayyu", "zombiesurvival", "MainActivity.java")
+                           "com", "silogames", "apsurvivor", "MainActivity.java")
         act_backup = act + ".selftest-backup"
         if os.path.exists(act_backup):
             shutil.move(act_backup, act)

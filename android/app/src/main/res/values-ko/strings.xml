@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 지시 #173 — 한국어 기기에서는 한글 이름, 그 밖(기본 values)은 영문 이름 -->
+<resources>
+    <string name="app_name">아포칼립스 서바이버</string>
+</resources>

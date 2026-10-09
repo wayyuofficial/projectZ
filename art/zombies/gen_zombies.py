@@ -39,6 +39,13 @@ Z = {
  'nuclear_worker': 'an infected nuclear plant worker zombie in a torn YELLOW radiation protection suit with a black radiation trefoil symbol, hood down, grey-green skin',
  'nuclear_mutant': 'a radioactive mutant zombie with bald head, lumpy skin and glowing toxic GREEN veins and glowing green eyes instead of red, torn grey clothes',
  'nuclear_guard':  'an infected nuclear plant security guard zombie in a dark green security uniform with a gas mask hanging on the neck, grey-green skin',
+ # M29 (지시 #194) — 구역 61~70 지하 벙커
+ 'bunker_marine':  'an infected special forces soldier zombie in black tactical gear, torn balaclava and night-vision goggles pushed up, grey-green skin',
+ 'bunker_officer': 'an infected military officer zombie in a torn grey dress uniform with medals and a peaked cap, grey-green skin',
+ 'bunker_tech':    'an infected bunker technician zombie in a dirty grey jumpsuit with a tool belt and a headset, grey-green skin',
+ 'core_host':      'a zombie fused with dark red organic flesh growths and pulsing veins over its torn clothes, glowing red cracks in the skin, BOTH arms visibly attached at the shoulders in every frame',
+ 'core_researcher':'an infected chief researcher zombie in a long torn black lab coat stained with red, a cracked respirator mask, grey-green skin',
+ 'core_crawler':   'a hunched mutated zombie with an elongated spine and bony spikes on its back, pale grey skin with red veins, walking on two legs bent low, both arms long and clawed',
 }
 TPL=("Pixel art game SPRITE SHEET of a ZOMBIE: {d}, glowing red eyes. Exactly 6 frames in ONE horizontal row, evenly spaced with clear gaps, "
      "identical character design, size and scale in every frame, full body, pure side view FACING RIGHT. Frames 1-4: a slow shambling WALK CYCLE "
@@ -47,7 +54,7 @@ TPL=("Pixel art game SPRITE SHEET of a ZOMBIE: {d}, glowing red eyes. Exactly 6 
      "but a different character as described. No text, no labels, no frame borders, no ground shadows.")
 def run(k):
     if os.path.exists(f'{OUT}/{k}.png') and '--force' not in sys.argv: return k,'skip'
-    r=subprocess.run(['python3',ROOT+'/nanobanana/nanobanana.py',TPL.format(d=Z[k]),'--ref',OUT+'/city_civilian.png','--model','flash','--size','512px','--aspect','21:9','--transparent','--no-trim','--out',f'{OUT}/{k}.png'],capture_output=True,text=True)
+    r=subprocess.run([sys.executable,(os.path.join('D:'+os.sep,'nanobanana','nanobanana.py') if os.name=='nt' else ROOT+'/nanobanana/nanobanana.py'),TPL.format(d=Z[k]),'--ref',OUT+'/city_civilian.png','--model','flash','--size','512px','--aspect','21:9','--transparent','--no-trim','--out',f'{OUT}/{k}.png'],capture_output=True,text=True,encoding='utf-8',errors='replace')
     return k,(r.stdout+r.stderr).strip().splitlines()[-1][:120]
 keys=[k for k in Z if len(sys.argv)<2 or k in sys.argv[1:]]
 with ThreadPoolExecutor(4) as ex:

@@ -95,7 +95,6 @@ assert len(GACHA_XP_NEEDS) == GACHA_LV_MAX, (len(GACHA_XP_NEEDS), GACHA_LV_MAX) 
 GACHA_COST_PLANS = int(num("GACHA_COST_PLANS"))   # M6 7.1 — 장비 1개 = 설계도 1개
 STAGE_PLANS = int(num("STAGE_PLANS"))
 BOSS_PLANS = int(num("BOSS_PLANS"))
-QUEST_PLANS = int(num("QUEST_PLANS"))
 RECLEAR_PLANS = int(num("RECLEAR_PLANS"))       # 다시 깨는 단계
 LEGACY_BP_RATIO = num("LEGACY_BP_RATIO")            # v5 저장본 이전에만
 LEGACY_GACHA_COST_FRAC = num("LEGACY_GACHA_COST_FRAC")
@@ -134,7 +133,7 @@ MEDAL_PER = num("MEDAL_PER")
 SKILLS = table("SKILLS")                   # M12 (지시 #160) — 스킬 8개
 SKILL_IDS = [d["id"] for d in SKILLS]
 SKILL_SLOTS = int(num("SKILL_SLOTS")); SKILL_LV_MAX = int(num("SKILL_LV_MAX")); SKILL_LV_STEP = num("SKILL_LV_STEP"); SKILL_POW = num("SKILL_POW")
-BOSS_BOOKS_FIRST = int(num("BOSS_BOOKS_FIRST")); BOSS_BOOKS_AGAIN = int(num("BOSS_BOOKS_AGAIN")); QUEST_BOOKS = int(num("QUEST_BOOKS")); ZONE_BOOKS = int(num("ZONE_BOOKS"))
+BOSS_BOOKS_FIRST = int(num("BOSS_BOOKS_FIRST")); BOSS_BOOKS_AGAIN = int(num("BOSS_BOOKS_AGAIN")); ZONE_BOOKS = int(num("ZONE_BOOKS"))
 SKILL_STRIP_H = num("SKILL_STRIP_H")
 STAGE_WALK_SEC = num("STAGE_WALK_SEC"); ZONE_TRAVEL_SEC = num("ZONE_TRAVEL_SEC")   # M13 (지시 #161) — 걷기·구역 이동 대기
 LOOP_G = num("LOOP_G")                     # M11 1 — 회차 배수(좀비)
@@ -156,6 +155,9 @@ TIER_COST_MULT = num("TIER_COST_MULT")
 TIER_POWER_MULT = num("TIER_POWER_MULT")     # M6 재설계 — 등급 위력 곱하기
 OFFLINE_MAX_HOURS = num("OFFLINE_MAX_HOURS")
 OFFLINE_RATE = num("OFFLINE_RATE")
+MEDAL_PERKS = table("MEDAL_PERKS")   # M27 (지시 #192) — 훈장 상점. 원본 표에서 읽는다
+CAMP_BUILDS = table("CAMP_BUILDS")   # M28 (지시 #193) — 남쪽 캠프
+MATS_BOSS = int(num("MATS_BOSS")); MATS_ZONE = int(num("MATS_ZONE")); AD_CAMP_MIN = int(num("AD_CAMP_MIN"))
 AD_BOOST_MIN = num("AD_BOOST_MIN")
 GAME_W = num("GAME_W")
 MIN_GAME_H = num("MIN_GAME_H")
@@ -188,25 +190,16 @@ WEAPON_TYPES = table("WEAPON_TYPES")
 # M4 4.3 (a) 2026-09-17 — 장비로만 오르는 축. **원본의 gearOnly 에서 읽는다.** 여기 손으로 적으면
 # 원본과 갈라진다 (사례 23: 한 개념이 두 곳에 있으면 한 곳은 남는다).
 GEAR_ONLY_STATS = {s["id"] for s in STATS if s.get("gearOnly")}
-# M4 1.2 (a) 2026-09-17 — 과제도 원본 표에서 읽는다. 전에는 need 를 손으로 베껴 두고 "바뀌면 여기도" 라고 적었다.
-# 지시 #151 — 풀(9종)과 칸(3: 시간대·몫). 날마다 dailyQuests(day) 가 풀에서 3개를 골라 칸에 앉힌다.
-QUEST_POOL = table("QUEST_POOL")
-QUEST_SLOTS = table("QUEST_SLOTS")
-QUEST_DEFS_IDS = [q["id"] for q in QUEST_POOL]                 # 도구 호환 — 이제 '풀' 의 id
-QUEST_NEEDS = {q["id"]: int(q["need"]) for q in QUEST_POOL}
-
-
-def daily_quests(day):
-    """원본 dailyQuests 와 같은 식(Math.imul 하위 32비트 = 파이썬 & 0xffffffff)."""
-    s = ((int(day) * 2654435761) & 0xffffffff) or 1
-    idx = list(range(len(QUEST_POOL))); out = []
-    for k in range(len(QUEST_SLOTS)):
-        s = (s * 1103515245 + 12345) & 0x7fffffff
-        j = k + (s % (len(idx) - k))
-        idx[k], idx[j] = idx[j], idx[k]
-        q = dict(QUEST_POOL[idx[k]]); q.update(QUEST_SLOTS[k]); out.append(q)
-    return out
-QUEST_BANDS = [int(x) for x in re.search(r"const\s+QUEST_BANDS\s*=\s*\[([^\]]*)\]", SRC).group(1).replace(" ", "").split(",") if x]
+# 지시 #187 — 퀘스트 셋(일일 고정 5 · 일일 완료 · 반복 · 업적). 원본 표에서 읽는다(손으로 베끼지 않는다).
+QUEST_DAILY = table("QUEST_DAILY")
+QUEST_DAILY_ALL = table("QUEST_DAILY_ALL")
+QUEST_REPEAT = table("QUEST_REPEAT")
+QUEST_ACH = table("QUEST_ACH")
+QUEST_DAILY_SHARE = num("QUEST_DAILY_SHARE")
+QUEST_CUM = tuple(re.findall(r"'(\w+)'", re.search(r"const\s+QUEST_CUM\s*=\s*\[([^\]]*)\]", SRC).group(1)))
+STORY_ZONES = [int(x) for x in re.search(r"const STORY_ZONES = \[([^\]]*)\]", SRC).group(1).split(",")]   # 지시 #188
+QUEST_DEFS_IDS = [q["id"] for q in QUEST_DAILY]                 # 도구 호환 — 일일 id
+QUEST_NEEDS = {q["id"]: int(q["need"]) for q in QUEST_DAILY}
 
 
 # ── 원본 함수 본문을 그대로 떠서 해시한다 ─────────────────────────────
@@ -241,12 +234,15 @@ MIRRORED = {
     "acceptRevive": "22975d87d579a771",
     "adRowY": "5ed5d78e1b23b919",
     "applyDamage": "44f3fc0acd0ea484",
-    "applyOffline": "7c67a2a215adcf54",
+    "applyOffline": "2830611cc9c8775f",
     "attacksPerSec": "0639c7d834dcbe23",
     "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "0041f8d10abc9176",
+    "buildButtons": "fd880e7210a00541",
+    "buyPerk": "936716819438d513",
     "buyStat": "e92f891d410963f4",
+    "campBuild": "106561b9c0bf0d6a",
+    "campTick": "1a705e07a9ddba77",
     "canEquipBetter": "66a45cfc3ca1b1d8",
     "canFuse": "236dc9baad626747",
     "canRebirth": "a66b83d63aeb50bb",
@@ -254,15 +250,14 @@ MIRRORED = {
     "curGachaLv": "e40d82faf896292f",
     "curWeapon": "837d285bf3118179",
     "dailyBudget": "51f1b98162132ed0",
-    "dailyQuests": "79f19f9555b60faa",
     "damageZombie": "de858f78fa27b6f3",
     "dayIndex": "e395fb011be7dfbc",
-    "doRebirth": "c2d5443ebb0abd77",
+    "doRebirth": "81a07c381c87f951",
     "equipBest": "0f92c8c2f2743745",
     "firstClear": "469a179f675bd42f",
-    "fitGame": "c865c9f0968c6437",
+    "fitGame": "efc52009e8769fc5",
     "freshSkills": "d57168837a130519",
-    "freshState": "142af2bb358bc4fb",
+    "freshState": "a74240a5444abea9",
     "fuseAll": "82b2582d09c7805e",
     "gachaCost": "b5e4af366ce8db89",
     "gachaLevel": "17ab77ebf0a0fe9d",
@@ -279,36 +274,34 @@ MIRRORED = {
     "isBossKill": "e461a4a51bbb69c5",
     "isWallZone": "6f63f1e3b34209a7",
     "killReward": "0ef3ffe5d2eb73ba",
-    "killZombie": "45f4e077279fdda4",
+    "killZombie": "818c5e00130cf3df",
     "layout": "a6a07a236eb89472",
     "listBotY": "58cb9bb82a45c13d",
     "listTopY": "85ee3342407d5876",
     "loopMult": "72fea6b1ab010c6d",
     "loopRwMult": "d559223a9b92f280",
     "maxHP": "85e54826f897f7c7",
-    "medalMult": "46c08bcbefe88ff9",
+    "medalMult": "d4986f2c59b416d2",
     "medalsFor": "40a1cb07ee003bd6",
-    "migrate": "b01e7bde5c46647d",
+    "migrate": "a92bac796c93ec8c",
     "onDeath": "bd9a06f0be2dbe37",
     "openSupply": "ef504f009bbf894e",
     "partsPerSecondEstimate": "424babe8c5fc62f9",
     "pierceShot": "9db3268bc8df46f8",
     "playerDPS": "06d866ae2129b84d",
     "pullGacha": "851dba3af0fc6fb0",
-    "questBand": "47a268e16a55bfbd",
-    "questOpen": "14e21773cabeb67b",
-    "questReady": "d56a30909b205279",
+    "questReady": "3994e1c48868d364",
     "regenPerSec": "73badd17c9fc2857",
     "rewardMult": "bff5bcb3e94a3395",
     "rollGear": "d5a4ca6ac6f36122",
     "rollTier": "802162caae06b933",
     "rollTierOdds": "ed4822ee0404a536",
-    "rolloverDay": "9ddc72a3bfa1d93a",
-    "skillHit": "4484ba6971cb2fad",
+    "rolloverDay": "5da47dfc82599be4",
+    "skillHit": "2328493bec595a31",
     "skillLvMult": "8a2e2daddc0980dc",
     "skillSpdMult": "5b142d6cdf65193e",
     "skillToggle": "b0d0a29dc3a841e4",
-    "skillUp": "44ab1591608f7c97",
+    "skillUp": "af35c3971eed7be5",
     "skillUpCost": "f6bfc45233684273",
     "spawnZombie": "d4054c63f48a4d4a",
     "stageKills": "4cb2b09008d21635",
@@ -318,8 +311,7 @@ MIRRORED = {
     "stepCombat": "77da0715ffc39789",
     "stepSkills": "e73576e1cfdf7432",
     "tabRowY": "d001ac81a8afa161",
-    "takeQuest": "cab3ce03ca945559",
-    "todayQuests": "5da0fbfeb4eb3edf",
+    "takeQuest": "49f5bdc1529732f0",
     "unlockSkills": "d2185638165f6aeb",
     "weaponOf": "cd23351858d3c448",
     "weaponPower": "8fcbdfc907029bf9",
@@ -446,10 +438,11 @@ class Sim(object):
     def freshState(self):
         return dict(v=SAVE_VERSION, parts=0.0, plans=0.0, zone=1, kills=0,
                     gear=dict(weapon=0), inv=self.emptyInv(), own=dict(self.emptyInv(), weapon=[1] + [0] * (LADDER - 1)), fresh={},   # M10
-                    medals=0, rebirths=0, loop=1,
+                    medals=0, rebirths=0, loop=1, medalSpent=0, perk={},   # M27 — 훈장 상점
+                    mats=0, camp=dict(lv={}, build=None),   # M28 — 자재 · 캠프
                     skills=self.freshSkills(), books=0, peakZone=1,   # M12
                     seen={}, rec=dict(loop=1, sec=0.0, zone=1, sec60=None, list=[]),   # M15 — 재화 안내 · 회차 기록
-                    day=0, maxDay=0, quest={}, questTaken={},   # 지시 #151
+                    day=0, maxDay=0, story=dict(seen={}, tut=0), qd={}, qdTaken={}, qr={}, qrLv={}, qc={}, qa={},   # 지시 #187 — 퀘스트 · #188 줄거리
                     login=dict(streak=0, lastDay=-1), keys=KEY_MAX,
                     lv=dict(atk=0, spd=0, hp=0, reg=0, inc=0),
                     hp=100.0, bestZone=1, totalKills=0, gachaXp=0, clearBest=0,   # M6 7.2 · 7.1
@@ -540,6 +533,30 @@ class Sim(object):
             slots.append(sid if sid and lvs.get(sid, 0) > 0 and sid not in slots else None)
         s["skills"] = dict(lv=lvs, slots=slots)
         s["books"] = max(0, int(s.get("books") or 0)); s["peakZone"] = max(1, s.get("peakZone") or 1, s.get("bestZone") or 1)
+        for k in ("qd", "qdTaken", "qr", "qrLv", "qc", "qa"):   # 지시 #187 — 퀘스트 칸 모양 · 처음이면 누계를 지금 상태로
+            if not isinstance(s.get(k), dict):
+                s[k] = {}
+        if "qc" not in raw:
+            s["qc"] = {"stat": sum((raw.get("lv") or {}).values()), "skillup": sum(max(0, (s["skills"]["lv"].get(d["id"]) or 0) - 1) for d in SKILLS)}
+        pk = s.get("perk") if isinstance(s.get("perk"), dict) else {}   # M27 — 훈장 상점 칸 모양
+        s["perk"] = {d["id"]: max(0, min(int(d["max"]), int(pk.get(d["id"]) or 0))) for d in MEDAL_PERKS}
+        s["medalSpent"] = max(0, min(s.get("medals") or 0, int(s.get("medalSpent") or 0)))
+        cp = s.get("camp") if isinstance(s.get("camp"), dict) else {}   # M28 — 캠프 칸 모양
+        lv0 = cp.get("lv") if isinstance(cp.get("lv"), dict) else {}
+        bd = cp.get("build")
+        ok = isinstance(bd, dict) and any(d["id"] == bd.get("id") for d in CAMP_BUILDS) and isinstance(bd.get("until"), (int, float))
+        s["camp"] = dict(lv={d["id"]: max(0, min(int(d["max"]), int(lv0.get(d["id"]) or 0))) for d in CAMP_BUILDS},
+                         build=dict(id=bd["id"], until=bd["until"]) if ok else None)
+        s["mats"] = max(0, int(s.get("mats") or 0))
+        st = s.get("story") if isinstance(s.get("story"), dict) else {}   # 지시 #188 — 줄거리 칸 · 하던 사람은 튜토리얼 건너뜀
+        s["story"] = {"seen": st.get("seen") if isinstance(st.get("seen"), dict) else {}, "tut": max(0, min(4, int(st.get("tut") or 0)))}
+        if "story" not in raw and ((raw.get("totalKills") or 0) > 30 or s["peakZone"] > 1):
+            s["story"]["tut"] = 4; s["story"]["seen"]["intro"] = 1
+            for z in STORY_ZONES:
+                if s["peakZone"] >= z:
+                    s["story"]["seen"]["zone%d" % z] = 1
+            if (s.get("loop") or 1) >= 2:
+                s["story"]["seen"]["loop2"] = 1
         r = s.get("rec") if isinstance(s.get("rec"), dict) else {}   # M15 — 기록·안내 모양을 맞춘다
         s60 = r.get("sec60")
         s["rec"] = dict(loop=max(1, int(r.get("loop") or s.get("loop") or 1)), sec=max(0.0, float(r.get("sec") or 0)), zone=max(1, int(r.get("zone") or 1)),
@@ -655,7 +672,90 @@ class Sim(object):
         return math.floor((bz - (REBIRTH_MIN_ZONE - 1)) ** 1.5) * max(1, self.G.get("loop") or 1) if bz >= REBIRTH_MIN_ZONE else 0   # M11: × 회차
 
     def medalMult(self, sid):
-        return 1 + MEDAL_PER * (self.G.get("medals") or 0) if sid in ("atk", "inc") else 1.0
+        m = 1 + MEDAL_PER * (self.G.get("medals") or 0) if sid in ("atk", "inc") else 1.0
+        for d in MEDAL_PERKS:   # M27 — 상점 능력치
+            if d.get("stat") == sid:
+                m *= 1 + d["per"] * self.perkLv(d["id"])
+        for d in CAMP_BUILDS:   # M28 캠프
+            if d.get("stat") == sid:
+                m *= 1 + d["per"] * self.campLv(d["id"])
+        return m
+
+    # ---- M28 남쪽 캠프 (원본과 같은 구조) ----
+    def campDef(self, cid):
+        return next(d for d in CAMP_BUILDS if d["id"] == cid)
+
+    def campLv(self, cid):
+        return ((self.G.get("camp") or {}).get("lv") or {}).get(cid, 0)
+
+    def campCost(self, cid):
+        d = self.campDef(cid)
+        return math.ceil(d["cost0"] * d["costG"] ** self.campLv(cid))
+
+    def campTime(self, cid):
+        d = self.campDef(cid)
+        return round(d["t0"] * d["tG"] ** self.campLv(cid))
+
+    def campEff(self, key):
+        return sum(d[key] * self.campLv(d["id"]) for d in CAMP_BUILDS if d.get(key))
+
+    def campMats(self, n):
+        g = math.floor(n * (1 + self.campEff("mats")))
+        self.G["mats"] = (self.G.get("mats") or 0) + g
+        return g
+
+    def campBuild(self, cid, now):
+        d = next((x for x in CAMP_BUILDS if x["id"] == cid), None)
+        if d is None or self.G["camp"]["build"] or self.campLv(cid) >= d["max"]:
+            return False
+        c = self.campCost(cid)
+        if (self.G.get("mats") or 0) < c:
+            return False
+        self.G["mats"] -= c
+        self.G["camp"]["build"] = dict(id=cid, until=now + self.campTime(cid) * 1000)
+        return True
+
+    def campTick(self, now):
+        b = (self.G.get("camp") or {}).get("build")
+        if not b or now < b["until"]:
+            return None
+        self.G["camp"]["lv"][b["id"]] = self.campLv(b["id"]) + 1
+        self.G["camp"]["build"] = None
+        return b["id"]
+
+    def campAuto(self):
+        """포트에만 — 쉬고 있으면 지을 수 있는 것 중 값이 가장 싼 것을 바로 짓는다(auto_run(camp=True) 에서만)."""
+        if self.G["camp"]["build"]:
+            return
+        c = [(self.campCost(d["id"]), d["id"]) for d in CAMP_BUILDS if self.campLv(d["id"]) < d["max"]]
+        c = [x for x in c if x[0] <= (self.G.get("mats") or 0)]
+        if c:
+            self.campBuild(min(c)[1], self.now_ms)
+
+    # ---- M27 훈장 상점 (원본과 같은 구조) ----
+    def perkLv(self, pid):
+        return (self.G.get("perk") or {}).get(pid, 0)
+
+    def perkCost(self, pid):
+        d = next(x for x in MEDAL_PERKS if x["id"] == pid)
+        return math.ceil(d["cost0"] * d["costG"] ** self.perkLv(pid))
+
+    def medalsFree(self):
+        return max(0, (self.G.get("medals") or 0) - (self.G.get("medalSpent") or 0))
+
+    def buyPerk(self, pid):
+        d = next((x for x in MEDAL_PERKS if x["id"] == pid), None)
+        if d is None or self.perkLv(pid) >= d["max"]:
+            return False
+        c = self.perkCost(pid)
+        if self.medalsFree() < c:
+            return False
+        self.G["medalSpent"] = (self.G.get("medalSpent") or 0) + c
+        self.G.setdefault("perk", {})[pid] = self.perkLv(pid) + 1
+        return True
+
+    def offlineMaxHours(self):
+        return OFFLINE_MAX_HOURS + self.perkLv("night")
 
     def canRebirth(self):
         return (self.G.get("bestZone") or 1) >= REBIRTH_MIN_ZONE
@@ -666,7 +766,8 @@ class Sim(object):
         gain = self.medalsFor(self.G.get("bestZone") or 1)
         self.G["medals"] = (self.G.get("medals") or 0) + gain; self.G["rebirths"] = (self.G.get("rebirths") or 0) + 1
         self.G["loop"] = (self.G.get("loop") or 1) + 1   # M11 1
-        self.G.update(zone=1, bestZone=1, kills=0, parts=0.0, clearBest=0)
+        z0 = min(ZONE_COUNT, 1 + self.perkLv("start"))   # M27 선발대
+        self.G.update(zone=z0, bestZone=z0, kills=0, parts=0.0, clearBest=0)
         for k in list(self.G["lv"].keys()):
             self.G["lv"][k] = 0
         self.G["hp"] = self.maxHP()
@@ -704,7 +805,7 @@ class Sim(object):
         return max(1, -(-self.skillLv(sid) // 2))   # M14 2.1 — ⌈L/2⌉
 
     def skillHit(self):
-        return self.playerDPS()   # M12 3.2 — 1초 피해 단위
+        return self.playerDPS() * (1 + self.campEff("skill"))   # M12 3.2 — 1초 피해 단위 · M28 작업장
 
     def skillActive(self, sid):
         return (self.skillRt["act"].get(sid) or 0) > 0
@@ -730,6 +831,7 @@ class Sim(object):
         if not self.skillLv(sid) or self.skillLv(sid) >= SKILL_LV_MAX or (self.G.get("books") or 0) < c:
             return False
         self.G["books"] -= c; self.G["skills"]["lv"][sid] += 1
+        self.questProgress("skillup", 1)   # 지시 #187
         return True
 
     def skillToggle(self, sid):
@@ -951,22 +1053,15 @@ class Sim(object):
         return 2 if self.boostActive() else 1
 
     # ---- 구매 ----
-    def questBand(self, hour):
-        return 2 if (hour >= QUEST_BANDS[2] or hour < QUEST_BANDS[0]) else (1 if hour >= QUEST_BANDS[1] else 0)
-
-    def questOpen(self, q):
-        # 원본은 로컬 시각(getHours). 포트는 now_ms 의 UTC 시각 — 시간대 **번호**가 같으면 된다.
-        return self.questBand(int((self.now_ms // 3600000) % 24)) == int(q["band"])
-
     def questProgress(self, qid, n):
-        """M4 1 — 카운터만 센다. **시뮬은 일일 보상을 수령하지 않는다** (사람이 눌러야 받는다).
-           그래서 auto_run 의 진행에 일일 보상이 안 섞이고 곡선 측정이 흔들리지 않는다.
-           M4 1.2 (a): 열린 시간대에만 센다."""
-        q = next((x for x in self.todayQuests() if x["id"] == qid), None)   # 지시 #151 — 오늘 미션만
-        if q is None or not self.questOpen(q):
-            return
-        d = self.G.setdefault("quest", {})
-        d[qid] = d.get(qid, 0) + n
+        """지시 #187 — 세 갈래로 센다: 일일(qd) · 반복(qr) · 누계(qc, 업적용). 받기는 claimAll(측정 claim=True 일 때만)."""
+        G = self.G
+        if any(q["id"] == qid for q in QUEST_DAILY):
+            G["qd"][qid] = G["qd"].get(qid, 0) + n
+        if any(q["id"] == qid for q in QUEST_REPEAT):
+            G["qr"][qid] = G["qr"].get(qid, 0) + n
+        if qid in QUEST_CUM:
+            G["qc"][qid] = G["qc"].get(qid, 0) + n
 
     # ---- 일일 보상 (M4 1) ----
     # **2026-09-16 에 옮겼다.** 전에는 이 넷이 포트에 없어서 `auto_run` 이 일일 보상을
@@ -997,8 +1092,8 @@ class Sim(object):
         cont = prev.get("lastDay") == today - 1
         self.G["login"] = {"streak": min(LOGIN_DAYS, prev.get("streak", 0) + 1) if cont else 1,
                            "lastDay": today}
-        self.G["quest"] = {}
-        self.G["questTaken"] = {}
+        self.G["qd"] = {}
+        self.G["qdTaken"] = {}   # 지시 #187 — 일일만 리셋
         self.G["keys"] = KEY_MAX
         self.G["day"] = today
         self.G["maxDay"] = today
@@ -1006,24 +1101,56 @@ class Sim(object):
         gain = self.grant(self.dailyBudget() * w)
         return {"kind": "login", "day": self.G["login"]["streak"], "gain": gain}
 
-    def dailyQuests(self, day):
-        return daily_quests(day)
+    def achValue(self, aid):
+        G = self.G
+        return self.curGachaLv() if aid == "gacha" else (G.get("peakZone") or 1) if aid == "zone" else (G.get("rebirths") or 0) if aid == "loop" else (G.get("qc") or {}).get(aid, 0)
 
-    def todayQuests(self):
-        return daily_quests(self.G.get("day") or 0)
+    def achTarget(self, a):
+        return (self.G["qa"].get(a["id"], 0) + 1) * a["step"]
 
-    def questReady(self, qid):
-        return (self.G.get("quest", {}).get(qid, 0) >= QUEST_NEEDS[qid]
-                and not (self.G.get("questTaken") or {}).get(qid))
+    def questReady(self, kind, qid=None):
+        G = self.G
+        if kind == "d":
+            q = next((x for x in QUEST_DAILY if x["id"] == qid), None)
+            return q is not None and G["qd"].get(qid, 0) >= q["need"] and not G["qdTaken"].get(qid)
+        if kind == "da":
+            return not G["qdTaken"].get("all") and all(G["qdTaken"].get(q["id"]) for q in QUEST_DAILY)
+        if kind == "r":
+            q = next((x for x in QUEST_REPEAT if x["id"] == qid), None)
+            return q is not None and G["qr"].get(qid, 0) >= q["need"]
+        if kind == "a":
+            a = next((x for x in QUEST_ACH if x["id"] == qid), None)
+            return a is not None and self.achValue(qid) >= self.achTarget(a)
+        return False
 
-    def takeQuest(self, qid):
-        q = next((x for x in self.todayQuests() if x["id"] == qid), None)   # 지시 #151
-        if q is None or not self.questReady(qid):
+    def takeQuest(self, kind, qid=None):
+        if not self.questReady(kind, qid):
             return False
-        self.G.setdefault("questTaken", {})[qid] = 1
-        self.G["plans"] = self.G.get("plans", 0.0) + QUEST_PLANS   # M6 7.1 — 과제 하나에 설계도 QUEST_PLANS 개
-        self.G["books"] = (self.G.get("books") or 0) + QUEST_BOOKS   # M12
-        return self.grant(self.dailyBudget() * float(q["share"]))
+        G = self.G
+        if kind == "d":
+            r = next(x for x in QUEST_DAILY if x["id"] == qid); G["qdTaken"][qid] = 1; G["parts"] += self.dailyBudget() * QUEST_DAILY_SHARE
+        elif kind == "da":
+            r = QUEST_DAILY_ALL[0]; G["qdTaken"]["all"] = 1
+        elif kind == "r":
+            r = next(x for x in QUEST_REPEAT if x["id"] == qid); G["qr"][qid] -= r["need"]; G["qrLv"][qid] = G["qrLv"].get(qid, 0) + 1
+        else:
+            r = next(x for x in QUEST_ACH if x["id"] == qid); G["qa"][qid] = G["qa"].get(qid, 0) + 1
+        G["plans"] = G.get("plans", 0.0) + int(r.get("plans") or 0)
+        G["books"] = (G.get("books") or 0) + int(r.get("books") or 0)
+        self.questTaken = getattr(self, "questTaken", 0) + 1
+        return True
+
+    def claimAll(self):
+        """포트에만 — 받을 수 있는 퀘스트를 전부 받는다(사람이 바로바로 누른다고 치고). auto_run(claim=True) 에서만 부른다."""
+        for q in QUEST_DAILY:
+            self.takeQuest("d", q["id"])
+        self.takeQuest("da")
+        for q in QUEST_REPEAT:
+            while self.takeQuest("r", q["id"]):
+                pass
+        for a in QUEST_ACH:
+            while self.takeQuest("a", a["id"]):
+                pass
 
     def openSupply(self):
         if (self.G.get("keys") or 0) <= 0:
@@ -1071,6 +1198,9 @@ class Sim(object):
             bs.append(dict(kind=kind, x=x, y=y, w=w, h=h, tone=tone,
                            enabled=enabled, wid=wid, clip=clip))
 
+        if getattr(self, "storyQ", None):        # 지시 #188 — 줄거리 대화(포트 시뮬은 대화를 안 띄운다 — 자리만)
+            b("story_next", 0, 0, GAME_W, L["GAME_H"], "scrim")
+            return bs
         if self.offlineReport:
             b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
             if not self.offlineReport.get("doubled"):
@@ -1079,19 +1209,38 @@ class Sim(object):
             return bs
 
         # M4 1 — 탭 3개. 폭 164, 간격 8 (원본과 같다)
-        if getattr(self, "dailyPopup", False):   # 지시 #151 — 미션 팝업: 접속 1 · 미션 3 · 상자 1 · 지우기 1 · 닫기
+        if getattr(self, "setPopup", False):     # M20 (지시 #183) · 지시 #184 — 설정 팝업: 틀 · 줄마다 아이콘 켜기/끄기 + 슬라이더 · X
             b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
-            dy = L["GAME_H"] / 2 - 200
-            rows = [("login", "ghost", False, None)]
-            for q in self.todayQuests():
-                cur = (self.G.get("quest") or {}).get(q["id"], 0); need = int(q["need"])
-                taken = bool((self.G.get("questTaken") or {}).get(q["id"]))
-                rows.append(("quest", "ghost" if taken else ("buy" if cur >= need else "off"), (not taken) and cur >= need, q["id"]))
-            keys = self.G.get("keys", 0)
-            rows += [("supply", "buy" if keys > 0 else "off", keys > 0, None), ("reset", "ghost", True, None)]
-            for kind, tone, en, wid in rows:
-                b(kind, 24, dy, GAME_W - 48, ROW_H, tone, en, wid); dy += ROW_PITCH
-            b("daily_close", 186, dy + 10, 168, ROW_H, "ghost")
+            px, py, pw = 30, L["GAME_H"] / 2 - 242, GAME_W - 60   # 지시 #198 — 총소리 줄을 더해 434
+            b("set_panel", px, py, pw, 434, "hit")
+            for i, k in enumerate(("bgm", "sfx", "gun")):
+                b("set_" + k + "_on", px + 30, py + 104 + i * 104, 64, 56, "hit")
+                b("set_" + k + "_slider", px + 108, py + 104 + i * 104, pw - 138, 56, "hit")
+            b("set_close", px + pw - 66, py + 8, 56, 56, "hit")
+            b("reset", px + pw / 2 - 120, py + 372, 240, 58, "ghost")   # 지시 #187 — 저장 지우기(테스트)를 퀘스트 팝업에서 여기로
+            return bs
+        if getattr(self, "campPopup", False):    # M28 — 캠프 팝업: 틀 · 광고 · 시설 6줄 짓기 · X (원본 questPanel·campAdRect·questRewardRect·questCloseRect 와 같은 수)
+            b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
+            ph = min(L["GAME_H"] - 40, 676); px, py, pw = 20, round((L["GAME_H"] - ph) / 2), GAME_W - 40
+            b("camp_panel", px, py, pw, ph, "hit")
+            b("camp_ad", px + pw - 14 - 150, py + 63, 150, 58, "hit", bool(self.G["camp"]["build"]))
+            for i, d in enumerate(CAMP_BUILDS):
+                ok = self.campLv(d["id"]) < d["max"] and not self.G["camp"]["build"] and (self.G.get("mats") or 0) >= self.campCost(d["id"])
+                b("camp_build_" + d["id"], px + 14 + (pw - 28) - 108, py + 128 + i * 68 + 3, 100, 58, "hit", ok)
+            b("camp_close", px + pw - 64, py + 2, 58, 58, "hit")
+            return bs
+        if getattr(self, "dailyPopup", False):   # 지시 #187 — 퀘스트 팝업: 틀 · 탭 셋 · 줄마다 보상 버튼 · X (원본 questPanel·questTabRect·questRewardRect·questCloseRect 와 같은 수)
+            tab = self.dailyPopup if self.dailyPopup in ("d", "r", "a") else "d"
+            b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
+            ph = min(L["GAME_H"] - 40, 676); px, py, pw = 20, round((L["GAME_H"] - ph) / 2), GAME_W - 40
+            b("quest_panel", px, py, pw, ph, "hit")
+            tw = (pw - 28 - 16) / 3
+            for i, k in enumerate(("d", "r", "a")):
+                b("quest_tab_" + k, px + 14 + i * (tw + 8), py + 60, tw, 58, "on" if tab == k else "off")
+            n = (1 + len(QUEST_DAILY) + 1) if tab == "d" else len(QUEST_REPEAT) if tab == "r" else len(QUEST_ACH)   # 일일: 완료 · 5개 · 보급 상자(접속 줄은 버튼 없음)
+            for i in range(n):
+                b("quest_take", px + 14 + (pw - 28) - 108, py + 128 + i * 68 + 3, 100, 58, "hit")
+            b("quest_close", px + pw - 64, py + 2, 58, 58, "hit")
             return bs
         if self.skillPopup:                   # M12 — 스킬 팝업: 끼기/빼기 · 올리기 · 닫기
             sid = self.skillPopup["id"]; on = sid in self.G["skills"]["slots"]; full = None not in self.G["skills"]["slots"]
@@ -1109,7 +1258,8 @@ class Sim(object):
             gap = 8; cw = (GAME_W - 48 - gap * (SKILL_SLOTS - 1)) / SKILL_SLOTS
             for i in range(SKILL_SLOTS):
                 b("skill_slot_%d" % i, 24 + i * (cw + gap), self.tabRowY() + ROW_H + 8, cw, SKILL_STRIP_H, "hit", bool(self.G["skills"]["slots"][i]))
-        b("snd_btn", GAME_W - 24 - 58 - 8 - 58, L["ARENA_BOT"] - 58 - 8, 58, 58, "mini")   # M16 — 소리 켜기/끄기(원본과 같은 자리)
+        b("camp_btn", GAME_W - 24 - 58 * 3 - 16, L["ARENA_BOT"] - 58 - 8, 58, 58, "mini")   # M28 — 캠프
+        b("snd_btn", GAME_W - 24 - 58 - 8 - 58, L["ARENA_BOT"] - 58 - 8, 58, 58, "mini")   # M16 자리 — M20 부터 설정 팝업을 연다
         b("daily_btn", GAME_W - 24 - 58, L["ARENA_BOT"] - 58 - 8, 58, 58, "mini")   # 지시 #151 — 전투 화면 오른쪽 아래
 
         top, bot = self.listTopY(), self.listBotY()
@@ -1150,6 +1300,9 @@ class Sim(object):
             # M10 2.2 — 환생 탭: 훈장 · 환생하기 · 남는 것 · 처음으로
             put_row("rebirth_info", "equipped", False, None)
             put_row("rebirth_go", "buy", self.canRebirth(), None)
+            for d in MEDAL_PERKS:   # M27 — 훈장 상점 6줄
+                full = self.perkLv(d["id"]) >= d["max"]
+                put_row("perk_" + d["id"], "buy", (not full) and self.medalsFree() >= self.perkCost(d["id"]), None)
             put_row("rebirth_title", "ghost", False, None)    # M15 — 칭호(보기만)
             put_row("rebirth_record", "ghost", False, None)   # M15 — 기록판(보기만)
             put_row("rebirth_keep", "ghost", False, None)
@@ -1249,6 +1402,7 @@ class Sim(object):
             if first:
                 self.G["plans"] = self.G.get("plans", 0.0) + BOSS_PLANS
             self.G["books"] = (self.G.get("books") or 0) + (BOSS_BOOKS_FIRST if first else BOSS_BOOKS_AGAIN) + max(0, (self.G.get("loop") or 1) - 1)   # M12
+            self.campMats(MATS_BOSS * max(1, self.G.get("loop") or 1))   # M28 — 자재
         if self.killIndex >= self.zoneKills(self.G["zone"]):
             self.killIndex = 0
             if self.farm and self.G["zone"] + 1 == self.farm["zone"]:   # M14 — 보강 중이면 같은 구역 한 번 더
@@ -1264,6 +1418,7 @@ class Sim(object):
                 self.G["bestZone"] = max(self.G["bestZone"], self.G["zone"])
                 if self.G["zone"] > (self.G.get("peakZone") or 1):
                     self.G["books"] = (self.G.get("books") or 0) + ZONE_BOOKS   # M14 2.1
+                    self.campMats(MATS_ZONE)   # M28
                 self.G["peakZone"] = max(self.G.get("peakZone") or 1, self.G["zone"]); self.unlockSkills()   # M12
                 del self.zombies[:]
                 self.shots = 0
@@ -1373,6 +1528,8 @@ class Sim(object):
     def step(self, dt):
         """`frame()` 의 고정 시간 간격 한 칸. 시계도 같이 민다."""
         self.stepCombat(dt)
+        self.campTick(self.now_ms)   # M28 — 원본은 frame() 에서 Date.now() 로
+        self.questProgress("play", dt)   # 지시 #187 — 원본은 frame() 의 tickRecords 옆
         self.t += dt
         self.now_ms += dt * 1000
 
@@ -1383,10 +1540,10 @@ class Sim(object):
 
     def applyOffline(self):
         elapsed = max(0.0, (self.now_ms - (self.G.get("lastSeen") or self.now_ms)) / 1000.0)
-        capped = min(elapsed, OFFLINE_MAX_HOURS * 3600)
+        capped = min(elapsed, self.offlineMaxHours() * 3600)   # M27 야간 경계
         if capped < 60:
             return None
-        gain = self.partsPerSecondEstimate() * capped * OFFLINE_RATE
+        gain = self.partsPerSecondEstimate() * capped * (OFFLINE_RATE + self.campEff("offline"))   # M28 발전소
         self.G["parts"] += gain
         # M3 5 — 설계도도 같이 쌓인다 (원본과 같다)
         # M6 2.1 — 설계도 없음(단계·과제만)
@@ -1425,7 +1582,7 @@ def _worker(args):
     if want_quest:
         def qp(self, qid, n, _o=orig, _h=hits):
             _o(self, qid, n)
-            if self.G["quest"].get(qid, 0) >= S.QUEST_NEEDS[qid] and qid not in _h:
+            if qid in S.QUEST_NEEDS and self.G["qd"].get(qid, 0) >= S.QUEST_NEEDS[qid] and qid not in _h:   # 지시 #187 — 일일(qd)
                 _h[qid] = self.t / 60.0
         S.Sim.questProgress = qp
     try:
@@ -1459,7 +1616,7 @@ def run_many(seeds, kw=None, overrides=None, lock_stat=None, want_buys=False, wa
 
 def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
              offline_every_min=None, offline_hours=8, on_buy=None, focus_duty=None,
-             stop_zone=None, now_ms=None, sim=None):
+             stop_zone=None, now_ms=None, sim=None, claim=False, camp=False):
     """가장 싼 것부터 계속 사면서 구역 10 까지 간다.
 
     `offline_every_min` 을 주면 그만큼 놀고 나서 `offline_hours` 시간 자리를 비운다.
@@ -1505,6 +1662,10 @@ def auto_run(seed=1, max_min=120, buy_every=0.5, dt=FIXED_STEP,
         buyT += dt
         if buyT >= buy_every:
             buyT = 0.0
+            if camp:
+                s.campAuto()   # M28 — 캠프를 바로바로 짓는 사람(측정 옵션 — 기본 곡선은 짓지 않는다)
+            if claim:
+                s.claimAll()   # 지시 #187 — 퀘스트 보상을 바로바로 받는 사람(측정 옵션 — 기본 곡선은 받지 않는다)
             # **재화가 둘이면 줄도 둘이다.** (2026-09-16, 지시 #102)
             # 전에는 무기 값도 `parts` 와 견주고 결제는 `plans` 로 했다.
             # 그래서 못 살 무기가 "가장 싼 것" 으로 뽑히면 그 틱이 통째로 멈췄고,

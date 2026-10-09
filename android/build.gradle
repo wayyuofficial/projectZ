@@ -1,4 +1,4 @@
 // 루트 빌드 파일. 플러그인 버전만 선언한다.
 plugins {
-    id 'com.android.application' version '8.5.2' apply false
+    id 'com.android.application' version '8.13.0' apply false   // M18(지시 #174): API 36 을 쓰려고 8.5.2 → 8.13.0
 }

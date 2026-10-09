@@ -9,7 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.pat
 P = os.path.join(ROOT, "game", "index.html")
 t = io.open(P, encoding="utf-8-sig").read()
 rows, total = [], 0
-for z in range(1, 61):   # M11: 구역 60
+for z in range(1, 71):   # M11: 구역 60 · M29: 70
     f = os.path.join(HERE, "wide", "z%02d.png" % z)   # M15 (분석 B2) — 가로로 긴 이어지는 그림이 있으면 그것(art/bg/gen_wide.py)
     if not os.path.exists(f):
         f = os.path.join(HERE, "zones", "z%02d.png" % z)
