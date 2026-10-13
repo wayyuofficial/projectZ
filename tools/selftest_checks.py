@@ -98,7 +98,7 @@ def main():
 
         # c11: WebView 의 DOM Storage 를 주석 처리해 fail 이 나야 한다
         act = os.path.join(ROOT, "android", "app", "src", "main", "java",
-                           "com", "wayyu", "zombiesurvival", "MainActivity.java")
+                           "com", "silogames", "apsurvivor", "MainActivity.java")
         act_backup = act + ".selftest-backup"
         if os.path.exists(act):
             shutil.copy2(act, act_backup); made.append(act_backup)
@@ -166,7 +166,8 @@ def main():
 
         # c18: 곡선 밖 기록을 가장 새 것으로 심는다 — 도달 밖 21개, 벽 비 9, 골짜기 0.1 이면 warn 이 나야 한다
         p = os.path.join(ROOT, "measurements", "balance-M3-_selftest.json")
-        w(p, '{"벽": true, "곡선밖": [10,11,12,13,14,15,16,17,18,19,20,21], "도달_밖": [10,11], "벽비": {"5": 9.0}, "골짜기": {"5": 0.1}}')
+        # M15: 정본에 SCOPE_ARRIVE_TOL 이 있으면 c18 은 누적 도달 시각으로 본다 — 도달 밖도 4개 이상이어야 두 선 모두에서 warn
+        w(p, '{"벽": true, "곡선밖": [10,11,12,13,14,15,16,17,18,19,20,21], "도달_밖": [10,11,12,13,14], "도달비": {"10": 1.5, "11": 1.5, "12": 1.4, "13": 1.3, "14": 1.3, "15": 1.0}, "벽비": {"5": 9.0}, "골짜기": {"5": 0.1}}')
         os.utime(p, (_future, _future)); made.append(p)
 
         # c19: 판정 근거로 **인용된** 기록의 도장이 옛 빌드면 warn 이 나야 한다.
@@ -291,7 +292,7 @@ def main():
             if backup in made:
                 made.remove(backup)
         act = os.path.join(ROOT, "android", "app", "src", "main", "java",
-                           "com", "wayyu", "zombiesurvival", "MainActivity.java")
+                           "com", "silogames", "apsurvivor", "MainActivity.java")
         act_backup = act + ".selftest-backup"
         if os.path.exists(act_backup):
             shutil.move(act_backup, act)

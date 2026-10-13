@@ -1,13 +1,13 @@
 plugins { id 'com.android.application' }
 
 android {
-    namespace 'com.wayyu.zombiesurvival'
-    compileSdk 34
+    namespace 'com.silogames.apsurvivor'
+    compileSdk 36
 
     defaultConfig {
-        applicationId "com.wayyu.zombiesurvival"
+        applicationId "com.silogames.apsurvivor"   // 지시 #173 — 첫 업로드 뒤 못 바꾼다
         minSdk 24            // Android 7.0. LG V30(Android 8~9)을 덮는다
-        targetSdk 34
+        targetSdk 36         // 지시 #174 — 2026-08-31 부터 새 앱은 API 36 이상
         versionCode 1
         versionName "0.1.0"
     }
@@ -45,4 +45,8 @@ android {
 // WebView 하나짜리 앱에 androidx.appcompat 을 넣었더니 kotlin-stdlib 1.8.22 와
 // kotlin-stdlib-jdk7/jdk8 1.6.21 이 겹쳐 빌드가 깨졌다 (2026-09-08).
 // 프레임워크 Activity 와 프레임워크 테마만 쓰면 그 문제가 통째로 사라지고 APK 도 작아진다.
-dependencies { }
+// M17(지시 #172): 보상형 광고. 광고 SDK 하나만 더한다(appcompat 은 여전히 안 쓴다).
+dependencies {
+    // 23.6.0 은 에뮬레이터의 구글 서비스(광고 모듈 25.5)와 맞지 않아 시험 광고를 그리다 'Internal error' → No fill(3) 이었다(2026-10-08). 25.5.0 에서 해결.
+    implementation 'com.google.android.gms:play-services-ads:25.5.0'
+}

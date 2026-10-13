@@ -1,0 +1,23 @@
+{
+ "type": "ai_bgm",
+ "engine": "google-lyria",
+ "model": "lyria-3.5",
+ "prompt": "Tense post-apocalyptic zombie survival action music for a mobile idle shooter game. Driving pulsing synth bass ostinato, gritty distorted electric guitar chugs, punchy industrial drums, dark cinematic staccato strings, eerie ambient pads. Urgent and relentless, the feeling of being chased by a horde through a ruined city, but not overwhelming, suitable for hours of background listening. Minor key",
+ "final_prompt": "Tense post-apocalyptic zombie survival action music for a mobile idle shooter game. Driving pulsing synth bass ostinato, gritty distorted electric guitar chugs, punchy industrial drums, dark cinematic staccato strings, eerie ambient pads. Urgent and relentless, the feeling of being chased by a horde through a ruined city, but not overwhelming, suitable for hours of background listening. Minor key. Instrumental only, no vocals, no singing. Tempo 132 BPM, steady tempo throughout, 4/4 time. About 120 seconds long. Designed as looping video game background music: the same groove, key and energy throughout, no fade-in intro, no ending or outro, no big breaks or silence.",
+ "bpm": 132,
+ "output_text": "[[A0]]\n[[A1]]\n[[A2]]\n[[A3]]",
+ "raw": "bgm_ai_apocalypse_raw.wav",
+ "cost_usd": 0.08,
+ "created": "2026-10-08 17:16",
+ "loop": {
+  "start_sec": 63.36,
+  "length_sec": 14.769,
+  "bars": 8,
+  "bpm": 132,
+  "est_bpm": 86.54,
+  "similarity": 0.726,
+  "xfade_sec": 0.909
+ },
+ "source_seconds": 122.43,
+ "desc": "Tense post-apocalyptic zombie survival action music for a mobile idle shooter game. Driving pulsing synth bass ostinato, gritty distorted electric guitar chugs, punchy industrial drums, dark cinematic staccato strings, eerie ambient pads. Urgent and relentless, the feeling of being chased by a horde through a ruined city, but not overwhelming, suitable for hours of background listening. Minor key"
+}

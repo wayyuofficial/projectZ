@@ -1,0 +1,46 @@
+{
+ "측정일": "2026-10-08",
+ "대상": "M17 광고 다리 — 브라우저 경로(가짜 다리) · APK 크기",
+ "빌드도장": "6d4d24b6969c98c5",
+ "방법": "로컬 HTTP 8124, 콘솔에서 adReward/onAdResult 직접 호출(window.AdBridge 가짜), gradlew assembleDebug",
+ "브라우저_다리없음": {
+  "부품2배": true,
+  "부활": true,
+  "오프라인2배": true
+ },
+ "가짜다리": {
+  "준비중이면_보상없음": true,
+  "부탁": true,
+  "두번누름_막힘": true,
+  "중간에닫으면_보상없음": true,
+  "끝까지보면_보상": true,
+  "부활제안_사라진뒤에도_복귀": true,
+  "엉뚱한결과_무시": true
+ },
+ "APK_디버그_바이트": {
+  "전": 2879388,
+  "후_clean": 8981151,
+  "증가": 6101763,
+  "주의": "증분 빌드(clean 없이)는 dex 를 겹쳐 11848864 까지 나왔다 — 크기는 clean assembleDebug 로만 잰다"
+ },
+ "병합_매니페스트_권한": [
+  "INTERNET",
+  "ACCESS_NETWORK_STATE",
+  "AD_ID",
+  "ACCESS_ADSERVICES_AD_ID",
+  "ACCESS_ADSERVICES_ATTRIBUTION",
+  "ACCESS_ADSERVICES_TOPICS",
+  "WAKE_LOCK",
+  "FOREGROUND_SERVICE"
+ ],
+ "판정하지_않는다": "M17-P1·P2·P3 판정은 사람",
+ "광고중_소리": "확인 못 함 — 브라우저는 사람 손 없이 AudioContext 를 켤 수 없어(자동재생 정책) 시험 전부터 suspended. 에뮬레이터 점검 7번으로.",
+ "옛빌드_사유": "M17 빌드 6d4d24b6969c98c5 의 기록. 그 뒤 M18(지시 #173)은 게임 HTML 의 <title> 한 줄만 바꿨다 — 광고 다리·전투는 그대로. 같은 날 새 빌드로 곡선·매수·저장을 다시 쟀다(balance-M18-curve · upgrade-cadence-M18 · storage-m18, 327.3분 같음).",
+ "에뮬레이터_고장과_수정": {
+  "증상": "사람 제보: '광고 · 부품 2배' 를 누르면 '광고 준비 중' 만 뜬다",
+  "원인": "Logcat AdBridge: LoadAdError Code 3 'No fill' — 응답 안 어댑터 오류 Code 0 'Internal error' (시험 영상 캠페인은 왔는데 그리기 실패). 앱의 play-services-ads 23.6.0 이 에뮬레이터 구글 서비스의 광고 모듈 250505301(25.5)과 두 판 차이",
+  "수정": "play-services-ads 25.5.0 · AdBridge 에 실패 내용 로그",
+  "확인": "API 36 Google Play 에뮬레이터(sdk_gphone16k_x86_64): '광고 준비됨' → 탭 → 'Test Ad' 영상 → 'Reward granted' → X → 게임에 '부품 2배'·버튼 '2배 9분 56초' (AI 가 adb 로 탭·화면 캡처)",
+  "APK_clean_바이트": 10616663
+ }
+}

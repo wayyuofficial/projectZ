@@ -1,0 +1,97 @@
+{
+ "측정일": "2026-10-09",
+ "도구": "tools/rebirth_check.py",
+ "시드": 8,
+ "훈장상점_다씀": false,
+ "행": [
+  {
+   "seed": 1,
+   "first_min": 593.1,
+   "best": 70,
+   "medals": 476,
+   "bought": 0,
+   "perk": {},
+   "second_min": 409.1,
+   "ratio": 0.689765638172315,
+   "z10_second": 1.3
+  },
+  {
+   "seed": 2,
+   "first_min": 655.7,
+   "best": 70,
+   "medals": 476,
+   "bought": 0,
+   "perk": {},
+   "second_min": 474.7,
+   "ratio": 0.7239591276498398,
+   "z10_second": 1.3
+  },
+  {
+   "seed": 3,
+   "first_min": 605.8,
+   "best": 70,
+   "medals": 476,
+   "bought": 0,
+   "perk": {},
+   "second_min": 421.3,
+   "ratio": 0.6954440409376033,
+   "z10_second": 1.3
+  },
+  {
+   "seed": 4,
+   "first_min": 637.7,
+   "best": 70,
+   "medals": 476,
+   "bought": 0,
+   "perk": {},
+   "second_min": 446.7,
+   "ratio": 0.7004861220009408,
+   "z10_second": 1.3
+  },
+  {
+   "seed": 5,
+   "first_min": 620.7,
+   "best": 70,
+   "medals": 476,
+   "bought": 0,
+   "perk": {},
+   "second_min": 449.1,
+   "ratio": 0.7235379410343161,
+   "z10_second": 1.3
+  },
+  {
+   "seed": 6,
+   "first_min": 584.6,
+   "best": 70,
+   "medals": 476,
+   "bought": 0,
+   "perk": {},
+   "second_min": 485.1,
+   "ratio": 0.8297981525829627,
+   "z10_second": 1.3
+  },
+  {
+   "seed": 7,
+   "first_min": 628.0,
+   "best": 70,
+   "medals": 476,
+   "bought": 0,
+   "perk": {},
+   "second_min": 513.0,
+   "ratio": 0.8168789808917197,
+   "z10_second": 1.3
+  },
+  {
+   "seed": 8,
+   "first_min": 590.3,
+   "best": 70,
+   "medals": 476,
+   "bought": 0,
+   "perk": {},
+   "second_min": 499.3,
+   "ratio": 0.8458410977469084,
+   "z10_second": 1.3
+  }
+ ],
+ "비율중앙": 0.723748534342078
+}

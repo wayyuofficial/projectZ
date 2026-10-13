@@ -13,7 +13,7 @@ from sheet_tools import row_frames, foot_x, webp_uri, replace_block, block_js
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ZH, K, Q = 54, 3, 75             # 화면 키(논리 px, 주인공 56) · 배율 · WebP 품질
-BANDS = ["city", "subway", "factory", "forest", "base", "lab", "school", "mart", "park", "prison", "cruise", "nuclear"]   # M11: 구역 31~60   # BG_BANDS 순서
+BANDS = ["city", "subway", "factory", "forest", "base", "lab", "school", "mart", "park", "prison", "cruise", "nuclear", "bunker", "core"]   # M11: 구역 31~60   # BG_BANDS 순서
 FRAMES = 6
 
 

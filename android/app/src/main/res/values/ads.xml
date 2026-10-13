@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AdMob ID (M17, 지시 #172).
+     지금 값은 Google 이 공개한 **시험용** ID 다 — 눌러도 수익이 없고 계정 정지 위험도 없다.
+     출시 전에 사람이 AdMob 에서 앱과 '보상형' 광고 단위를 만들고 아래 두 줄을 바꾼다.
+     시험 중에 진짜 ID 로 자기 광고를 누르면 계정이 정지될 수 있다 — 개발 중에는 시험 ID 그대로 둔다. -->
+<resources>
+    <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="admob_rewarded_id" translatable="false">ca-app-pub-3940256099942544/5224354917</string>
+</resources>

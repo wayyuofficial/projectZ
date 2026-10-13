@@ -1,0 +1,183 @@
+diff --git a/game/index.html b/game/index.html
+index 7aaf74b..08972aa 100644
+--- a/game/index.html
++++ b/game/index.html
+@@ -254,6 +254,22 @@ function hpKnot(z) {
+   return k[k.length - 1][1];
+ }
+ let farm = null;   // { zone: 죽은 구역, dps: 다시 도전할 DPS, t: 흐른 초 }
++/* M15 1.4 (지시 #167, M15-P1 반증 조건의 다음 수) — 벽 구역 = **보강 없는 시간 제한 도전**.
++   벽(구역 10·15·…)에서는 죽어도 물러나지 않고, 제한 시간 안에 못 깨도 그 자리에서 처음부터 다시 한다(처치 0, 체력 가득). 보강(아래 구역 되풀이)은 없다.
++   그동안 잡은 좀비의 부품은 그대로 — 벽 앞에서 버티며 강해진다. 제한 시간 = WALL_TIME_X × 목표 체류(정본 0.6분 × 1.06^(z−1), 같은 값). */
++const WALL_TIME_X = 2, WALL_T0_MIN = 0.6, WALL_T_G = 1.06;
++/* 첫 격자(지시 #167): 공격이 그대로면 시간이 다 되기 전에 먼저 죽어 제한 시간이 한 번도 안 걸렸다(사망 130 → 193). 벽 좀비 공격 × WALL_DMG_MULT. */
++const WALL_DMG_MULT = 1;
++/* 둘째 격자: 공격 0 · 체력 ×4 면 앞 벽(10·15·20)은 이웃의 10~26배, 뒤 벽(30~)은 0.15~0.5배 — 뒤쪽 보통 구역은 죽고 물러나는 시간이 커서 안 죽는 벽이 오히려 빠르다.
++   그래서 벽 체력 배수는 구역이 깊을수록 커진다: WALL_HP_MULT × (z/10)^WALL_HP_POW. */
++const WALL_HP_POW = 0;
++function wallLimit(z) { return WALL_TIME_X * WALL_T0_MIN * 60 * Math.pow(WALL_T_G, z - 1); }   // 초
++let wallTry = null;   // { zone, t } — 지금 벽 도전에서 흐른 초 (저장하지 않는다)
++function wallFail(why) {
++  killIndex = 0; G.kills = 0; zombies.length = 0; shots.length = 0; G.hp = maxHP(); moveT = 0;
++  if (wallTry) wallTry.t = 0;
++  addFloat(GAME_W / 2, ARENA_TOP + 60, why === 'time' ? '시간 초과 · 다시 도전' : '쓰러짐 · 다시 도전', PALETTE.warn, 22);
++}
+ const ZOMBIE_DPS_RATIO = 0.2;   /* 2026-09-08 지시 #23 재보정.
+      접촉 판정을 위치 기준으로 고치면서 때리는 좀비가 최대 8마리에서 3마리로 줄었다.
+      실제 전투 루프로 배수를 훑어 0.07 -> 0.14 를 골랐다 (구역5 10.2분 / 구역10 69.4분).
+@@ -702,9 +718,9 @@ function playerDPS() { return expectedHit() * attacksPerSec(); }   // M6 1.2: 
+ function maxHP() { return statOf('hp'); }
+ function regenPerSec() { return statOf('reg'); }
+ 
+-function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1) * hpKnot(z) * (isWallZone(z) ? WALL_HP_MULT : 1) * loopMult(); }   // M15 1: 구역별 체력 매듭(HP_KNOTS) · 벽 체력(WALL_HP_MULT)
++function zoneHP(z) { return ZONE_HP0 * Math.pow(ZONE_HP_G, z - 1) * hpKnot(z) * (isWallZone(z) ? WALL_HP_MULT * Math.pow(z / 10, WALL_HP_POW) : 1) * loopMult(); }   // M15 1: 구역별 체력 매듭(HP_KNOTS) · 벽 체력(WALL_HP_MULT)
+ function isWallZone(z) { return z >= WALL_START && z % WALL_EVERY === 0; }   // M11: 회차 배수(회차 1 은 ×1)
+-function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO; }
++function zoneDPS(z) { return zoneHP(z) * ZOMBIE_DPS_RATIO * (isWallZone(z) ? WALL_DMG_MULT : 1); }   // M15 1.4 — 벽은 시간 싸움: 공격은 WALL_DMG_MULT
+ function zoneKills(z) { return KILLS_PER_ZONE * ((z >= WALL_START && z % WALL_EVERY === 0) ? WALL_KILL_MULT : 1); }   // M2 벽: 처치 수만 늘어난다
+ function zoneReward(z) { return ZONE_RW0 * Math.pow(ZONE_RW_G, z - 1) * KILLS_PER_ZONE / zoneKills(z) * loopRwMult(); }   // M2 벽: 처치당 보상 ÷2 — 벽의 총수입은 보통 구역과 같다 (M2-B2‴, 지시 #63)
+ /* =========================================================================
+@@ -1570,6 +1586,11 @@ function stepCombat(dt) {
+   const hadTarget = zombies.length > 0;
+   if (moveT > 0) moveT = Math.max(0, moveT - dt);   // M13 — 걷기·구역 이동 중
+   if (farm) farm.t += dt;                            // M14 — 보강 시간
++  if (isWallZone(G.zone)) {                          // M15 1.4 — 벽 도전 시간
++    if (!wallTry || wallTry.zone !== G.zone) wallTry = { zone: G.zone, t: 0 };
++    if (moveT <= 0) wallTry.t += dt;
++    if (wallTry.t > wallLimit(G.zone)) wallFail('time');
++  } else wallTry = null;
+ 
+   // 스폰 간격을 처치 시간에 맞춘다. 고정 간격이면 초반에 좀비가 쌓여 즉사한다 (WBS 8.1)
+   spawnTimer -= dt;
+@@ -1664,6 +1685,7 @@ function onDeath() {
+   const from = G.zone;
+   G.hp = maxHP();
+   deathFlash = 1;
++  if (isWallZone(G.zone)) { wallFail('death'); save(); return; }   // M15 1.4 — 벽에서는 물러나지 않는다
+   zombies.length = 0; shots.length = 0;
+   if (G.zone > 1) G.zone--;
+   killIndex = 0; G.kills = 0; moveT = 0;   // M13 — 물러날 때는 바로
+@@ -2549,7 +2571,7 @@ function drawHUD() {
+   ctx.fillText(zoneName(G.zone), GAME_W - 24, 52);
+   ctx.fillStyle = PALETTE.parts;
+   ctx.font = '600 11px "Segoe UI", "Malgun Gothic", system-ui, sans-serif';
+-  ctx.fillText(farm ? '보강 중 · ' + Math.max(0, Math.ceil(FARM_MAX_SEC - farm.t)) + '초' : currentStage() + ' / ' + STAGES_PER_ZONE + ' 단계', GAME_W - 24, 68);   // M14
++  ctx.fillText(wallTry ? '벽 · ' + Math.max(0, Math.ceil(wallLimit(G.zone) - wallTry.t)) + '초' : farm ? '보강 중 · ' + Math.max(0, Math.ceil(FARM_MAX_SEC - farm.t)) + '초' : currentStage() + ' / ' + STAGES_PER_ZONE + ' 단계', GAME_W - 24, 68);   // M14
+ 
+   const px = 24, pw = GAME_W - 48;
+   // M3 4.1 — 진행 막대를 단계 수만큼 쪼갠다. 한 칸이 한 단계다.
+diff --git a/tools/sim_port.py b/tools/sim_port.py
+index 4893841..9593aa7 100644
+--- a/tools/sim_port.py
++++ b/tools/sim_port.py
+@@ -108,6 +108,9 @@ WALL_EVERY, WALL_KILL_MULT, WALL_START = int(num("WALL_EVERY")), int(num("WALL_K
+ FARM_GAIN, FARM_MAX_SEC = num("FARM_GAIN"), num("FARM_MAX_SEC")   # M14 — 보강
+ WALL_HP_MULT = num("WALL_HP_MULT")   # M15 1 — 벽 체력
+ HP_KNOTS = matrix("HP_KNOTS")        # M15 1 — 구역별 체력 매듭
++WALL_TIME_X, WALL_T0_MIN, WALL_T_G = num("WALL_TIME_X"), num("WALL_T0_MIN"), num("WALL_T_G")   # M15 1.4 — 벽 시간 제한
++WALL_DMG_MULT = num("WALL_DMG_MULT")
++WALL_HP_POW = num("WALL_HP_POW")
+ ZOMBIE_DPS_RATIO = num("ZOMBIE_DPS_RATIO")
+ STAGES_PER_ZONE = int(num("STAGES_PER_ZONE"))
+ STAGE_BONUS_RATIO = num("STAGE_BONUS_RATIO")
+@@ -289,7 +292,7 @@ MIRRORED = {
+     "medalMult": "46c08bcbefe88ff9",
+     "medalsFor": "40a1cb07ee003bd6",
+     "migrate": "b01e7bde5c46647d",
+-    "onDeath": "bd9a06f0be2dbe37",
++    "onDeath": "9f355b8d99f7171e",
+     "openSupply": "ef504f009bbf894e",
+     "partsPerSecondEstimate": "424babe8c5fc62f9",
+     "pierceShot": "9db3268bc8df46f8",
+@@ -315,16 +318,18 @@ MIRRORED = {
+     "statCost": "3915c9b212b37571",
+     "statDef": "e7ad6087978fd6ec",
+     "statOf": "64433344a9e069b6",
+-    "stepCombat": "77da0715ffc39789",
++    "stepCombat": "31bca04c21351ca2",
+     "stepSkills": "e73576e1cfdf7432",
+     "tabRowY": "d001ac81a8afa161",
+     "takeQuest": "cab3ce03ca945559",
+     "todayQuests": "5da0fbfeb4eb3edf",
+     "unlockSkills": "d2185638165f6aeb",
++    "wallFail": "bae2f65d8f822a7f",
++    "wallLimit": "d612c26e31f28ec8",
+     "weaponOf": "cd23351858d3c448",
+     "weaponPower": "8fcbdfc907029bf9",
+-    "zoneDPS": "9abab3ae0b004352",
+-    "zoneHP": "bdeda52960435a6b",
++    "zoneDPS": "ea3713a56947114e",
++    "zoneHP": "532e1260c8b7b792",
+     "zoneReward": "fc08ad169107745f",
+ }
+ 
+@@ -440,6 +445,7 @@ class Sim(object):
+         self.skillPopup = None
+         self.moveT = 0.0                 # M13 — 걷기·구역 이동 남은 시간(저장 안 함)
+         self.farm = None                 # M14 — 보강
++        self.wallTry = None              # M15 1.4 — 벽 도전
+         self.dmgShot = 0.0; self.dmgSkill = 0.0   # 포트에만 있는 계수기 — 스킬 피해 몫(tools/skill_share.py)
+ 
+     # ---- 저장 ----
+@@ -819,7 +825,7 @@ class Sim(object):
+         return self.statOf("reg")
+ 
+     def zoneHP(self, z):
+-        return ZONE_HP0 * (ZONE_HP_G ** (z - 1)) * Sim.hpKnot(z) * (WALL_HP_MULT if Sim.isWallZone(z) else 1) * self.loopMult()   # M11 회차 · M15 휨·벽
++        return ZONE_HP0 * (ZONE_HP_G ** (z - 1)) * Sim.hpKnot(z) * (WALL_HP_MULT * (z / 10) ** WALL_HP_POW if Sim.isWallZone(z) else 1) * self.loopMult()   # M11 회차 · M15 휨·벽
+ 
+     @staticmethod
+     def hpKnot(z):
+@@ -837,7 +843,7 @@ class Sim(object):
+         return z >= WALL_START and z % WALL_EVERY == 0
+ 
+     def zoneDPS(self, z):
+-        return self.zoneHP(z) * ZOMBIE_DPS_RATIO
++        return self.zoneHP(z) * ZOMBIE_DPS_RATIO * (WALL_DMG_MULT if Sim.isWallZone(z) else 1)   # M15 1.4
+ 
+     @staticmethod
+     def stageKills(z):
+@@ -1274,6 +1280,15 @@ class Sim(object):
+             self.moveT = max(0.0, self.moveT - dt)   # M13
+         if self.farm:
+             self.farm["t"] += dt                     # M14
++        if self.isWallZone(self.G["zone"]):         # M15 1.4 — 벽 도전 시간
++            if not self.wallTry or self.wallTry["zone"] != self.G["zone"]:
++                self.wallTry = {"zone": self.G["zone"], "t": 0.0}
++            if self.moveT <= 0:
++                self.wallTry["t"] += dt
++            if self.wallTry["t"] > self.wallLimit(self.G["zone"]):
++                self.wallFail("time")
++        else:
++            self.wallTry = None
+ 
+         self.spawnTimer -= dt
+         ttk = self.zoneHP(self.G["zone"]) / max(1e-6, self.playerDPS())
+@@ -1337,10 +1352,27 @@ class Sim(object):
+             if self.reviveOffer["t"] >= REVIVE_OFFER_SEC:
+                 self.reviveOffer = None
+ 
++    @staticmethod
++    def wallLimit(z):
++        return WALL_TIME_X * WALL_T0_MIN * 60 * (WALL_T_G ** (z - 1))
++
++    def wallFail(self, why):
++        self.killIndex = 0
++        self.G["kills"] = 0
++        del self.zombies[:]
++        self.shots = 0
++        self.G["hp"] = self.maxHP()
++        self.moveT = 0.0
++        if self.wallTry:
++            self.wallTry["t"] = 0.0
++
+     def onDeath(self):
+         """쓰러지면 한 구역 물러나 계속 싸운다 (지시 #35). 멈추지 않는다."""
+         self.deaths += 1
+         self.G["hp"] = self.maxHP()
++        if self.isWallZone(self.G["zone"]):                # M15 1.4 — 벽에서는 물러나지 않는다
++            self.wallFail("death")
++            return
+         del self.zombies[:]
+         self.shots = 0
+         frm = self.G["zone"]

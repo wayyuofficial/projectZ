@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 프레임워크 테마만 쓴다. appcompat 을 넣지 않는다 (의존성 충돌 회피). -->
-    <style name="Theme.ZombieSurvival" parent="@android:style/Theme.NoTitleBar.Fullscreen">
+    <style name="Theme.ApocalypseSurvivor" parent="@android:style/Theme.NoTitleBar.Fullscreen">
         <item name="android:windowBackground">#05080A</item>
         <item name="android:statusBarColor">#05080A</item>
         <item name="android:navigationBarColor">#05080A</item>
