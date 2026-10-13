@@ -238,7 +238,7 @@ MIRRORED = {
     "attacksPerSec": "0639c7d834dcbe23",
     "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "22b418ee043cd84e",
+    "buildButtons": "df8543f630c8d69a",
     "buyPerk": "936716819438d513",
     "buyStat": "e92f891d410963f4",
     "campBuild": "106561b9c0bf0d6a",
@@ -255,7 +255,7 @@ MIRRORED = {
     "doRebirth": "81a07c381c87f951",
     "equipBest": "0f92c8c2f2743745",
     "firstClear": "469a179f675bd42f",
-    "fitGame": "efc52009e8769fc5",
+    "fitGame": "3fda2e090a150b81",
     "freshSkills": "d57168837a130519",
     "freshState": "a74240a5444abea9",
     "fuseAll": "82b2582d09c7805e",
@@ -1211,13 +1211,16 @@ class Sim(object):
         # M4 1 — 탭 3개. 폭 164, 간격 8 (원본과 같다)
         if getattr(self, "setPopup", False):     # M20 (지시 #183) · 지시 #184 — 설정 팝업: 틀 · 줄마다 아이콘 켜기/끄기 + 슬라이더 · X
             b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
-            px, py, pw = 30, L["GAME_H"] / 2 - 242, GAME_W - 60   # 지시 #198 — 총소리 줄을 더해 434
-            b("set_panel", px, py, pw, 434, "hit")
+            px, py, pw = 30, L["GAME_H"] / 2 - 294, GAME_W - 60   # 지시 #198 총소리 · #206 화질 줄을 더해 538
+            b("set_panel", px, py, pw, 538, "hit")
             for i, k in enumerate(("bgm", "sfx", "gun")):
                 b("set_" + k + "_on", px + 30, py + 104 + i * 104, 64, 56, "hit")
                 b("set_" + k + "_slider", px + 108, py + 104 + i * 104, pw - 138, 56, "hit")
+            qw = (pw - 60 - 16) / 3
+            for k, q in enumerate(("auto", "sharp", "smooth")):   # 지시 #206 — 화질
+                b("set_q_" + q, px + 30 + k * (qw + 8), py + 104 + 3 * 104, qw, 56, "off")
             b("set_close", px + pw - 66, py + 8, 56, 56, "hit")
-            b("reset", px + pw / 2 - 120, py + 372, 240, 58, "ghost")   # 지시 #187 — 저장 지우기(테스트)를 퀘스트 팝업에서 여기로
+            b("reset", px + pw / 2 - 120, py + 476, 240, 58, "ghost")   # 지시 #187 — 저장 지우기(테스트)를 퀘스트 팝업에서 여기로
             return bs
         if getattr(self, "campPopup", False):    # M28 — 캠프 팝업: 틀 · 광고 · 시설 6줄 짓기 · X (원본 questPanel·campAdRect·questRewardRect·questCloseRect 와 같은 수)
             b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")

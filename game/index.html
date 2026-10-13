@@ -505,23 +505,44 @@ let cssW = 0, cssH = 0, backW = 0, backH = 0, dpr = 1;
    그래서 그리기만 가볍게: 백버퍼 해상도를 기기 픽셀 1배로 · 그리기 30fps(게임 진행은 고정 간격 그대로) · 색보정 합성·분위기 입자 끔.
    켜는 길: 자동(그린 간격 중앙이 GFX_SLOW_MS 를 넘으면 — 한 번 켜지면 이 기기에 기억) · 주소 ?gfx=low / ?gfx=high(강제). ?perf=1 이면 왼쪽 위에 fps 표시.
    전투 규칙·저장은 안 바뀐다 — 거울(c16) 밖이다. */
-const GFX_KEY = 'zombie-idle-gfx', GFX_SLOW_MS = 28, GFX_FPS_LOW = 30;
+const GFX_KEY = 'zombie-idle-gfx4', GFX_STEP_MS = 34, GFX_SLOW_MS = 28, GFX_FPS_LOW = 30, GFX_WARM_MS = 8000;   // 지시 #204 — 키를 바꿔 예전 자동 판정(플립3 이 시작 때 잘못 걸린 것)을 버린다
 const GFX_Q = (() => { try { return new URLSearchParams(location.search); } catch (e) { return null; } })();
 const GFX_PERF = !!(GFX_Q && GFX_Q.get('perf'));
-let gfxLow = false, gfxAuto = true, gfxDrawAt = 0, gfxIv = [], gfxFps = 0, gfxSince = 0;
+let gfxCap = 0, gfxLow = false, gfxAuto = true, gfxDrawAt = 0, gfxIv = [], gfxFps = 0, gfxSince = 0;
 { const q = GFX_Q && GFX_Q.get('gfx');
   if (q === 'low' || q === 'high') { gfxLow = q === 'low'; gfxAuto = false; }
-  else { try { gfxLow = localStorage.getItem(GFX_KEY) === 'low'; } catch (e) {} } }
+  else { try { const v = JSON.parse(localStorage.getItem(GFX_KEY) || '{}'); gfxCap = +v.cap || 0; gfxLow = !!v.low; } catch (e) {} } }
+/* 지시 #205 — 해상도를 한 번에 1배로 떨어뜨리지 않고 0.5 씩 내린다(기기 배율 → … → 게임 본래 폭 540). 그 아래로도 느리면 저사양(30fps 그리기·색보정 끔).
+   플립3 앱 WebView: 가로 1080 ≈ 24fps · 900 ≈ 24 · 720 ≈ 30~40 · 540 ≈ 60 — 30fps 밑(한 프레임 34ms 넘음)일 때만 한 단계 내린다. 정한 단계는 이 기기에 기억. */
+/* 지시 #206 — 사람: "설정에도 옵션 넣는게 좋을것같아." 설정 창 '화질' 줄: 자동(위의 단계 조절) · 선명(기기 배율 그대로 — 플립3 1080 폭 ≈ 24~30fps)
+   · 부드러움(게임 본래 폭 540 — 60fps). 고른 것은 이 기기에 기억. 주소 ?gfx= 가 있으면 그것이 먼저(시험용). */
+const GFX_MODE_KEY = 'zombie-idle-quality', GFX_MODES = [['auto', '자동'], ['sharp', '선명'], ['smooth', '부드러움']];
+let gfxMode = 'auto';
+try { const m = localStorage.getItem(GFX_MODE_KEY); if (m === 'sharp' || m === 'smooth') gfxMode = m; } catch (e) {}
+function gfxModeVars() {   // 고른 화질을 단계 변수로
+  if (GFX_Q && (GFX_Q.get('gfx') === 'low' || GFX_Q.get('gfx') === 'high')) return;
+  if (gfxMode === 'auto') {   // 켤 때마다 기억한 단계보다 한 단계 위에서 다시 잰다 — 기기가 뜨거울 때 배운 낮은 단계에 갇히지 않게(플립3 과열 중 540·저사양을 배웠다)
+    gfxAuto = true; gfxLow = false;
+    try { const v = JSON.parse(localStorage.getItem(GFX_KEY) || '{}'); gfxCap = v.low ? (+v.cap || 1) : (+v.cap ? +v.cap + 0.5 : 0); } catch (e) { gfxCap = 0; }
+    if (gfxCap >= (window.devicePixelRatio || 1)) gfxCap = 0;
+  }
+  else { gfxAuto = false; gfxLow = false; gfxCap = gfxMode === 'smooth' ? 1 : 0; }   // 1 = 본래 폭까지(아래 fitGame 이 540 밑으로는 안 내린다)
+}
+gfxModeVars();
+function setGfxMode(m) { gfxMode = m; try { localStorage.setItem(GFX_MODE_KEY, m); } catch (e) {} gfxModeVars(); gfxIv = []; gfxSince = 0; fitGame(); return true; }
+function gfxFloor() { return Math.max(1, GAME_W / Math.max(1, cssW)); }
+function gfxSave() { try { localStorage.setItem(GFX_KEY, JSON.stringify({ cap: gfxCap, low: gfxLow })); } catch (e) {} }
 function gfxSample(dtMs) {   // 그린 간격을 모아 fps 와 자동 저사양 판정
   if (dtMs <= 0 || dtMs > 500) return;
   gfxIv.push(dtMs); if (gfxIv.length > 90) gfxIv.shift();
   const s = gfxIv.slice().sort((a, b) => a - b), med = s[s.length >> 1];
   gfxFps = med > 0 ? Math.round(1000 / med) : 0;
+  if (titleOn) { gfxSince = 0; return; }   // 지시 #204 — 시작 화면(그림 읽는 중)은 재지 않는다
   gfxSince += dtMs;
-  if (gfxAuto && !gfxLow && gfxSince > 4000 && gfxIv.length >= 90 && med > GFX_SLOW_MS && !document.hidden) {
-    gfxLow = true; try { localStorage.setItem(GFX_KEY, 'low'); } catch (e) {}
-    gfxIv = []; fitGame();
-  }
+  if (!gfxAuto || gfxLow || gfxSince <= GFX_WARM_MS || gfxIv.length < 90 || document.hidden) return;
+  const fl = gfxFloor();
+  if (dpr > fl + 0.01 && med > GFX_STEP_MS) { gfxCap = Math.max(fl, Math.ceil(dpr * 2 - 1.001) / 2); gfxSave(); gfxIv = []; gfxSince = 0; fitGame(); }   // 한 단계(0.5) 내림
+  else if (dpr <= fl + 0.01 && med > GFX_SLOW_MS) { gfxLow = true; gfxSave(); gfxIv = []; fitGame(); }   // 본래 폭에서도 느리면 저사양
 }
 
 function fitGame() {
@@ -547,7 +568,8 @@ function fitGame() {
      그때까지 이 판정을 재던 방식(잘린 dpr 로 cssW*dpr 을 계산)은 **구조상 실패가 불가능**했다.
      상한은 MAX_BACK_W 하나로 남긴다. V30 은 360x4 = 1440 이라 상한 안이다. */
   dpr = window.devicePixelRatio || 1;
-  if (gfxLow) dpr = Math.min(dpr, 1);   // 지시 #195 — 저사양: 칠할 픽셀 수를 줄인다
+  if (gfxCap) dpr = Math.min(dpr, Math.max(gfxCap, Math.max(1, GAME_W / Math.max(1, cssW))));   // 지시 #205 — 자동으로 정한 단계
+  if (gfxLow) dpr = Math.min(dpr, Math.max(1, GAME_W / Math.max(1, cssW)));   // 지시 #195 — 저사양: 칠할 픽셀 수를 줄인다 · #204 게임 본래 폭(540) 밑으로는 안 내린다(플립3 에서 360 으로 뭉개졌다)
   backW = Math.round(cssW * dpr);
   if (backW > MAX_BACK_W) { backW = MAX_BACK_W; dpr = backW / cssW; }
   // 세로도 실제 CSS 높이에서 뽑는다. 비율로 계산하면 비정수 DPR 에서 물리픽셀이 어긋난다
@@ -1164,10 +1186,25 @@ function drawFrame9(name, x, y, w, h, d) {
 /* M21 (지시 #185) — 녹슨 철판 무늬(UI_ART.rust, 이음새 없는 192px)를 사각형에 깐다. 그림이 아직 없으면 false(부르는 쪽 단색 그대로).
    dim = 그 위에 얹는 어두운 막(글자 대비) — PALETTE.rustDim 등. */
 let rustPat = null;
+/* 지시 #204 — 갤럭시 Z 플립3 실기: 백버퍼 1080×2403 에서 한 프레임 150~200ms(초당 5~7). draw() 계산은 4ms 인데
+   **그라데이션·무늬(패턴) 채우기·soft-light 합성**이 화면 크기만큼 비쌌다(전체 화면 원형 그라데이션 한 번 = 60ms, 그림 붙이기 두 장 = 8ms 남짓).
+   그래서 이 셋을 '한 번 구워 둔 그림을 붙이기'로 바꾼다 — 보이는 결과는 같다. 녹 무늬는 화면 크기 한 장을 구워 필요한 칸만 잘라 붙인다
+   (패턴은 원점에 붙어 이어지므로 같은 자리를 잘라 오면 같은 무늬다). 크기가 바뀌면 다시 굽는다. */
+let rustSheet = null;
+function rustSheetFor(im) {
+  const key = backW + '|' + backH + '|' + GAME_H;
+  if (rustSheet && rustSheet.key === key) return rustSheet;
+  const c = document.createElement('canvas'); c.width = Math.max(1, backW); c.height = Math.max(1, backH);
+  const g = c.getContext('2d'); g.setTransform(backW / GAME_W, 0, 0, backH / GAME_H, 0, 0); g.imageSmoothingEnabled = false;
+  g.fillStyle = g.createPattern(im, 'repeat'); g.fillRect(0, 0, GAME_W, GAME_H);
+  c.key = key; c.kx = backW / GAME_W; c.ky = backH / GAME_H;
+  return (rustSheet = c);
+}
 function rustFill(x, y, w, h, dim) {
   const im = uiImg.rust; if (!im || !im.ready) return false;
-  if (!rustPat) rustPat = ctx.createPattern(im, 'repeat');
-  ctx.fillStyle = rustPat; ctx.fillRect(x, y, w, h);
+  const S = rustSheetFor(im);
+  const x0 = Math.max(0, x), y0 = Math.max(0, y), x1 = Math.min(GAME_W, x + w), y1 = Math.min(GAME_H, y + h);
+  if (x1 > x0 && y1 > y0) ctx.drawImage(S, x0 * S.kx, y0 * S.ky, (x1 - x0) * S.kx, (y1 - y0) * S.ky, x0, y0, x1 - x0, y1 - y0);
   if (dim) { ctx.fillStyle = dim; ctx.fillRect(x, y, w, h); }
   return true;
 }
@@ -2277,7 +2314,8 @@ function buildButtons() {
     btn({ x: c.x, y: c.y, w: c.w, h: c.h, label: '', enabled: true, tone: 'hit', onTap: close });
     /* 테스트용 저장 지우기 (사람 요청 2026-09-17) — 지시 #187 에서 퀘스트 팝업에서 여기로. 5초 안에 두 번 눌러야 한다. 디자인이 끝나면 뺀다(거울 buildButtons 의 reset 도) */
     const armed = resetArmAt && (performance.now() - resetArmAt) < RESET_CONFIRM_MS;
-    btn({ x: P.x + P.w / 2 - 120, y: P.y + 372, w: 240, h: 58, label: armed ? '한 번 더 누르면 처음부터' : '저장 지우기 (테스트)', enabled: true, tone: armed ? 'ad' : 'ghost', onTap: () => resetSave() });
+    GFX_MODES.forEach(([m, name], k) => { const r = setQualityRect(k); btn({ x: r.x, y: r.y, w: r.w, h: r.h, label: name, enabled: true, tone: gfxMode === m ? 'on' : 'off', onTap: () => setGfxMode(m) }); });   // 지시 #206 — 화질
+    btn({ x: P.x + P.w / 2 - 120, y: P.y + 476, w: 240, h: 58, label: armed ? '한 번 더 누르면 처음부터' : '저장 지우기 (테스트)', enabled: true, tone: armed ? 'ad' : 'ghost', onTap: () => resetSave() });
     return;
   }
   if (campPopup) {   // M28 — 캠프 팝업: 광고(짓는 중일 때) · 시설 6줄 짓기 버튼 · X. 떠 있으면 이 버튼들뿐(지시 #19). 자리는 퀘스트 팝업과 같은 틀
@@ -2559,9 +2597,10 @@ try {
   else if (localStorage.getItem(SND_KEY) === 'off') { SND_ON = false; BGM_ON = false; }
 } catch (e) {}
 let setPopup = false;   // M20 — 설정 팝업
-function setPanel() { return { x: 30, y: GAME_H / 2 - 242, w: GAME_W - 60, h: 434 }; }   // 지시 #198 — 총소리 줄을 더해 104 만큼 높게   // 지시 #184 — 참고 화면처럼 틀 안에
+function setPanel() { return { x: 30, y: GAME_H / 2 - 294, w: GAME_W - 60, h: 538 }; }   // 지시 #206 — 화질 줄을 더해 104 만큼 높게(가운데 그대로)   // 지시 #198 — 총소리 줄을 더해 104 만큼 높게   // 지시 #184 — 참고 화면처럼 틀 안에
 function setToggleRect(i) { const P = setPanel(); return { x: P.x + 30, y: P.y + 104 + i * 104, w: 64, h: 56 }; }
 function setSliderRect(i) { const P = setPanel(); return { x: P.x + 108, y: P.y + 104 + i * 104, w: P.w - 138, h: 56 }; }
+function setQualityRect(k) { const P = setPanel(), w = (P.w - 60 - 16) / 3; return { x: P.x + 30 + k * (w + 8), y: P.y + 104 + 3 * 104, w: w, h: 56 }; }   // 지시 #206
 function setCloseRect() { const P = setPanel(); return { x: P.x + P.w - 66, y: P.y + 8, w: 56, h: 56 }; }
 function drawSetPopup() {   // 배경·틀·제목·X·아이콘 버튼·슬라이더를 그린다. 누르는 곳은 buildButtons(tone 'hit')
   ctx.fillStyle = PALETTE.scrim; ctx.fillRect(0, 0, GAME_W, GAME_H);
@@ -2593,6 +2632,7 @@ function drawSetPopup() {   // 배경·틀·제목·X·아이콘 버튼·슬라�
     ctx.fillStyle = on ? PALETTE.ink : PALETTE.dim2; rr(kx - 12, my - 17, 24, 34, 3); ctx.fill();
     ctx.strokeStyle = PALETTE.panel0; ctx.lineWidth = 2; ctx.strokeRect(kx - 12, my - 17, 24, 34); ctx.lineWidth = 1;
   });
+  { const q = setQualityRect(0); ctx.fillStyle = PALETTE.ink; ctx.font = '700 16px ' + F; ctx.textAlign = 'left'; ctx.fillText('화질', q.x, q.y - 10); }   // 지시 #206 — 고르는 버튼 셋은 drawButtons
 }
 function sndSave() { try { localStorage.setItem(SND_KEY2, JSON.stringify({ sfxOn: SND_ON, bgmOn: BGM_ON, sfx: SFX_LV, bgm: BGM_LV, gunOn: GUN_ON, gun: GUN_LV })); } catch (e) {} }
 function sndApply() {   // 크기·켜짐을 출력 이득에 바로 반영
@@ -3246,8 +3286,8 @@ function draw() {
   vfxWatch();                              // M24 — 이펙트(그리기 쪽 견줌)
   ctx.save();
   if (shake > 0) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
-  ctx.fillStyle = PALETTE.sky;
-  ctx.fillRect(-8, -8, GAME_W + 16, GAME_H + 16);
+  ctx.fillStyle = PALETTE.sky;   // 지시 #205 — 화면 전체를 칠하지 않는다(전투·패널은 각자 한 장으로 덮는다). 위 HUD 자리 + 흔들림에 드러나는 가장자리만
+  ctx.fillRect(-8, -8, GAME_W + 16, ARENA_TOP + 8); ctx.fillRect(-8, 0, 8, GAME_H + 8); ctx.fillRect(GAME_W, 0, 8, GAME_H + 8); ctx.fillRect(-8, GAME_H, GAME_W + 16, 8);
   drawArena();
   vfxDraw('arena');                     // M24 — 불꽃·터짐·기운·분위기 입자
   if (arenaMove && arenaMove.fade > 0) { ctx.fillStyle = 'rgba(0,0,0,' + arenaMove.fade.toFixed(3) + ')'; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP); }   // M13 — 구역 이동 암전
@@ -3257,8 +3297,8 @@ function draw() {
   drawHUD();
   drawJuFly();                          // M19 ⑥
   drawTip();                            // M15 — 재화 안내 말풍선(전투 영역 위쪽)
-  drawPanelBg();
-  if (tab === 'gear' && !offlineReport && !gachaResult && !oddsPopup && !slotPopup && !dailyPopup && !skillPopup && !setPopup && !campPopup) drawEquipStrip();   // M5 2.4
+  drawPanelLayer();                     // 지시 #205 — 패널 바탕 + 패널 버튼을 구워 둔 한 장(바뀔 때만 다시 그림)
+  if (tab === 'gear' && !offlineReport && !gachaResult && !oddsPopup && !slotPopup && !dailyPopup && !skillPopup && !setPopup && !campPopup && !panelStripBaked) drawEquipStrip();   // M5 2.4
   if (tab === 'skill' && !offlineReport && !gachaResult && !oddsPopup && !slotPopup && !dailyPopup && !skillPopup && !setPopup && !campPopup) drawSkillStrip();   // M12
   if (deathFlash > 0) {
     ctx.fillStyle = 'rgba(' + PALETTE.deathRgb + ',' + (deathFlash * 0.35).toFixed(3) + ')';
@@ -3307,52 +3347,93 @@ function moveView() {
   }
   return v;
 }
+/* 지시 #204 — 전투 영역에 겹겹이 칠하던 것(바탕색·하늘 그라데이션·묶음 틴트·색보정 / 비네트)을 같은 크기 그림으로 구워 둔다.
+   열쇠(구역·배치·백버퍼 크기·저사양)가 같으면 다시 안 굽는다. 칠하는 순서·색은 예전 그대로다(구운 그림 안에서 같은 순서로 칠한다). */
+let arenaSkyCache = null, arenaVigCache = null, arenaBack = null;
+function arenaBake(key, old, paint) {
+  if (old && old.key === key) return old;
+  const H = ARENA_BOT - ARENA_TOP, kx = backW / GAME_W, ky = backH / GAME_H;
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(GAME_W * kx)); c.height = Math.max(1, Math.round(H * ky));
+  const g = c.getContext('2d'); g.setTransform(kx, 0, 0, ky, 0, -ARENA_TOP * ky);
+  paint(g); c.key = key; return c;
+}
+function gradeBaked(src) {   // 배경 그림에 색보정(soft-light 한 겹)을 입힌 사본 — 투명한 곳(위쪽 하늘이 비치는 곳)은 그대로 투명
+  const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+  const g = c.getContext('2d'); g.drawImage(src, 0, 0);
+  g.globalCompositeOperation = 'soft-light'; g.fillStyle = PALETTE.grade; g.fillRect(0, 0, c.width, c.height);
+  g.globalCompositeOperation = 'destination-in'; g.drawImage(src, 0, 0);
+  return c;
+}
 function drawArena() {
+  const skyH = GROUND_Y - ARENA_TOP;
+  const lay = backW + '|' + backH + '|' + ARENA_TOP + '|' + GROUND_Y + '|' + ARENA_BOT;
+  arenaSkyCache = arenaBake(G.zone + '|' + bgBand(G.zone) + '|' + lay + '|' + (gfxLow ? 'l' : 'h'), arenaSkyCache, (c) => {
   // 구역마다 색이 눈에 띄게 달라야 한다 (검증자: 인접 구역 차이가 1/255 였다)
-  ctx.fillStyle = 'hsl(' + zoneHue() + ',' + (6 + (G.zone * 2) % 50 * 0.6) + '%,'
+  c.fillStyle = 'hsl(' + zoneHue() + ',' + (6 + (G.zone * 2) % 50 * 0.6) + '%,'
     + (8 + (G.zone % 3) * 3) + '%)';
-  ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
+  c.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
 
   /* 하늘 — 화면이 길어지면 전투 영역도 길어진다. 위를 비워두지 않는다. */
-  const skyH = GROUND_Y - ARENA_TOP;
-  const sky = ctx.createLinearGradient(0, ARENA_TOP, 0, GROUND_Y);
+  const sky = c.createLinearGradient(0, ARENA_TOP, 0, GROUND_Y);
   /* 위쪽 밝기를 4% 로 고정했더니 색상만 달라져도 RGB 로는 구역 6·7 이 완전히 같았다
      (8차 감사). 화면이 길수록 이 영역이 전투 화면 대부분을 먹는다. 밝기도 구역마다 옮긴다. */
   sky.addColorStop(0, 'hsla(' + zoneHue() + ',' + (13 + (G.zone * 3) % 60 * 0.5) + '%,'
     + (6 + (G.zone % 4) * 4) + '%,1)');
   sky.addColorStop(1, 'hsla(' + zoneHue() + ',' + (7 + (G.zone * 3) % 60 * 0.5) + '%,'
     + (10 + (G.zone % 3) * 2) + '%,1)');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, ARENA_TOP, GAME_W, skyH);
+  c.fillStyle = sky;
+  c.fillRect(0, ARENA_TOP, GAME_W, skyH);
   // M8 — 묶음 하늘 틴트 한 겹(구역별 차이는 위 그라데이션이 지킨다)
-  ctx.fillStyle = PALETTE.bandSky[bgBand(G.zone)] || PALETTE.clear; ctx.fillRect(0, ARENA_TOP, GAME_W, skyH);
+  c.fillStyle = PALETTE.bandSky[bgBand(G.zone)] || PALETTE.clear; c.fillRect(0, ARENA_TOP, GAME_W, skyH);
+  if (!gfxLow) { c.globalCompositeOperation = 'soft-light'; c.fillStyle = PALETTE.grade; c.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP); c.globalCompositeOperation = 'source-over'; }   // M7 5.1 색보정 — 하늘 몫
+  });
   const mv = moveView(); arenaMove = mv;
   const bgl = bgLayers(mv.zone);
-  // M8 1.3 — 생성 이미지 배경이면 전투 영역 한 장(바닥 포함). 아래 타일 두 줄은 안 그린다
-  // M13 — 시차 스크롤: 바닥선 위(건물·하늘)는 0.35 배, 바닥은 1 배로 흐른다(두 배 폭 그림을 이어 붙여 그린다)
-  if (bgl.full) {
-    ctx.imageSmoothingEnabled = false;
-    const split = GROUND_Y - ARENA_TOP - 14, W2 = bgl.wideW || GAME_W * 2;   // M15 — 파노라마면 그 폭
-    for (const [y0, h, sp] of [[0, split, 0.35], [split, bgl.fullH - split, 1]]) {
-      const off = ((Math.floor(mv.scroll * sp / MOVE_SNAP) * MOVE_SNAP) % W2 + W2) % W2;   // 지시 #162 — 3px 씩 끊어 흐른다
-      ctx.save(); ctx.beginPath(); ctx.rect(0, ARENA_TOP + y0, GAME_W, h); ctx.clip();
-      ctx.drawImage(bgl.wide, -off, ARENA_TOP, W2, bgl.fullH); ctx.drawImage(bgl.wide, W2 - off, ARENA_TOP, W2, bgl.fullH);
-      ctx.restore();
-    }
-  }
-
-  // M7 3.1 — 원경 두 겹을 8×8 타일(벽·창·지붕)로. 구역·크기마다 한 번 굽는다(bgLayers 캐시)
-  if (!bgl.full) { ctx.imageSmoothingEnabled = false; ctx.drawImage(bgl.build, 0, ARENA_TOP, GAME_W, bgl.skyH); }
-  // M5 3.2 — 비네트: 가장자리를 어둡게 해 시선을 가운데(생존자·좀비)로. 좀비 없는 상단이 넓어도 평평해 보이지 않는다
-  // M5 4.1 — 그라데이션은 배치(GROUND_Y)가 같으면 다시 안 만든다
-  if (!vignetteCache || vignetteCache.gy !== GROUND_Y) {
-    const vg = ctx.createRadialGradient(GAME_W / 2, (ARENA_TOP + GROUND_Y) / 2, GAME_W * .25, GAME_W / 2, (ARENA_TOP + GROUND_Y) / 2, GAME_W * .85);
+  arenaVigCache = arenaBake('v|' + lay, arenaVigCache, (c) => {   // 지시 #204 — 비네트도 구워 둔다
+    const vg = c.createRadialGradient(GAME_W / 2, (ARENA_TOP + GROUND_Y) / 2, GAME_W * .25, GAME_W / 2, (ARENA_TOP + GROUND_Y) / 2, GAME_W * .85);
     vg.addColorStop(0, PALETTE.clear); vg.addColorStop(1, PALETTE.vignette);
-    vignetteCache = { gy: GROUND_Y, vg: vg };
+    c.fillStyle = vg; c.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
+  });
+  /* 지시 #205 — 하늘·배경 두 겹·(색보정)·비네트를 한 장으로 합쳐 둔다. 앱 WebView(플립3)는 그림 붙이기도 화면 크기만큼 비쌌다(전투 영역 한 장 ≈ 5ms).
+     배경이 흐르는 자리(3px 단위)·구역·배치가 같으면 다시 안 합친다 — 서 있을 때는 한 장만 붙인다. 칠하는 순서는 예전 그대로다(합칠 때 같은 순서). */
+  const W2b = bgl.wideW || GAME_W * 2, split0 = GROUND_Y - ARENA_TOP - 14;
+  const offs = bgl.full ? [0.35, 1].map((sp) => ((Math.floor(mv.scroll * sp / MOVE_SNAP) * MOVE_SNAP) % W2b + W2b) % W2b) : [];
+  const bkey = arenaSkyCache.key + '#' + arenaVigCache.key + '#' + (bgl.key || '') + '#' + offs.join(',') + '#' + split0 + '#' + (gfxLow ? 1 : 0);
+  if (!arenaBack || arenaBack.width !== backW || arenaBack.height !== backH) { arenaBack = document.createElement('canvas'); arenaBack.width = Math.max(1, backW); arenaBack.height = Math.max(1, backH); arenaBack.key = ''; }
+  const kyA = backH / GAME_H, ay0 = Math.floor(ARENA_TOP * kyA), ay1 = Math.min(backH, Math.ceil(ARENA_BOT * kyA));
+  if (arenaBack.key !== bkey) {
+    arenaBack.key = bkey;
+    const main = ctx, g = arenaBack.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, ay0, backW, ay1 - ay0);
+    g.setTransform(backW / GAME_W, 0, 0, kyA, 0, 0);
+    ctx = g;
+    try {
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(arenaSkyCache, 0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
+    // M8 1.3 — 생성 이미지 배경이면 전투 영역 한 장(바닥 포함). 아래 타일 두 줄은 안 그린다
+    // M13 — 시차 스크롤: 바닥선 위(건물·하늘)는 0.35 배, 바닥은 1 배로 흐른다(두 배 폭 그림을 이어 붙여 그린다)
+    if (bgl.full) {
+      ctx.imageSmoothingEnabled = false;
+      const split = GROUND_Y - ARENA_TOP - 14, W2 = bgl.wideW || GAME_W * 2;   // M15 — 파노라마면 그 폭
+      for (const [y0, h, sp] of [[0, split, 0.35], [split, bgl.fullH - split, 1]]) {
+        const off = ((Math.floor(mv.scroll * sp / MOVE_SNAP) * MOVE_SNAP) % W2 + W2) % W2;   // 지시 #162 — 3px 씩 끊어 흐른다
+        ctx.save(); ctx.beginPath(); ctx.rect(0, ARENA_TOP + y0, GAME_W, h); ctx.clip();
+        const wimg = gfxLow ? bgl.wide : (bgl.wideG || (bgl.wideG = gradeBaked(bgl.wide)));   // 지시 #204 — 색보정을 입혀 둔 사본
+        ctx.drawImage(wimg, -off, ARENA_TOP, W2, bgl.fullH); ctx.drawImage(wimg, W2 - off, ARENA_TOP, W2, bgl.fullH);
+        ctx.restore();
+      }
+    }
+
+    // M7 3.1 — 원경 두 겹을 8×8 타일(벽·창·지붕)로. 구역·크기마다 한 번 굽는다(bgLayers 캐시)
+    if (!bgl.full) { ctx.imageSmoothingEnabled = false; ctx.drawImage(bgl.build, 0, ARENA_TOP, GAME_W, bgl.skyH); }
+    // M5 3.2 — 비네트: 가장자리를 어둡게 해 시선을 가운데(생존자·좀비)로. 좀비 없는 상단이 넓어도 평평해 보이지 않는다
+    // M5 4.1 — 그라데이션은 배치(GROUND_Y)가 같으면 다시 안 만든다
+    // M7 5.1 — 전체 색보정 한 겹(soft-light, 알파 0.14): 출처가 다른 도트·그라데이션을 한 무드로 묶는다. 밝기는 보존(글자 대비 유지). 비네트 앞.
+    if (!gfxLow && !bgl.full) { ctx.save(); ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = PALETTE.grade; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP); ctx.restore(); }   // 타일 배경일 때만 그 자리에서(그림 배경은 위에서 구운 사본) — 지시 #195·#204
+    ctx.drawImage(arenaVigCache, 0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
+    } finally { ctx = main; }
   }
-  // M7 5.1 — 전체 색보정 한 겹(soft-light, 알파 0.14): 출처가 다른 도트·그라데이션을 한 무드로 묶는다. 밝기는 보존(글자 대비 유지). 비네트 앞.
-  if (!gfxLow) { ctx.save(); ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = PALETTE.grade; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP); ctx.restore(); }   // 지시 #195 — 저사양이면 색보정 합성(가장 비싼 칠하기)을 뺀다
-  ctx.fillStyle = vignetteCache.vg; ctx.fillRect(0, ARENA_TOP, GAME_W, ARENA_BOT - ARENA_TOP);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(arenaBack, 0, ay0, backW, ay1 - ay0, 0, ay0 / kyA, GAME_W, (ay1 - ay0) / kyA);
   // M7 3.2 — 바닥 16×16 아스팔트 타일(맨 윗줄이 녹슨 바닥선). 캐시.
   if (!bgl.full) { ctx.imageSmoothingEnabled = false; ctx.drawImage(bgl.ground, 0, GROUND_Y, GAME_W, bgl.gh); }
 
@@ -3596,6 +3677,41 @@ function drawHUD() {
       , GAME_W / 2, 98, GAME_W - 48);
 }
 
+/* 지시 #205 — 사람: "패널 한 장으로 구워서 최고 해상도로 진행해줘." (#204 플립3 실기: 앱 WebView 에서 전체 해상도 한 프레임 58~75ms)
+   아래 패널(바탕·녹 무늬·목록 줄·탭·광고 줄)은 대부분의 프레임에서 그대로다. 그래서 백버퍼와 같은 크기의 그림 한 장에 그려 두고,
+   그리는 데 쓰는 값(줄의 자리·글자·칩·값·켜짐·색·점 · 스크롤 · 탭 · 배치)이 바뀔 때만 다시 그린다. 그 밖의 프레임은 그 한 장을 붙인다.
+   팝업이 떠 있으면 버튼은 예전처럼 맨 위에 따로 그린다(구운 장에는 바탕만). 눌림·반짝(drawJuButtons)·튜토리얼 표시·장착 띠는 매 프레임 위에 그린다.
+   그리는 함수(drawPanelBg·drawButtons)는 그대로 쓴다 — 그리는 곳(ctx)만 잠깐 그 한 장으로 바꾼다. */
+let panelLayer = null, panelSig = '', panelStripBaked = false;
+function panelBaked(b) {   // 구운 장에 들어가는 버튼: 팝업이 없을 때 패널 안에 있는, 그려지는 버튼
+  return b.tone !== 'scrim' && b.tone !== 'hit' && b.tone !== 'mini' && b.y >= ARENA_BOT - 1;
+}
+function drawPanelLayer() {
+  const busy = storyBusy(), list = busy ? [] : buttons.filter(panelBaked);
+  for (const b of buttons) b.baked = false;
+  for (const b of list) b.baked = true;
+  panelStripBaked = !busy && tab === 'gear';   // 장비 띠(카드 5장)도 같이 굽는다 — 낀 것·빨간 점이 바뀔 때만 다시
+  const strip = panelStripBaked ? JSON.stringify([G.gear, GEAR_SLOTS.map((s) => (hasNew(s.id) || canFuseSlot(s.id)) ? 1 : 0), tabRowY()]) : '';
+  const sig = [strip, backW, backH, GAME_H, ARENA_BOT, PANEL_TOP, tab, listScroll, listMax, busy ? 1 : 0, (uiImg.rust && uiImg.rust.ready) ? 1 : 0, Object.keys(uiImg).filter((k) => uiImg[k] && uiImg[k].ready).length,
+    JSON.stringify(list.map((b) => [b.x, b.y, b.w, b.h, b.label, b.sub, b.tone, b.enabled, b.icon, b.tint, b.dot, b.cost, b.costKind, b.chips, b.clip]))].join('|');
+  if (!panelLayer || panelLayer.width !== backW || panelLayer.height !== backH) {
+    panelLayer = document.createElement('canvas'); panelLayer.width = Math.max(1, backW); panelLayer.height = Math.max(1, backH); panelSig = '';
+  }
+  const ky = backH / GAME_H, sy = Math.floor(ARENA_BOT * ky), dy = sy / ky;
+  if (sig !== panelSig) {
+    panelSig = sig;
+    const main = ctx, g = panelLayer.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, sy, backW, backH - sy);
+    g.setTransform(backW / GAME_W, 0, 0, ky, 0, 0); g.imageSmoothingEnabled = false;
+    ctx = g;
+    try {
+      drawPanelBg();
+      if (panelStripBaked) drawEquipStrip();
+      if (list.length) drawButtons(list);
+    } finally { ctx = main; }
+  }
+  ctx.drawImage(panelLayer, 0, sy, backW, backH - sy, 0, dy, GAME_W, GAME_H - dy);
+}
 function drawPanelBg() {
   ctx.fillStyle = PALETTE.panel;
   ctx.fillRect(0, ARENA_BOT, GAME_W, GAME_H - ARENA_BOT);
@@ -3990,7 +4106,6 @@ function bgLayers(z) {
 }
 
 const iconCache = new Map();
-let vignetteCache = null;
 /* M7 4.1 (지시 #132) — 아이콘 37종 8×8 도트. 색은 호출자가 주던 그대로(단색), 셀 크기는 s/8 을 정수로. 시그니처 불변.
    'X' = 색, '.' = 빈칸. 종류·크기·색·DPR 마다 한 번 굽는다(아래 캐시). 경로 그리기(drawIconPath)는 표에 없는 종류의 예비로 남긴다. */
 const ICON_PX = {
@@ -4280,8 +4395,9 @@ function drawChips(chips, x, y, dim) {
     else x += 2;
   }
 }
-function drawButtons() {
-  for (const b of buttons) {
+function drawButtons(only) {
+  for (const b of (only || buttons)) {
+    if (!only && b.baked) continue;   // 지시 #205 — 패널 장에 구운 버튼은 다시 안 그린다
     if (b.tone === 'scrim' || b.tone === 'hit') continue;
     if (b.tone === 'mini') {   // 지시 #151 — 전투 화면 위 작은 아이콘 버튼(일일 미션)
       ctx.fillStyle = PALETTE.shade55; rr(b.x, b.y, b.w, b.h, 4); ctx.fill();
