@@ -8,8 +8,8 @@ android {
         applicationId "com.silogames.apsurvivor"   // 지시 #173 — 첫 업로드 뒤 못 바꾼다
         minSdk 24            // Android 7.0. LG V30(Android 8~9)을 덮는다
         targetSdk 36         // 지시 #174 — 2026-08-31 부터 새 앱은 API 36 이상
-        versionCode 3        // 지시 #212 — AdMob 진짜 ID(출시 빌드) · 화질 작업 · #213 2 는 Play 에 한 번 올렸다 취소해 이미 쓰인 번호라 3. 올릴 때마다 1씩 올린다
-        versionName "0.1.2"
+        versionCode 4        // 지시 #212 AdMob 진짜 ID · #213 2 는 Play 에서 이미 쓰인 번호 · #214 출시 전 정리(테스트 버튼 뺌·방침 링크·광고 실패 안내). 올릴 때마다 1씩 올린다
+        versionName "0.1.3"
     }
 
     sourceSets {

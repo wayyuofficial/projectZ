@@ -2068,21 +2068,14 @@ function rolloverDay() {
   return { kind: 'login', day: G.login.streak, gain: gain };
 }
 
-const RESET_CONFIRM_MS = 5000;
-let resetArmAt = 0;
-let resetting = false;                      // 켜지면 save() 가 아무것도 안 쓴다
-function resetSave() {
-  const now = performance.now();
-  if (resetArmAt && now - resetArmAt < RESET_CONFIRM_MS) {
-    resetting = true;                        // 먼저 저장을 막는다 — reload 전 틈에 자동 저장이 끼어들었다
-    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
-    G = freshState();                        // 메모리도 처음부터 (혹시 저장이 새어도 새 상태가 쓰인다)
-    resetArmAt = 0;
-    location.reload();                       // 처음부터 — 상태·화면을 통째로 새로 만든다
-    return true;
-  }
-  resetArmAt = now;
-  return false;
+let resetting = false;                      // 켜지면 save() 가 아무것도 안 쓴다 (지시 #214 — '저장 지우기(테스트)' 버튼은 출시 전에 뺐다. 처음부터는 앱 정보 → 저장공간 → 데이터 삭제)
+/* 지시 #214 — 개인정보처리방침(설정 창). 게임은 통신하지 않는다 — 주소로 '가기'만 한다: 앱이면 껍데기가 바깥 브라우저로 넘기고(안드로이드
+   shouldOverrideUrlLoading · iOS decidePolicyFor), 브라우저면 새 탭. */
+const PRIVACY_URL = 'https://wayyuofficial.github.io/projectZ/privacy.html';
+function openPrivacy() {
+  if (window.AdBridge || (window.webkit && window.webkit.messageHandlers)) location.href = PRIVACY_URL;
+  else window.open(PRIVACY_URL, '_blank', 'noopener');
+  return true;
 }
 /* 지시 #187 — 진행은 한 곳(questProgress)으로 모여 세 갈래로 센다: 일일(G.qd) · 반복(G.qr) · 누계(G.qc, 업적용). */
 function questProgress(id, n) {
@@ -2178,14 +2171,14 @@ function adReward(kind) {
   bridge.show(kind);
   return true;
 }
-window.onAdResult = function (kind, ok) {
+window.onAdResult = function (kind, ok, why) {   // why: 'fail' = 광고를 못 띄웠다(지시 #214) · 없으면 중간에 닫음
   const p = adPending;
   adPending = null;
   if (actx && actx.state === 'suspended') actx.resume();
   bgmHold(false);
   if (!p || p.kind !== kind) return;
   if (!ok) {
-    addFloat(GAME_W / 2, ARENA_TOP + 90, '끝까지 보면 보상', PALETTE.warn, 22);
+    addFloat(GAME_W / 2, ARENA_TOP + 90, why === 'fail' ? '광고를 못 불러왔다' : '끝까지 보면 보상', PALETTE.warn, 22);
     return;
   }
   if (kind === 'revive' && !reviveOffer && p.revive) reviveOffer = p.revive;
@@ -2312,10 +2305,8 @@ function buildButtons() {
     });
     const c = setCloseRect();
     btn({ x: c.x, y: c.y, w: c.w, h: c.h, label: '', enabled: true, tone: 'hit', onTap: close });
-    /* 테스트용 저장 지우기 (사람 요청 2026-09-17) — 지시 #187 에서 퀘스트 팝업에서 여기로. 5초 안에 두 번 눌러야 한다. 디자인이 끝나면 뺀다(거울 buildButtons 의 reset 도) */
-    const armed = resetArmAt && (performance.now() - resetArmAt) < RESET_CONFIRM_MS;
     GFX_MODES.forEach(([m, name], k) => { const r = setQualityRect(k); btn({ x: r.x, y: r.y, w: r.w, h: r.h, label: name, enabled: true, tone: gfxMode === m ? 'on' : 'off', onTap: () => setGfxMode(m) }); });   // 지시 #206 — 화질
-    btn({ x: P.x + P.w / 2 - 120, y: P.y + 476, w: 240, h: 58, label: armed ? '한 번 더 누르면 처음부터' : '저장 지우기 (테스트)', enabled: true, tone: armed ? 'ad' : 'ghost', onTap: () => resetSave() });
+    btn({ x: P.x + P.w / 2 - 120, y: P.y + 476, w: 240, h: 58, label: '개인정보처리방침', enabled: true, tone: 'ghost', onTap: openPrivacy });   // 지시 #214 — 저장 지우기(테스트) 자리
     return;
   }
   if (campPopup) {   // M28 — 캠프 팝업: 광고(짓는 중일 때) · 시설 6줄 짓기 버튼 · X. 떠 있으면 이 버튼들뿐(지시 #19). 자리는 퀘스트 팝업과 같은 틀

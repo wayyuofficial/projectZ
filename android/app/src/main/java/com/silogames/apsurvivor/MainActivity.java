@@ -1,7 +1,10 @@
 package com.silogames.apsurvivor;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.net.Uri;
+import android.webkit.WebResourceRequest;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -74,7 +77,19 @@ public class MainActivity extends Activity {
         s.setLoadWithOverviewMode(false);
         s.setMediaPlaybackRequiresUserGesture(false);
 
-        web.setWebViewClient(new WebViewClient());
+        web.setWebViewClient(new WebViewClient() {
+            // 지시 #214 — 게임 안 주소(file:///android_asset)만 웹뷰에서 연다. http(s) 주소(개인정보처리방침)는 바깥 브라우저로 — 게임이 그 페이지로 바뀌지 않게
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest req) {
+                Uri u = req.getUrl();
+                String s = u.getScheme();
+                if ("http".equals(s) || "https".equals(s)) {
+                    try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception e) { Log.w("GameBoot", "no browser " + e); }
+                    return true;
+                }
+                return false;
+            }
+        });
         web.addJavascriptInterface(new AdBridge(this, web), "AdBridge");   // M17 — 보상형 광고 다리
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
         web.setBackgroundColor(0xFF05080A);

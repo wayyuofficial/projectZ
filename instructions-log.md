@@ -5498,3 +5498,13 @@ M7 1단계: `PALETTE.ramp`(7×4), `pxSprite`/`drawPx`(1px=1칸 오프스크린 �
 처리: 진짜 ID 는 출시 빌드에만 — android/app/src/release/res/values/ads.xml(빌드 유형 덮어쓰기). 디버그 빌드는 main 의 Google 시험용 ID 그대로(시험 중 진짜 광고를 눌러 계정 정지되는 일을 막는다). versionCode 1 → 2, versionName 0.1.1. 확인: 출시 번들 리소스에 진짜 ID 둘 · 디버그 APK 에 시험용 ID 둘 · 출시 매니페스트에 AD_ID 권한. 유럽·영국은 Play Console 국가에서 빼므로 동의 팝업(UMP)은 지금 안 넣는다(유럽 출시 때 넣는다).
 
 2026-10-13 #213 — 사람: "이전에 한번 2버전 번들을 올렸다가 취소해서 그런지 2버전 코드는 이미 사용되었대. 다른걸로 다시 최신화해줘." → versionCode 3 · versionName 0.1.2 (Play 는 한 번 올린 번호를 취소해도 다시 못 쓴다).
+
+---
+
+## 지시 #214 — 출시 전 정리
+
+2026-10-13. 사람: (출시까지 남은 것 목록 중 게임 쪽 셋) "진행해줘."
+처리: ① 설정 창 '저장 지우기(테스트)' 버튼과 resetSave 를 걷어냄(save() 가 보는 resetting 만 남김) — 그 자리에 '개인정보처리방침' 버튼. 거울 reset → privacy. android/README 처음부터 = 앱 데이터 삭제. ② 방침 열기: 게임은 주소로 '가기'만(통신 아님, c3) — 안드로이드 WebViewClient.shouldOverrideUrlLoading 이 http(s) 를 바깥 브라우저로, iOS decidePolicyFor 가 사파리로. 브라우저면 새 탭. ③ 광고: 준비 안 됨은 원래 '광고 준비 중'(보상 없음)으로 안전했다. 다만 띄우다 실패해도 '끝까지 보면 보상' 이라 나오던 것을 가름 — AdBridge 가 onAdResult(종류, false, 'fail') → '광고를 못 불러왔다'. ④ versionCode 4 · 0.1.3.
+확인(플립3 디버그): 설정 창에 방침 버튼 있음 · 저장 지우기 없음 · 방침 → 크롬(IntentDispatcher)이 앞으로, 게임은 file:///android_asset 그대로 · 실패/중간 닫음 문구가 둘로 갈림. tap-T214 통과 · 차단 0.
+
+2026-10-13 #214 측정 — 곡선(balance-M29-T214: 70 도달 613분 · ±20% 밖 3개) · 탭(tap-T214) · 저장(storage-T214 25/25). 업그레이드 간격은 사람이 "cpu 사용량이 너무 과도해서 다른 작업이 불가능" → 우선순위 낮춤·코어 2개로 묶음 → "측정은 마지막으로 미뤄두고 일단 진행상황 다 commit해. 측정은 자기 전에 돌려놓고 잘게." 로 멈춤. 경고(c21 간격 낡음) 남은 채 커밋.

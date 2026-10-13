@@ -76,7 +76,7 @@ public class AdBridge {
         final String k = safeKind(kind);
         main.post(() -> {
             RewardedAd a = ad;
-            if (a == null || showing) { result(k, false); load(); return; }
+            if (a == null || showing) { result(k, false, "fail"); load(); return; }
             ad = null;
             showing = true;
             final boolean[] earned = { false };
@@ -91,7 +91,7 @@ public class AdBridge {
                 @Override
                 public void onAdFailedToShowFullScreenContent(AdError e) {
                     showing = false;
-                    result(k, false);
+                    result(k, false, "fail");   // 지시 #214 — '끝까지 보면 보상' 이 아니라 '못 불러왔다'
                     load();
                 }
             });
@@ -105,7 +105,9 @@ public class AdBridge {
         return s.replaceAll("[^a-z0-9]", "");
     }
 
-    private void result(String kind, boolean ok) {
-        web.evaluateJavascript("window.onAdResult && window.onAdResult('" + kind + "', " + ok + ")", null);
+    private void result(String kind, boolean ok) { result(kind, ok, ""); }
+
+    private void result(String kind, boolean ok, String why) {
+        web.evaluateJavascript("window.onAdResult && window.onAdResult('" + kind + "', " + ok + ", '" + why + "')", null);
     }
 }

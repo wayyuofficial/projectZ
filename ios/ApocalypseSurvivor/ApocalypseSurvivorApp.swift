@@ -56,6 +56,16 @@ final class GameWeb: NSObject, WKNavigationDelegate {
 
     func call(_ js: String) { view.evaluateJavaScript(js, completionHandler: nil) }
 
+    // 지시 #214 — http(s) 주소(개인정보처리방침)는 사파리로 넘긴다. 게임 파일(file://)만 웹뷰에서 연다
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if let u = navigationAction.request.url, let s = u.scheme, s == "http" || s == "https" {
+            UIApplication.shared.open(u)
+            decisionHandler(.cancel)
+            return
+        }
+        decisionHandler(.allow)
+    }
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         webView.scrollView.pinchGestureRecognizer?.isEnabled = false   // 두 손가락 확대 막기
     }

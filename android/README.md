@@ -60,7 +60,7 @@ gradle 버전·의존성 버전이 실제로 맞물리는지는 **처음 Sync �
    (2026-10-01 확인: SDK 에 emulator 는 있고 시스템 이미지·AVD 는 없었다.)
 3. 위 툴바에서 그 기기를 고르고 **▶ Run 'app'**. 에뮬레이터가 뜨고 앱이 설치·실행된다. 게임을 고친 뒤에는 ▶ 만 다시 누르면 된다 — assets 가 `game/` 을 그대로 가리킨다.
 4. 이미 만든 APK 만 넣으려면: 저장소 루트의 `apocalypse-survivor-debug.apk` 를 에뮬레이터 창에 **끌어다 놓는다**.
-- 처음부터: 일일 탭 맨 아래 "저장 지우기 (테스트)" 를 5초 안에 두 번. 옛 저장 위 이전 확인: 지우지 말고 ▶ 로 덮어 설치.
+- 처음부터: 폰의 설정 → 애플리케이션 → 이 앱 → 저장공간 → **데이터 삭제**(게임 안 "저장 지우기(테스트)" 버튼은 출시 전에 뺐다, 지시 #214). 옛 저장 위 이전 확인: 지우지 말고 ▶ 로 덮어 설치.
 - 오류 보기: 아래 **Logcat** 에서 `package:com.silogames.apsurvivor.debug`. 화면 캡처: 에뮬레이터 옆 카메라 버튼.
 - **에뮬레이터가 못 보는 것**: 실제 폰의 fps·발열, 손 터치 감각, DPR 4 뭉개짐, 노치. (`plans/실기묶음.md`)
 - **버벅이다 통째로 멈추면** (2026-10-01 실제로 겪음: 런처·systemui 가 `HardwareRenderer` 시간 초과로 죽고 "The system died"): 게임이 아니라 가상 폰의 그래픽이 죽은 것이다. **원인은 Graphics = Automatic 이 소프트웨어 그래픽을 골라 쓴 것** — Device Manager → 연필(Edit) → Show Advanced Settings → **Graphics 를 Hardware 로** 바꾸고 Cold Boot 하니 잘 돈다(사람이 확인). 처음에 AI 는 반대로(Software 로 바꾸라고) 권했다 — 틀렸다. 화면·동작만 보려면 PC 크롬에서 `game/index.html` 을 열고 F12 → 기기 모드(375×812)도 된다.

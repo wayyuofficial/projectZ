@@ -238,7 +238,7 @@ MIRRORED = {
     "attacksPerSec": "0639c7d834dcbe23",
     "bestOwned": "07d4ef38def7b50f",
     "boostActive": "ed9a9a513325e7ef",
-    "buildButtons": "df8543f630c8d69a",
+    "buildButtons": "fbb17e085005b70f",
     "buyPerk": "936716819438d513",
     "buyStat": "e92f891d410963f4",
     "campBuild": "106561b9c0bf0d6a",
@@ -1220,7 +1220,7 @@ class Sim(object):
             for k, q in enumerate(("auto", "sharp", "smooth")):   # 지시 #206 — 화질
                 b("set_q_" + q, px + 30 + k * (qw + 8), py + 104 + 3 * 104, qw, 56, "off")
             b("set_close", px + pw - 66, py + 8, 56, 56, "hit")
-            b("reset", px + pw / 2 - 120, py + 476, 240, 58, "ghost")   # 지시 #187 — 저장 지우기(테스트)를 퀘스트 팝업에서 여기로
+            b("privacy", px + pw / 2 - 120, py + 476, 240, 58, "ghost")   # 지시 #214 — 저장 지우기(테스트) 자리에 개인정보처리방침
             return bs
         if getattr(self, "campPopup", False):    # M28 — 캠프 팝업: 틀 · 광고 · 시설 6줄 짓기 · X (원본 questPanel·campAdRect·questRewardRect·questCloseRect 와 같은 수)
             b("scrim", 0, 0, GAME_W, L["GAME_H"], "scrim")
