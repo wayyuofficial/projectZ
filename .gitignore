@@ -13,3 +13,8 @@ source/sound/bgm/.soundgen/*.wav
 source/sound/bgm/bgm_combat_v1_peaceful.wav
 source/sound/bgm/bgm_apocalypse.wav
 source/sound/build/
+
+# 출시 서명 키 — 저장소에 넣지 않는다 (지시 #207)
+*.jks
+*.keystore
+android/app/release/
