@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AdMob 진짜 ID — 출시(release) 빌드에만 들어간다 (지시 #212, 2026-10-13 사람이 AdMob 에서 만든 앱·보상형 단위).
+     디버그 빌드는 src/main/res/values/ads.xml 의 Google 시험용 ID 를 그대로 쓴다 — 시험 중 진짜 광고를 눌러 계정이 정지되지 않게.
+     이 값들은 앱 안에 들어가는 공개 식별자다(비밀번호·키가 아니다). -->
+<resources>
+    <string name="admob_app_id" translatable="false">ca-app-pub-6023403948846789~3177386074</string>
+    <string name="admob_rewarded_id" translatable="false">ca-app-pub-6023403948846789/9471331689</string>
+</resources>
